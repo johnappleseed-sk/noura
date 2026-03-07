@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shop by Department Mobile Mock</title>
+    <style>
+      :root {
+        --bg: #f4f7fb;
+        --surface: #ffffff;
+        --surface-soft: #f8fafc;
+        --text: #0f172a;
+        --muted: #475569;
+        --line: #d9e2ef;
+        --brand: #0b6dff;
+        --brand-soft: #e8f0ff;
+        --good: #16a34a;
+        --warn: #ef4444;
+        --shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: radial-gradient(circle at top, #dbe8ff 0%, #f4f7fb 50%, #edf2f8 100%);
+        color: var(--text);
+        font-family: "Segoe UI", "Noto Sans", "Helvetica Neue", Arial, sans-serif;
+      }
+
+      .stage {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        padding: 24px 14px;
+      }
+
+      .phone {
+        width: 390px;
+        border-radius: 30px;
+        border: 1px solid #cbd8ea;
+        box-shadow: 0 18px 40px rgba(2, 6, 23, 0.16);
+        overflow: hidden;
+        background: var(--bg);
+        position: relative;
+      }
+
+      .status-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px 8px;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+        background: linear-gradient(180deg, #eef4ff 0%, #f4f7fb 100%);
+        border-bottom: 1px solid #e1e8f3;
+      }
+
+      .status-icons {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #334155;
+      }
+
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #10b981;
+      }
+
+      .content {
+        padding: 16px 14px 110px;
+      }
+
+      .header {
+        margin-bottom: 14px;
+      }
+
+      .header h1 {
+        margin: 0;
+        font-size: 27px;
+        font-weight: 800;
+        line-height: 1.1;
+        letter-spacing: -0.01em;
+      }
+
+      .header p {
+        margin: 8px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      .section {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        box-shadow: var(--shadow);
+        padding: 12px;
+        margin-bottom: 12px;
+      }
+
+      .section h2 {
+        margin: 0 0 10px;
+        font-size: 17px;
+        font-weight: 800;
+        letter-spacing: -0.01em;
+      }
+
+      .department-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .department-item {
+        border: 1px solid #e3ebf5;
+        background: var(--surface-soft);
+        border-radius: 14px;
+        padding: 10px;
+        display: grid;
+        gap: 4px;
+      }
+
+      .department-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .dept-name {
+        font-size: 14px;
+        font-weight: 750;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .dept-desc {
+        margin: 0;
+        font-size: 12px;
+        color: #5a6b82;
+        line-height: 1.35;
+      }
+
+      .open-link {
+        font-size: 12px;
+        color: var(--brand);
+        text-decoration: none;
+        font-weight: 700;
+      }
+
+      .nested-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .nested-item {
+        border: 1px dashed #c8d7ea;
+        border-radius: 12px;
+        padding: 10px;
+        background: #f8fbff;
+      }
+
+      .nested-item h3 {
+        margin: 0 0 4px;
+        font-size: 14px;
+      }
+
+      .nested-item p {
+        margin: 0;
+        font-size: 12px;
+        color: #51637a;
+        line-height: 1.35;
+      }
+
+      .product-cards {
+        display: grid;
+        gap: 8px;
+      }
+
+      .product-card {
+        border: 1px solid #e3ebf5;
+        border-radius: 14px;
+        padding: 10px;
+        background: var(--surface-soft);
+      }
+
+      .product-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .product-name {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 770;
+      }
+
+      .chip {
+        border-radius: 999px;
+        padding: 2px 8px;
+        background: var(--brand-soft);
+        color: var(--brand);
+        font-size: 10px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      .meta {
+        margin-top: 4px;
+        font-size: 12px;
+        color: #5b6e87;
+      }
+
+      .rating {
+        margin-top: 6px;
+        color: #f59e0b;
+        font-size: 12px;
+        letter-spacing: 0.04em;
+      }
+
+      .pricing {
+        margin-top: 6px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .price-new {
+        font-size: 15px;
+        font-weight: 800;
+        color: var(--good);
+      }
+
+      .price-old {
+        font-size: 12px;
+        color: var(--warn);
+        text-decoration: line-through;
+      }
+
+      .bottom-search {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: #ffffff;
+        border-top: 1px solid #d4deec;
+        padding: 10px 12px 14px;
+      }
+
+      .search-shell {
+        border: 1px solid #c9d8ef;
+        border-radius: 999px;
+        background: #f8fbff;
+        height: 46px;
+        display: flex;
+        align-items: center;
+        padding: 0 14px;
+        justify-content: space-between;
+      }
+
+      .search-text {
+        font-size: 13px;
+        color: #56718f;
+      }
+
+      .search-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: #dcebff;
+        color: #0b6dff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 800;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="stage">
+      <section class="phone" aria-label="Mobile ecommerce interface">
+        <div class="status-bar">
+          <span>13:40 2026/3/2</span>
+          <div class="status-icons">
+            <span>5G</span>
+            <span>88%</span>
+            <span class="dot" aria-hidden="true"></span>
+          </div>
+        </div>
+
+        <div class="content">
+          <header class="header">
+            <h1>Shop by Department</h1>
+            <p>Departments are ranked by your recent browsing behavior.</p>
+          </header>
+
+          <section class="section" aria-label="Department list">
+            <div class="department-list">
+              <article class="department-item">
+                <div class="department-top">
+                  <div class="dept-name">⌚ Wearables</div>
+                  <a class="open-link" href="#">Open department</a>
+                </div>
+                <p class="dept-desc">Health and wellness products for connected lifestyles.</p>
+              </article>
+              <article class="department-item">
+                <div class="department-top">
+                  <div class="dept-name">💄 Beauty</div>
+                  <a class="open-link" href="#">Open department</a>
+                </div>
+                <p class="dept-desc">Explore top skincare, makeup, and daily essentials.</p>
+              </article>
+              <article class="department-item">
+                <div class="department-top">
+                  <div class="dept-name">💻 Computing</div>
+                  <a class="open-link" href="#">Open department</a>
+                </div>
+                <p class="dept-desc">Laptops, monitors, and accessories for modern teams.</p>
+              </article>
+              <article class="department-item">
+                <div class="department-top">
+                  <div class="dept-name">🏠 Home</div>
+                  <a class="open-link" href="#">Open department</a>
+                </div>
+                <p class="dept-desc">Smart home essentials and automated living upgrades.</p>
+              </article>
+              <article class="department-item">
+                <div class="department-top">
+                  <div class="dept-name">👟 Sports</div>
+                  <a class="open-link" href="#">Open department</a>
+                </div>
+                <p class="dept-desc">Performance gear and training essentials.</p>
+              </article>
+              <article class="department-item">
+                <div class="department-top">
+                  <div class="dept-name">🎧 Audio</div>
+                  <a class="open-link" href="#">Open department</a>
+                </div>
+                <p class="dept-desc">Headphones, ANC gear, and studio-grade sound tools.</p>
+              </article>
+              <article class="department-item">
+                <div class="department-top">
+                  <div class="dept-name">🪑 Home Office</div>
+                  <a class="open-link" href="#">Open department</a>
+                </div>
+                <p class="dept-desc">Workspace solutions tuned for focus and productivity.</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="section" aria-label="Beauty category">
+            <h2>Beauty category</h2>
+            <div class="nested-list">
+              <article class="nested-item">
+                <h3>Beauty</h3>
+                <p>Top picks for skincare, personal care routines, and daily essentials.</p>
+              </article>
+              <article class="nested-item">
+                <h3>Home Entertainment</h3>
+                <p>Streaming displays, smart speakers, and living room setup upgrades.</p>
+              </article>
+              <article class="nested-item">
+                <h3>Recommended for You</h3>
+                <p>AI-ranked items based on your recent category views and purchase intent.</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="section" aria-label="Recommended products">
+            <h2>Recommended for You</h2>
+            <div class="product-cards">
+              <article class="product-card">
+                <div class="product-head">
+                  <p class="product-name">PulseFit Smartwatch X2</p>
+                  <span class="chip">Wearables</span>
+                </div>
+                <p class="meta">Category: Wearables | Brand: Cytrack</p>
+                <div class="rating">★★★★★ 4.8</div>
+                <div class="pricing">
+                  <span class="price-new">$159</span>
+                  <span class="price-old">$199</span>
+                </div>
+              </article>
+              <article class="product-card">
+                <div class="product-head">
+                  <p class="product-name">LumiGlow Pro Serum Set</p>
+                  <span class="chip">Beauty</span>
+                </div>
+                <p class="meta">Category: Beauty | Brand: LumiSkin</p>
+                <div class="rating">★★★★☆ 4.6</div>
+                <div class="pricing">
+                  <span class="price-new">$69</span>
+                  <span class="price-old">$89</span>
+                </div>
+              </article>
+              <article class="product-card">
+                <div class="product-head">
+                  <p class="product-name">Atlas Pro Laptop 14"</p>
+                  <span class="chip">Computing</span>
+                </div>
+                <p class="meta">Category: Computing | Brand: NovaTech</p>
+                <div class="rating">★★★★★ 4.9</div>
+                <div class="pricing">
+                  <span class="price-new">$1,299</span>
+                  <span class="price-old">$1,499</span>
+                </div>
+              </article>
+              <article class="product-card">
+                <div class="product-head">
+                  <p class="product-name">Nimbus Air Purifier Max</p>
+                  <span class="chip">Home</span>
+                </div>
+                <p class="meta">Category: Home | Brand: Nimbus</p>
+                <div class="rating">★★★★☆ 4.5</div>
+                <div class="pricing">
+                  <span class="price-new">$229</span>
+                  <span class="price-old">$279</span>
+                </div>
+              </article>
+              <article class="product-card">
+                <div class="product-head">
+                  <p class="product-name">SonicWave ANC Elite</p>
+                  <span class="chip">Audio</span>
+                </div>
+                <p class="meta">Category: Audio | Brand: SonicWave</p>
+                <div class="rating">★★★★☆ 4.7</div>
+                <div class="pricing">
+                  <span class="price-new">$189</span>
+                  <span class="price-old">$239</span>
+                </div>
+              </article>
+            </div>
+          </section>
+        </div>
+
+        <footer class="bottom-search">
+          <div class="search-shell">
+            <span class="search-text">在此处进行搜索</span>
+            <span class="search-icon">⌕</span>
+          </div>
+        </footer>
+      </section>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,48 @@
+.footer {
+  background-color: var(--color-footer-bg, #f5f5f5);
+  color: var(--color-footer-text, #333);
+  padding: 2rem 0;
+  margin-top: auto;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.link {
+  color: var(--color-footer-link, #0066cc);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.2s;
+}
+
+.link:hover,
+.link:focus {
+  color: var(--color-footer-link-hover, #004499);
+  text-decoration: underline;
+}
+
+.copy {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--color-footer-muted, #666);
+}
+
+@media (min-width: 768px) {
+  .links {
+    justify-content: flex-start;
+  }
+  .copy {
+    text-align: left;
+  }
+}

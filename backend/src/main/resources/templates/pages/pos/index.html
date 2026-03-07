@@ -1,0 +1,4284 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title th:text="#{common.appName}">POS System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
+  <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
+
+  <!-- UI helpers only (no logic change) -->
+  <style>
+    :root{
+      --space-1:8px;
+      --space-2:16px;
+      --space-3:24px;
+      --space-4:32px;
+      --space-5:40px;
+      --space-6:48px;
+      --radius-sm:10px;
+      --radius-md:14px;
+      --radius-lg:18px;
+      --radius-xl:26px;
+      --ep-bg-a:#f8f9fa;
+      --ep-bg-b:#f0f1f3;
+      --ep-surface:#ffffff;
+      --ep-surface-soft:#f8f9fa;
+      --ep-surface-strong:#f1f3f5;
+      --ep-stroke:#dee2e6;
+      --ep-stroke-strong:#ced4da;
+      --ep-text:#111111;
+      --ep-muted:#6c757d;
+      --ep-brand:#1a1a1a;
+      --ep-brand-hover:#000000;
+      --ep-brand-soft:rgba(0,0,0,.05);
+      --ep-shadow:0 24px 48px -16px rgba(0,0,0,.12), 0 8px 16px -8px rgba(0,0,0,.06);
+      --ep-danger:#dc2626;
+      --ep-danger-bg:#fef2f2;
+      --ep-disabled-bg:#f1f3f5;
+      --ep-disabled-text:#adb5bd;
+      --ep-focus-ring:0 0 0 3px rgba(0, 0, 0, .15);
+      --ep-accent:#343a40;
+      --ep-accent-soft:rgba(0,0,0,.04);
+      --ep-success:#059669;
+      --ep-success-soft:rgba(5,150,105,.08);
+      --pos-header-h:0px;
+      --pos-toolbar-h:0px;
+      --pos-main-y-pad:24px;
+      --pos-toolbar-gap:16px;
+      --glass-bg:rgba(255,255,255,.78);
+      --glass-blur:16px;
+      --transition-fast:.15s cubic-bezier(.4,0,.2,1);
+      --transition-smooth:.25s cubic-bezier(.4,0,.2,1);
+    }
+
+    [data-theme="dark"]{
+      --ep-bg-a:#0a0a0a;
+      --ep-bg-b:#141414;
+      --ep-surface:#1a1a1a;
+      --ep-surface-soft:#212121;
+      --ep-surface-strong:#2a2a2a;
+      --ep-stroke:#333333;
+      --ep-stroke-strong:#444444;
+      --ep-text:#e8e8e8;
+      --ep-muted:#999999;
+      --ep-brand:#e0e0e0;
+      --ep-brand-hover:#ffffff;
+      --ep-brand-soft:rgba(255,255,255,.08);
+      --ep-shadow:0 24px 48px -16px rgba(0,0,0,.5), 0 8px 16px -8px rgba(0,0,0,.35);
+      --ep-danger:#f87171;
+      --ep-danger-bg:rgba(248,113,113,.1);
+      --ep-disabled-bg:#2a2a2a;
+      --ep-disabled-text:#555555;
+      --ep-focus-ring:0 0 0 3px rgba(255, 255, 255, .2);
+      --ep-accent:#b0b0b0;
+      --ep-accent-soft:rgba(255,255,255,.06);
+      --ep-success:#34d399;
+      --ep-success-soft:rgba(52,211,153,.12);
+      --glass-bg:rgba(10,10,10,.82);
+      --glass-blur:20px;
+    }
+
+    html, body{
+      min-height:100%;
+    }
+
+    body{
+      font-family:"Manrope","Avenir Next","Segoe UI",sans-serif;
+      color:var(--ep-text);
+      background:linear-gradient(180deg, var(--ep-bg-a), var(--ep-bg-b));
+      position:relative;
+      isolation:isolate;
+      transition:background-color var(--transition-smooth), color var(--transition-smooth);
+    }
+
+    [data-theme="dark"] body{
+      background:linear-gradient(180deg, var(--ep-bg-a), var(--ep-bg-b));
+    }
+
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      z-index:-1;
+      pointer-events:none;
+      background-image:
+        linear-gradient(rgba(0,0,0,.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,0,0,.03) 1px, transparent 1px);
+      background-size:52px 52px;
+      opacity:.4;
+    }
+
+    [data-theme="dark"] body::before{
+      background-image:
+        linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+      opacity:.2;
+    }
+
+    .font-mono{
+      font-family:"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    .ui-stack-1{ display:flex; flex-direction:column; gap:var(--space-1); }
+    .ui-stack-2{ display:flex; flex-direction:column; gap:var(--space-2); }
+    .ui-stack-3{ display:flex; flex-direction:column; gap:var(--space-3); }
+
+    .ui-card{
+      border:1px solid var(--ep-stroke);
+      border-radius:var(--radius-lg);
+      background:linear-gradient(180deg, var(--ep-surface) 0%, var(--ep-surface-soft) 100%);
+      padding:var(--space-2);
+    }
+
+    .ui-card-soft{
+      border:1px solid var(--ep-stroke);
+      border-radius:var(--radius-lg);
+      background:var(--ep-surface-soft);
+      padding:var(--space-2);
+    }
+
+    .ui-label{
+      display:block;
+      margin-bottom:4px;
+      font-size:12px;
+      font-weight:700;
+      color:var(--ep-muted);
+      letter-spacing:.01em;
+    }
+
+    .ui-input,
+    .ui-select,
+    .ui-textarea{
+      width:100%;
+      min-height:40px;
+      border:1px solid var(--ep-stroke);
+      border-radius:var(--radius-md);
+      background:#fff;
+      color:var(--ep-text);
+      font-size:14px;
+      line-height:1.2;
+      padding:0 var(--space-2);
+      transition:border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
+    }
+
+    .ui-textarea{
+      min-height:80px;
+      padding:10px var(--space-2);
+      resize:vertical;
+    }
+
+    .ui-input::placeholder,
+    .ui-textarea::placeholder{
+      color:var(--ep-muted);
+    }
+
+    .ui-input:focus-visible,
+    .ui-select:focus-visible,
+    .ui-textarea:focus-visible{
+      outline:none;
+      border-color:var(--ep-brand);
+      box-shadow:var(--ep-focus-ring);
+    }
+
+    .ui-input[aria-invalid="true"],
+    .ui-select[aria-invalid="true"],
+    .ui-textarea[aria-invalid="true"],
+    .ui-input:invalid,
+    .ui-select:invalid,
+    .ui-textarea:invalid{
+      border-color:var(--ep-danger);
+      background:var(--ep-danger-bg);
+    }
+
+    .ui-btn{
+      min-height:40px;
+      border-radius:var(--radius-md);
+      border:1px solid transparent;
+      padding:0 var(--space-2);
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+      font-size:13px;
+      font-weight:700;
+      line-height:1;
+      letter-spacing:.01em;
+      transition:background-color .18s ease, border-color .18s ease, color .18s ease, box-shadow .18s ease, transform .1s ease;
+    }
+
+    .ui-btn:focus-visible{
+      outline:none;
+      box-shadow:var(--ep-focus-ring);
+    }
+
+    .ui-btn-primary{
+      color:#fff;
+      border-color:var(--ep-brand);
+      background:linear-gradient(135deg, #1a1a1a 0%, #333333 100%);
+      box-shadow:0 4px 14px -4px rgba(0,0,0,.3);
+    }
+
+    .ui-btn-primary:hover{
+      background:linear-gradient(135deg, #000000 0%, #222222 100%);
+      box-shadow:0 6px 20px -4px rgba(0,0,0,.4);
+      transform:translateY(-1px);
+    }
+
+    .ui-btn-secondary{
+      color:var(--ep-text);
+      border-color:var(--ep-stroke-strong);
+      background:var(--ep-surface);
+    }
+
+    .ui-btn-secondary:hover{
+      background:var(--ep-surface-strong);
+      border-color:var(--ep-brand);
+    }
+
+    .ui-btn-danger{
+      color:#fff;
+      border-color:var(--ep-danger);
+      background:linear-gradient(135deg, #ef4444 0%, var(--ep-danger) 100%);
+      box-shadow:0 4px 14px -4px rgba(220,38,38,.35);
+    }
+
+    .ui-btn-danger:hover{
+      background:linear-gradient(135deg, var(--ep-danger) 0%, #b91c1c 100%);
+      box-shadow:0 6px 20px -4px rgba(220,38,38,.45);
+      transform:translateY(-1px);
+    }
+
+    [data-theme="dark"] .ui-btn-primary{
+      border-color:#555;
+      background:linear-gradient(135deg, #e0e0e0 0%, #cccccc 100%);
+      color:#111;
+      box-shadow:0 4px 14px -4px rgba(255,255,255,.15);
+    }
+
+    [data-theme="dark"] .ui-btn-primary:hover{
+      background:linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%);
+    }
+
+    [data-theme="dark"] .ui-btn-secondary{
+      background:var(--ep-surface-strong);
+      border-color:var(--ep-stroke);
+      color:var(--ep-text);
+    }
+
+    [data-theme="dark"] .ui-btn-secondary:hover{
+      border-color:var(--ep-stroke-strong);
+      background:var(--ep-brand-soft);
+    }
+
+    .ui-btn:disabled,
+    .ui-input:disabled,
+    .ui-select:disabled,
+    .ui-textarea:disabled{
+      cursor:not-allowed;
+      opacity:1;
+      color:var(--ep-disabled-text);
+      background:var(--ep-disabled-bg);
+      border-color:#c5d4e3;
+      box-shadow:none;
+    }
+
+    .checkout-shell{
+      display:flex;
+      flex-direction:column;
+      gap:var(--space-2);
+    }
+
+    .payment-priority{
+      border:1px solid #333;
+      border-radius:var(--radius-lg);
+      background:linear-gradient(135deg, #111111 0%, #1a1a1a 50%, #222222 100%);
+      color:#e0e0e0;
+      padding:var(--space-2);
+      box-shadow:0 16px 32px -12px rgba(0,0,0,.4);
+    }
+
+    [data-theme="dark"] .payment-priority{
+      background:linear-gradient(135deg, #0a0a0a 0%, #111111 50%, #1a1a1a 100%);
+      border-color:#444;
+    }
+
+    .payment-priority-grid{
+      display:grid;
+      grid-template-columns:repeat(3, minmax(0, 1fr));
+      gap:var(--space-1);
+    }
+
+    .payment-priority-label{
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      color:rgba(235,245,255,.78);
+      font-weight:700;
+    }
+
+    .payment-priority-value{
+      margin-top:4px;
+      font-size:22px;
+      line-height:1.15;
+      font-weight:800;
+      letter-spacing:-.01em;
+      color:#ffffff;
+    }
+
+    .payment-priority-sub{
+      margin-top:var(--space-1);
+      font-size:12px;
+      color:rgba(235,245,255,.82);
+    }
+
+    #paymentFocusStatus{
+      color:#d7f7e7;
+    }
+
+    #paymentFocusChange{
+      color:#7ff4be;
+    }
+
+    main .text-slate-500{
+      color:var(--ep-muted) !important;
+    }
+
+    main .text-slate-400{
+      color:var(--ep-muted) !important;
+    }
+
+    header{
+      border-color:var(--ep-stroke) !important;
+      background:var(--glass-bg) !important;
+      box-shadow:0 1px 3px rgba(0,0,0,.06), 0 8px 20px -16px rgba(0,0,0,.08);
+      backdrop-filter:blur(var(--glass-blur));
+      -webkit-backdrop-filter:blur(var(--glass-blur));
+    }
+
+    [data-theme="dark"] header{
+      background:linear-gradient(180deg, rgba(255,255,255,.96) 0%, rgba(248,250,252,.96) 100%) !important;
+      border-color:rgba(203,213,225,.78) !important;
+      box-shadow:0 10px 20px -16px rgba(15,23,42,.24);
+    }
+
+    .toolbar-shell,
+    .enterprise-panel{
+      border-color:var(--ep-stroke) !important;
+      background:linear-gradient(180deg, var(--ep-surface) 0%, var(--ep-surface-soft) 100%) !important;
+      box-shadow:var(--ep-shadow);
+      transition:background var(--transition-smooth), border-color var(--transition-smooth), box-shadow var(--transition-smooth);
+    }
+
+    .toolbar-controls-grid > form{
+      min-width:0;
+    }
+
+    .toolbar-query-form,
+    .toolbar-quick-form,
+    .toolbar-barcode-form{
+      border:1px solid var(--ep-stroke);
+      border-radius:16px;
+      background:rgba(255,255,255,.9);
+      padding:12px;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.72), 0 10px 24px -20px rgba(15,23,42,.35);
+      backdrop-filter:blur(6px);
+      transition:border-color var(--transition-fast), box-shadow var(--transition-fast);
+    }
+
+    .toolbar-query-form:hover,
+    .toolbar-quick-form:hover,
+    .toolbar-barcode-form:hover{
+      border-color:var(--ep-stroke-strong);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.84), 0 12px 28px -22px rgba(15,23,42,.45);
+    }
+
+    .toolbar-query-form .ui-label,
+    .toolbar-quick-form .ui-label,
+    .toolbar-barcode-form .ui-label{
+      margin-bottom:6px;
+      font-size:11px;
+      letter-spacing:.03em;
+      text-transform:uppercase;
+      color:#64748b;
+    }
+
+    .toolbar-query-form .ui-input,
+    .toolbar-query-form .ui-select,
+    .toolbar-barcode-form .ui-input{
+      border-color:#d7dee8 !important;
+      background:#fff !important;
+    }
+
+    .toolbar-query-form .ui-select,
+    .toolbar-query-form .ui-btn,
+    .toolbar-quick-form .ui-btn,
+    .toolbar-barcode-form .ui-btn{
+      min-height:44px;
+    }
+
+    .toolbar-quick-form .ui-btn,
+    .toolbar-barcode-form .ui-btn{
+      min-height:44px;
+    }
+
+    .toolbar-shortcut-chip{
+      position:absolute;
+      right:10px;
+      top:50%;
+      transform:translateY(-50%);
+      border:1px solid var(--ep-stroke-strong);
+      border-radius:9999px;
+      background:#f8fafc;
+      color:#64748b;
+      font-size:10px;
+      font-weight:700;
+      letter-spacing:.02em;
+      line-height:1;
+      padding:3px 7px;
+      min-width:24px;
+      text-align:center;
+      box-shadow:0 1px 0 rgba(255,255,255,.8);
+      pointer-events:none;
+    }
+
+    .toolbar-search-input{
+      padding-left:44px;
+      padding-top:10px;
+      padding-bottom:10px;
+      padding-right:72px;
+      min-height:44px;
+      font-size:14px;
+      font-weight:500;
+    }
+
+    .toolbar-barcode-input{
+      padding-left:44px;
+      padding-top:10px;
+      padding-bottom:10px;
+      padding-right:60px;
+      min-height:44px;
+      font-size:14px;
+      font-weight:500;
+    }
+
+    .toolbar-scan-btn{
+      min-width:76px;
+      min-height:44px;
+      font-size:14px;
+      font-weight:700;
+      letter-spacing:.01em;
+      box-shadow:0 6px 16px -6px rgba(0,0,0,.3);
+    }
+
+    .toolbar-controls-grid{
+      align-items:stretch;
+    }
+
+    .toolbar-shortcuts{
+      margin-top:2px;
+      color:#64748b;
+      font-size:11px;
+    }
+
+    .toolbar-shortcuts .font-mono{
+      border-color:#d7dee8 !important;
+      background:#fff !important;
+      color:#475569;
+      box-shadow:0 1px 0 rgba(255,255,255,.8);
+      min-width:24px;
+      text-align:center;
+    }
+
+    .toolbar-totals-shell{
+      border-color:var(--ep-stroke) !important;
+      background:rgba(255,255,255,.92) !important;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.86), 0 8px 20px -18px rgba(15,23,42,.3);
+      padding:10px;
+    }
+
+    .surface-products,
+    .surface-cart{
+      background:linear-gradient(180deg, var(--ep-surface) 0%, var(--ep-surface-soft) 100%) !important;
+    }
+
+    .surface-products{
+      box-shadow:0 8px 24px -12px rgba(0,0,0,.08), 0 4px 8px -4px rgba(0,0,0,.03) !important;
+    }
+
+    .surface-cart{
+      background:linear-gradient(180deg, var(--ep-surface) 0%, var(--ep-surface-soft) 100%) !important;
+      border-color:var(--ep-stroke-strong) !important;
+      box-shadow:0 12px 32px -12px rgba(0,0,0,.10), 0 4px 12px -4px rgba(0,0,0,.04) !important;
+    }
+
+    .surface-products > .border-b,
+    .surface-cart > .border-b{
+      border-color:var(--ep-stroke) !important;
+      background:linear-gradient(180deg, var(--ep-surface) 0%, var(--ep-surface-soft) 100%);
+    }
+
+    #quickTotals{
+      gap:10px;
+    }
+
+    #quickTotals .quick-total-cell{
+      border:1px solid var(--ep-stroke);
+      background:var(--ep-surface-soft);
+      border-radius:1rem;
+      padding:12px 14px;
+      min-height:74px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      text-align:right;
+    }
+
+    #quickTotals .quick-total-cell.is-total{
+      border-color:#222;
+      background:linear-gradient(135deg, #111111 0%, #1a1a1a 100%) !important;
+      box-shadow:0 8px 24px -8px rgba(0,0,0,.35);
+    }
+
+    [data-theme="dark"] #quickTotals .quick-total-cell{
+      border-color:var(--ep-stroke);
+      background:var(--ep-surface-strong);
+    }
+
+    [data-theme="dark"] #quickTotals .quick-total-cell.is-total{
+      background:linear-gradient(135deg, #231a3f 0%, #30245a 55%, #3f2f70 100%) !important;
+      border-color:rgba(167,139,250,.45);
+      color:#f8fafc;
+      box-shadow:0 12px 26px -14px rgba(76,29,149,.65);
+    }
+
+    [data-theme="dark"] #quickTotals .quick-total-cell.is-total .quick-total-value{
+      color:#f8fafc;
+    }
+
+    [data-theme="dark"] #quickTotals .quick-total-cell.is-total .text-white\/70{
+      color:rgba(226,232,240,.78) !important;
+    }
+
+    #quickTotals .quick-total-cell.is-total .text-white\/70{
+      color:rgba(255,255,255,.76) !important;
+    }
+
+    #quickTotals .quick-total-value{
+      margin-top:2px;
+      font-size:18px;
+      line-height:1.1;
+      font-weight:800;
+      letter-spacing:-.01em;
+    }
+
+    #quickTotals .quick-total-cell.is-total .quick-total-value{
+      font-size:28px;
+      line-height:1;
+      font-weight:900;
+      letter-spacing:-.02em;
+    }
+
+    main input:not([type="checkbox"]):not([type="radio"]),
+    main select,
+    main textarea{
+      border-color:var(--ep-stroke) !important;
+      background:var(--ep-surface) !important;
+      color:var(--ep-text) !important;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.5);
+      transition:border-color var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast);
+    }
+
+    main input:not([type="checkbox"]):not([type="radio"]):focus,
+    main select:focus,
+    main textarea:focus{
+      border-color:var(--ep-brand) !important;
+      box-shadow:var(--ep-focus-ring) !important;
+      outline:none;
+    }
+
+    main .bg-slate-900.text-white{
+      background:linear-gradient(135deg, #1a1a1a 0%, #333333 100%) !important;
+      box-shadow:0 6px 16px -8px rgba(0,0,0,.35);
+    }
+
+    main .bg-slate-900.text-white:hover{
+      background:linear-gradient(135deg, #000000 0%, #222222 100%) !important;
+      transform:translateY(-1px);
+    }
+
+    main .border.border-slate-200.bg-white{
+      border-color:var(--ep-stroke) !important;
+      background:linear-gradient(180deg, var(--ep-surface) 0%, var(--ep-surface-soft) 100%) !important;
+    }
+
+    main .border.border-slate-200.bg-white:hover{
+      border-color:var(--ep-stroke-strong) !important;
+      background:var(--ep-surface-soft) !important;
+    }
+
+    #productGridWrap [data-product-card='true'] .group > .relative{
+      border-color:var(--ep-stroke) !important;
+      box-shadow:0 4px 16px -6px rgba(0,0,0,.06), 0 2px 6px -2px rgba(0,0,0,.03);
+      background:linear-gradient(180deg, var(--ep-surface) 0%, var(--ep-surface-soft) 100%) !important;
+      transition:transform var(--transition-smooth), box-shadow var(--transition-smooth), border-color var(--transition-smooth);
+    }
+
+    #productGridWrap [data-product-card='true'] .group:hover > .relative{
+      transform:translateY(-4px) scale(1.01);
+      border-color:var(--ep-stroke-strong) !important;
+      box-shadow:0 20px 40px -16px rgba(0,0,0,.14), 0 8px 16px -8px rgba(0,0,0,.06);
+    }
+
+    #productGridWrap [data-product-card='true'] .group:focus-within > .relative{
+      border-color:var(--ep-brand) !important;
+      box-shadow:var(--ep-focus-ring), 0 12px 24px -12px rgba(0,0,0,.10);
+    }
+
+    #productGridWrap .product-image-wrap{
+      background:var(--ep-surface-soft);
+      border-bottom:1px solid var(--ep-stroke);
+    }
+
+    #productGridWrap .product-image-wrap .product-image{
+      filter:drop-shadow(0 8px 14px rgba(0,0,0,.08));
+    }
+
+    #productGridWrap .product-admin-actions{
+      opacity:1;
+      transform:translateY(0);
+      pointer-events:auto;
+      position:relative;
+      z-index:2;
+      transition:opacity .18s ease, transform .18s ease;
+    }
+
+    @media (hover: hover) and (pointer: fine){
+      #productGridWrap .product-admin-actions{
+        opacity:0;
+        transform:translateY(-2px);
+        pointer-events:none;
+      }
+
+      #productGridWrap [data-product-card='true'] .group:hover .product-admin-actions,
+      #productGridWrap [data-product-card='true'] .group:focus-within .product-admin-actions{
+        opacity:1;
+        transform:translateY(0);
+        pointer-events:auto;
+      }
+    }
+
+    #productGridWrap .product-action-btn{
+      border:1px solid transparent;
+    }
+
+    #productGridWrap .product-action-btn:hover{
+      border-color:var(--ep-stroke);
+    }
+
+    #productGridWrap .card-qty-stepper{
+      backdrop-filter:blur(2px);
+    }
+
+    #productGridWrap .product-add-fab{
+      min-width:88px;
+      justify-content:center;
+      backdrop-filter:blur(2px);
+      background:linear-gradient(135deg, #1a1a1a, #333333) !important;
+      border-color:transparent !important;
+      box-shadow:0 4px 12px -4px rgba(0,0,0,.3);
+    }
+
+    #productGridWrap .product-add-fab:hover{
+      background:linear-gradient(135deg, #000000, #1a1a1a) !important;
+      box-shadow:0 6px 16px -4px rgba(0,0,0,.4);
+      transform:translateY(-1px);
+    }
+
+    #cartPanel .cart-item{
+      border-color:var(--ep-stroke) !important;
+      background:linear-gradient(180deg, var(--ep-surface) 0%, var(--ep-surface-soft) 100%) !important;
+      transition:transform var(--transition-fast), box-shadow var(--transition-smooth), border-color var(--transition-fast), background var(--transition-fast);
+    }
+
+    #cartPanel .cart-item:hover{
+      border-color:var(--ep-stroke-strong) !important;
+      box-shadow:0 6px 16px -8px rgba(0,0,0,.10);
+      transform:translateX(2px);
+    }
+
+    #cartPanel .cart-item.cart-item-active{
+      border-color:var(--ep-brand) !important;
+      background:linear-gradient(180deg, var(--ep-surface) 0%, rgba(0,0,0,.03) 100%) !important;
+      box-shadow:var(--ep-focus-ring), 0 8px 16px -8px rgba(0,0,0,.10);
+    }
+
+    #cartPanel .cart-item-added{
+      animation:cart-item-pop .34s ease-out;
+    }
+
+    #checkoutSection{
+      border-color:var(--ep-stroke) !important;
+      background:linear-gradient(180deg, var(--ep-surface-soft) 0%, var(--ep-surface-strong) 100%) !important;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.5);
+    }
+
+    #checkoutSection .checkout-action-rail{
+      position:sticky;
+      bottom:0;
+      z-index:20;
+      margin-top:12px;
+      border-top:1px solid var(--ep-stroke);
+      padding-top:12px;
+      background:linear-gradient(180deg, rgba(240,245,251,0) 0%, var(--ep-surface-strong) 36%, var(--ep-surface-strong) 100%);
+    }
+
+    #checkoutSection .pay-now-btn{
+      min-height:56px;
+      font-size:17px;
+      font-weight:800;
+      letter-spacing:.01em;
+      box-shadow:0 8px 24px -6px rgba(0,0,0,.35);
+      background:linear-gradient(135deg, #111111 0%, #1a1a1a 50%, #222222 100%) !important;
+      border:none;
+      transition:transform var(--transition-fast), box-shadow var(--transition-smooth);
+    }
+
+    [data-theme="dark"] #checkoutSection .pay-now-btn{
+      background:linear-gradient(135deg, #8d79df 0%, #7b66d6 48%, #684fba 100%) !important;
+      color:#f8fafc;
+      box-shadow:0 12px 28px -10px rgba(76,29,149,.72), inset 0 1px 0 rgba(255,255,255,.22);
+    }
+
+    #checkoutSection .pay-now-btn:hover{
+      box-shadow:0 12px 32px -6px rgba(0,0,0,.45);
+      transform:translateY(-2px);
+    }
+
+    #checkoutSection .pay-now-btn:active{
+      transform:translateY(0) scale(0.99);
+    }
+
+    .collapsible-section{
+      border:1px solid var(--ep-stroke);
+      border-radius:var(--radius-lg);
+      background:linear-gradient(180deg, var(--ep-surface) 0%, var(--ep-surface-soft) 100%);
+      padding:12px;
+    }
+
+    .collapsible-section > summary{
+      list-style:none;
+      cursor:pointer;
+      user-select:none;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      font-size:14px;
+      font-weight:700;
+      color:var(--ep-text);
+    }
+
+    .collapsible-section > summary::-webkit-details-marker{
+      display:none;
+    }
+
+    .collapsible-section .collapse-chevron{
+      height:26px;
+      width:26px;
+      border-radius:9999px;
+      border:1px solid var(--ep-stroke);
+      background:#fff;
+      display:grid;
+      place-items:center;
+      color:#4f6a88;
+      transition:transform .18s ease, background-color .18s ease;
+      flex:0 0 auto;
+    }
+
+    .collapsible-section[open] .collapse-chevron{
+      transform:rotate(180deg);
+      background:#f2f7fd;
+    }
+
+    .ui-switch{
+      position:relative;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      cursor:pointer;
+    }
+
+    .ui-switch input{
+      position:absolute;
+      opacity:0;
+      pointer-events:none;
+    }
+
+    .ui-switch-track{
+      width:40px;
+      height:22px;
+      border-radius:9999px;
+      background:var(--ep-stroke-strong);
+      border:1px solid var(--ep-stroke);
+      position:relative;
+      transition:background-color var(--transition-fast), border-color var(--transition-fast);
+      flex:0 0 auto;
+    }
+
+    .ui-switch-track::after{
+      content:"";
+      position:absolute;
+      top:2px;
+      left:2px;
+      width:16px;
+      height:16px;
+      border-radius:50%;
+      background:#fff;
+      box-shadow:0 1px 2px rgba(15,33,58,.2);
+      transition:transform .18s ease;
+    }
+
+    .ui-switch input:checked + .ui-switch-track{
+      background:var(--ep-brand);
+      border-color:var(--ep-brand);
+    }
+
+    .ui-switch input:checked + .ui-switch-track::after{
+      transform:translateX(18px);
+    }
+
+    .ui-switch input:focus-visible + .ui-switch-track{
+      box-shadow:var(--ep-focus-ring);
+    }
+
+    .cart-updated{
+      animation:cart-panel-flash .42s ease-out;
+    }
+
+    .quick-total-flash{
+      animation:quick-total-flash .45s ease-out;
+    }
+
+    @keyframes cart-item-pop{
+      0%{transform:translateY(5px); opacity:.65;}
+      100%{transform:translateY(0); opacity:1;}
+    }
+
+    @keyframes cart-panel-flash{
+      0%{box-shadow:0 0 0 0 rgba(0,0,0,.2);}
+      100%{box-shadow:0 0 0 12px rgba(0,0,0,0);}
+    }
+
+    @keyframes quick-total-flash{
+      0%{transform:translateY(0) scale(1);}
+      40%{transform:translateY(-1px) scale(1.03);}
+      100%{transform:translateY(0) scale(1);}
+    }
+
+    @keyframes rise-in{
+      from{opacity:0; transform:translateY(8px);}
+      to{opacity:1; transform:translateY(0);}
+    }
+
+    .toolbar-shell{ animation:rise-in .4s cubic-bezier(.4,0,.2,1) both; }
+    .surface-products{ animation:rise-in .5s cubic-bezier(.4,0,.2,1) .08s both; }
+    .surface-cart{ animation:rise-in .5s cubic-bezier(.4,0,.2,1) .16s both; }
+
+    @keyframes fade-scale-in{
+      from{opacity:0; transform:scale(.96);}
+      to{opacity:1; transform:scale(1);}
+    }
+
+    .cart-item{ animation:fade-scale-in .3s cubic-bezier(.4,0,.2,1) both; }
+
+    /* Dark mode transitions for all elements */
+    *,
+    *::before,
+    *::after{
+      transition-property:background-color, border-color, color, fill, stroke, box-shadow;
+      transition-duration:0s;
+    }
+
+    [data-theme-transitioning] *,
+    [data-theme-transitioning] *::before,
+    [data-theme-transitioning] *::after{
+      transition-duration:.35s !important;
+      transition-timing-function:cubic-bezier(.4,0,.2,1) !important;
+    }
+
+    .line-clamp-2{
+      display:-webkit-box;
+      -webkit-line-clamp:2;
+      -webkit-box-orient:vertical;
+      overflow:hidden;
+    }
+
+    #productGrid[data-density="compact"]{
+      gap:0.875rem;
+    }
+    #productGrid .product-image-wrap{
+      overflow:hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      aspect-ratio:4 / 3;
+      height:auto;
+      padding:0.75rem;
+    }
+    #productGrid .product-image-wrap img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      object-position:center;
+      display:block;
+    }
+    #productGrid[data-density="compact"] .product-image-wrap{
+      aspect-ratio:1 / 1;
+      height:auto;
+      padding:0.5rem;
+    }
+    #productGrid[data-density="compact"] .product-content{
+      padding:0.75rem;
+    }
+    #productGrid[data-density="compact"] .product-title{
+      font-size:0.92rem;
+      -webkit-line-clamp:1;
+    }
+    #productGrid[data-density="compact"] .product-meta{
+      margin-top:0.4rem;
+    }
+
+    /* Scroll performance: skip paint/layout for offscreen cards. */
+    #productGrid > *{
+      content-visibility:auto;
+      contain-intrinsic-size:380px;
+    }
+
+    #recentGrid > *,
+    #pinnedGrid > *{
+      content-visibility:auto;
+      contain-intrinsic-size:220px;
+    }
+
+    .split-scroll{
+      scrollbar-width:thin;
+      scrollbar-color:rgba(0,0,0,.2) var(--ep-surface-strong);
+    }
+
+    .split-scroll:focus-visible{
+      outline:2px solid var(--ep-brand);
+      outline-offset:-2px;
+      box-shadow:inset 0 0 0 2px rgba(0,0,0,.08);
+    }
+
+    .split-scroll::-webkit-scrollbar{
+      width:8px;
+      height:8px;
+    }
+
+    .split-scroll::-webkit-scrollbar-track{
+      background:var(--ep-surface-strong);
+      border-radius:9999px;
+    }
+
+    .split-scroll::-webkit-scrollbar-thumb{
+      background:linear-gradient(180deg, rgba(0,0,0,.18) 0%, rgba(0,0,0,.28) 100%);
+      border-radius:9999px;
+      border:2px solid var(--ep-bg-b);
+    }
+
+    .split-scroll::-webkit-scrollbar-thumb:hover{
+      background:linear-gradient(180deg, rgba(0,0,0,.28) 0%, rgba(0,0,0,.4) 100%);
+    }
+
+    [data-theme="dark"] #posHeader{
+      background:linear-gradient(180deg, rgba(255,255,255,.96) 0%, rgba(248,250,252,.96) 100%) !important;
+      border-color:rgba(203,213,225,.78) !important;
+      box-shadow:0 10px 20px -16px rgba(15,23,42,.24);
+    }
+
+    [data-theme="dark"] #posAppShell .text-slate-900{ color:#f8fafc !important; }
+    [data-theme="dark"] #posAppShell .text-slate-800{ color:#e2e8f0 !important; }
+    [data-theme="dark"] #posAppShell .text-slate-700{ color:#cbd5e1 !important; }
+    [data-theme="dark"] #posAppShell .text-slate-600{ color:#a7b6ca !important; }
+    [data-theme="dark"] #posAppShell .text-slate-500{ color:#8fa1b8 !important; }
+    [data-theme="dark"] #posAppShell .text-slate-400{ color:#72859d !important; }
+
+    [data-theme="dark"] #posAppShell .border-slate-200{ border-color:rgba(100,116,139,.56) !important; }
+    [data-theme="dark"] #posAppShell .border-slate-300{ border-color:rgba(100,116,139,.72) !important; }
+
+    [data-theme="dark"] #posAppShell .bg-white,
+    [data-theme="dark"] #posAppShell .bg-white\/80,
+    [data-theme="dark"] #posAppShell .bg-white\/90,
+    [data-theme="dark"] #posAppShell .bg-white\/95{
+      background-color:rgba(15,23,42,.84) !important;
+    }
+
+    [data-theme="dark"] #posAppShell .bg-slate-50,
+    [data-theme="dark"] #posAppShell .bg-slate-50\/50,
+    [data-theme="dark"] #posAppShell .bg-slate-50\/70,
+    [data-theme="dark"] #posAppShell .bg-slate-50\/80{
+      background-color:rgba(30,41,59,.8) !important;
+    }
+
+    [data-theme="dark"] #posAppShell .bg-slate-100{
+      background-color:rgba(51,65,85,.78) !important;
+    }
+
+    [data-theme="dark"] #posAppShell .ui-input,
+    [data-theme="dark"] #posAppShell .ui-select,
+    [data-theme="dark"] #posAppShell .ui-textarea{
+      background:rgba(15,23,42,.78) !important;
+      border-color:rgba(100,116,139,.62) !important;
+      color:#e2e8f0 !important;
+    }
+
+    [data-theme="dark"] #posAppShell .ui-input::placeholder,
+    [data-theme="dark"] #posAppShell .ui-textarea::placeholder{
+      color:#8fa1b8 !important;
+    }
+
+    [data-theme="dark"] .toolbar-query-form,
+    [data-theme="dark"] .toolbar-quick-form,
+    [data-theme="dark"] .toolbar-barcode-form{
+      border-color:rgba(100,116,139,.55);
+      background:linear-gradient(180deg, rgba(15,23,42,.9) 0%, rgba(2,6,23,.86) 100%);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.07), 0 14px 28px -22px rgba(2,6,23,.95);
+    }
+
+    [data-theme="dark"] .toolbar-query-form .ui-label,
+    [data-theme="dark"] .toolbar-quick-form .ui-label,
+    [data-theme="dark"] .toolbar-barcode-form .ui-label{
+      color:#8fa1b8;
+    }
+
+    [data-theme="dark"] .toolbar-query-form .ui-input,
+    [data-theme="dark"] .toolbar-query-form .ui-select,
+    [data-theme="dark"] .toolbar-barcode-form .ui-input{
+      background:rgba(15,23,42,.78) !important;
+      border-color:rgba(100,116,139,.62) !important;
+      color:#e2e8f0 !important;
+    }
+
+    [data-theme="dark"] .toolbar-shortcut-chip{
+      border-color:rgba(100,116,139,.65);
+      background:rgba(30,41,59,.86);
+      color:#cbd5e1;
+      box-shadow:0 1px 0 rgba(255,255,255,.08);
+    }
+
+    [data-theme="dark"] .toolbar-shortcuts{
+      color:#8fa1b8;
+    }
+
+    [data-theme="dark"] .toolbar-shortcuts .font-mono{
+      border-color:rgba(100,116,139,.65) !important;
+      background:rgba(15,23,42,.86) !important;
+      color:#cbd5e1 !important;
+      box-shadow:0 1px 0 rgba(255,255,255,.08);
+    }
+
+    [data-theme="dark"] .toolbar-totals-shell{
+      background:rgba(2,6,23,.66) !important;
+      border-color:rgba(100,116,139,.55) !important;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.07), 0 10px 22px -20px rgba(2,6,23,.95);
+    }
+
+    [data-theme="dark"] #productGridWrap [data-product-card='true'] .group > .relative{
+      box-shadow:0 12px 26px -20px rgba(2,6,23,.94), 0 6px 14px -12px rgba(15,23,42,.8);
+    }
+
+    [data-theme="dark"] #productGridWrap [data-product-card='true'] .group:hover > .relative{
+      box-shadow:0 22px 34px -20px rgba(2,6,23,.95), 0 12px 18px -14px rgba(30,41,59,.82);
+    }
+
+    [data-theme="dark"] #cartPanel .cart-item{
+      box-shadow:0 10px 20px -18px rgba(2,6,23,.88);
+    }
+
+    @media (min-width: 1024px){
+      html,
+      body{
+        height:100dvh;
+        overflow:hidden;
+      }
+
+      #posAppShell{
+        height:100dvh;
+        overflow:hidden;
+      }
+
+      #posMain{
+        overflow:hidden;
+        gap:1.5rem;
+      }
+
+      #posSplitLayout{
+        height:auto;
+        flex:1 1 auto;
+        min-height:0;
+      }
+
+      #productPanelBody,
+      #cartPanelBody{
+        overflow-x:hidden;
+        overscroll-behavior:contain;
+      }
+
+      #cartPanel #checkoutSection{
+        position:static;
+      }
+    }
+
+    #productFeedSkeleton{
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      padding:4px 0;
+    }
+
+    #productFeedSkeleton.hidden{
+      display:none !important;
+    }
+
+    .feed-progress-shell{
+      width:min(100%, 620px);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:8px;
+    }
+
+    .feed-progress-indicator{
+      --feed-progress-accent:#6652ad;
+      --feed-progress-accent-soft:#cdc6e8;
+      width:min(100%, 560px);
+      display:flex;
+      align-items:center;
+      gap:16px;
+      padding:16px 18px;
+      border-radius:20px;
+      border:1px solid rgba(148,163,184,.22);
+      background:linear-gradient(180deg, rgba(255,255,255,.78) 0%, rgba(246,248,252,.76) 100%);
+      backdrop-filter:blur(10px);
+      box-shadow:0 14px 28px -26px rgba(15,23,42,.6);
+    }
+
+    .feed-progress-wave{
+      width:88px;
+      height:16px;
+      flex:0 0 auto;
+      color:var(--feed-progress-accent);
+    }
+
+    .feed-progress-wave svg{
+      width:100%;
+      height:100%;
+      display:block;
+    }
+
+    .feed-progress-wave path{
+      fill:none;
+      stroke:currentColor;
+      stroke-width:3.2;
+      stroke-linecap:round;
+      stroke-dasharray:56;
+      stroke-dashoffset:56;
+      animation:feed-wave-draw 1.3s ease-in-out infinite;
+    }
+
+    .feed-progress-track{
+      position:relative;
+      flex:1 1 auto;
+      height:3px;
+      border-radius:999px;
+      background:var(--feed-progress-accent-soft);
+      overflow:hidden;
+    }
+
+    .feed-progress-track::before{
+      content:"";
+      position:absolute;
+      top:0;
+      left:-40%;
+      width:40%;
+      height:100%;
+      border-radius:inherit;
+      background:linear-gradient(90deg, rgba(102,82,173,0) 0%, rgba(102,82,173,.86) 55%, rgba(102,82,173,0) 100%);
+      animation:feed-track-slide 1.25s linear infinite;
+    }
+
+    .feed-progress-dot{
+      position:absolute;
+      top:50%;
+      right:-3px;
+      width:6px;
+      height:6px;
+      margin-top:-3px;
+      border-radius:999px;
+      background:var(--feed-progress-accent);
+      box-shadow:0 0 0 4px rgba(102,82,173,.16);
+      animation:feed-dot-pulse 1.25s ease-in-out infinite;
+    }
+
+    .feed-progress-orb{
+      width:46px;
+      height:46px;
+      flex:0 0 auto;
+      display:grid;
+      place-items:center;
+      border-radius:999px;
+      border:3px solid rgba(102,82,173,.22);
+      color:var(--feed-progress-accent);
+      animation:feed-orb-drift 2.2s ease-in-out infinite;
+    }
+
+    .feed-progress-orb svg{
+      width:24px;
+      height:24px;
+      display:block;
+      transform-origin:50% 50%;
+      animation:feed-orb-spin 1.8s linear infinite;
+    }
+
+    .feed-progress-orb path{
+      fill:none;
+      stroke:currentColor;
+      stroke-width:2.8;
+      stroke-linecap:round;
+      stroke-linejoin:round;
+      stroke-dasharray:20 10;
+      stroke-dashoffset:8;
+      animation:feed-orb-draw 1.15s ease-in-out infinite;
+    }
+
+    .feed-progress-label{
+      font-size:11px;
+      font-weight:600;
+      letter-spacing:.02em;
+      color:#64748b;
+      text-align:center;
+    }
+
+    [data-theme="dark"] .feed-progress-indicator{
+      border-color:rgba(148,163,184,.24);
+      background:linear-gradient(180deg, rgba(15,23,42,.72) 0%, rgba(30,41,59,.72) 100%);
+      box-shadow:0 14px 28px -24px rgba(2,6,23,.9);
+    }
+
+    [data-theme="dark"] .feed-progress-label{
+      color:#cbd5e1;
+    }
+
+    [data-theme="dark"] .feed-progress-track{
+      background:rgba(148,163,184,.36);
+    }
+
+    @keyframes feed-wave-draw{
+      0%{
+        stroke-dashoffset:56;
+        opacity:.55;
+      }
+      100%{
+        stroke-dashoffset:0;
+        opacity:1;
+      }
+    }
+
+    @keyframes feed-track-slide{
+      0%{
+        left:-40%;
+      }
+      100%{
+        left:100%;
+      }
+    }
+
+    @keyframes feed-dot-pulse{
+      0%,100%{
+        transform:scale(.9);
+      }
+      50%{
+        transform:scale(1.12);
+      }
+    }
+
+    @keyframes feed-orb-spin{
+      0%{
+        transform:rotate(0deg);
+      }
+      100%{
+        transform:rotate(360deg);
+      }
+    }
+
+    @keyframes feed-orb-draw{
+      0%,100%{
+        stroke-dashoffset:8;
+      }
+      50%{
+        stroke-dashoffset:2;
+      }
+    }
+
+    @keyframes feed-orb-drift{
+      0%,100%{
+        transform:translateY(0);
+      }
+      50%{
+        transform:translateY(-2px);
+      }
+    }
+
+    @media (max-width: 640px){
+      .feed-progress-indicator{
+        gap:12px;
+        padding:14px 12px;
+      }
+
+      .feed-progress-wave{
+        width:70px;
+      }
+
+      .feed-progress-orb{
+        width:40px;
+        height:40px;
+      }
+    }
+
+    @media (max-width: 1024px){
+      body::before{
+        display:none;
+      }
+      .toolbar-shell,
+      .enterprise-panel{
+        box-shadow:0 12px 18px -20px rgba(12,31,59,.35);
+      }
+      .toolbar-query-form,
+      .toolbar-quick-form,
+      .toolbar-barcode-form{
+        padding:8px;
+      }
+      #productGridWrap [data-product-card='true'] .group > .relative{
+        box-shadow:0 8px 16px -18px rgba(15,31,54,.45);
+      }
+      #checkoutSection .checkout-action-rail{
+        position:static;
+        background:transparent;
+        border-top:0;
+        padding-top:4px;
+      }
+    }
+  </style>
+</head>
+
+<body class="bg-slate-100 text-slate-900"
+      th:attr="data-base-symbol=${baseCurrency.symbol},
+               data-base-code=${baseCurrency.code},
+               data-base-decimals=${baseCurrency.fractionDigits},
+               data-preferred-terminal-id=${preferredTerminalId},
+               data-terminal-printer-mode=${terminalSettings != null and terminalSettings.printerMode != null ? terminalSettings.printerMode.name() : 'PDF'},
+               data-terminal-bridge-url=${terminalSettings != null ? terminalSettings.bridgeUrl : ''},
+               data-terminal-auto-print=${terminalSettings != null and terminalSettings.autoPrintEnabled},
+               data-camera-scan-enabled=${terminalSettings != null and terminalSettings.cameraScannerEnabled}">
+  <!-- soft background accents (UI only) -->
+  <div class="absolute inset-0 -z-10">
+    <div class="absolute -top-28 -left-28 h-80 w-80 rounded-full bg-gray-400/15 blur-3xl"></div>
+    <div class="absolute -bottom-28 -right-28 h-96 w-96 rounded-full bg-gray-300/10 blur-3xl"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[600px] w-[600px] rounded-full bg-gray-200/10 blur-3xl"></div>
+  </div>
+
+  <div id="posAppShell" class="min-h-screen lg:h-[100dvh] lg:overflow-hidden lg:flex lg:flex-col">
+    <!-- Sticky top toolbar (UI only) -->
+    <header id="posHeader" class="sticky top-0 z-40 bg-white/80 backdrop-blur border-b border-slate-200 lg:flex-none">
+      <div class="w-full px-6 lg:px-10 py-5">
+        <div class="flex flex-col gap-3">
+          <!-- Title row -->
+          <div class="grid grid-cols-[auto_1fr_auto] items-center gap-4">
+            <div class="flex items-center gap-3">
+              <div class="h-10 w-10 rounded-xl bg-gradient-to-br from-gray-800 to-gray-950 text-white grid place-items-center shadow-md shadow-gray-500/25">
+                <!-- register icon -->
+                <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M6 6h12v4H6V6z"/>
+                  <path d="M6 10h12v8a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-8z"/>
+                  <path d="M9 14h6"/>
+                </svg>
+              </div>
+              <div>
+                <div class="text-xl sm:text-2xl font-bold leading-tight" th:text="#{pos.title}">Point of Sale</div>
+                <div class="text-sm text-slate-500" th:text="#{pos.subtitle}">Search items, scan barcodes, checkout</div>
+              </div>
+            </div>
+
+                        <nav th:replace="~{fragments/navigation :: mainNav}"></nav>
+
+            <div class="flex flex-wrap items-center justify-end gap-2">
+              <!-- Dark mode toggle -->
+              <button id="themeToggleBtn" type="button"
+                      class="relative h-9 w-9 rounded-xl border border-slate-200 bg-white grid place-items-center text-slate-600
+                             hover:bg-slate-50 hover:text-gray-900 transition-all duration-200
+                             dark:border-slate-600 dark:bg-slate-700 dark:text-amber-400"
+                      title="Toggle dark mode"
+                      aria-label="Toggle dark mode">
+                <svg id="themeIconSun" viewBox="0 0 24 24" class="h-5 w-5 hidden" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="4"/>
+                  <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+                </svg>
+                <svg id="themeIconMoon" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                </svg>
+              </button>
+              <a sec:authorize="isAnonymous()" href="/login"
+                 class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700
+                        hover:bg-slate-50 transition"
+                 th:text="#{common.login}">
+                Login
+              </a>
+              <form sec:authorize="isAuthenticated()" action="/logout" method="post" class="m-0">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <button class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700
+                               hover:bg-slate-50 transition"
+                        th:text="#{common.logout}">
+                  Logout
+                </button>
+              </form>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </header>
+
+    <main id="posMain" class="w-full px-6 lg:px-10 py-4 lg:pt-3 lg:pb-3 lg:flex-1 lg:min-h-0 lg:overflow-hidden lg:flex lg:flex-col">
+      <section id="posToolbar" class="toolbar-shell rounded-2xl border border-slate-200 bg-white/80 p-3 lg:p-4 shadow-sm lg:flex-none">
+        <div class="flex flex-col gap-3">
+          <!-- Controls row -->
+          <div class="toolbar-controls-grid grid grid-cols-1 xl:grid-cols-12 gap-3 items-end">
+            <form method="get" action="/pos"
+                  data-product-feed-form="true"
+                  class="toolbar-query-form xl:col-span-7 grid grid-cols-1 lg:grid-cols-12 gap-3 items-end">
+              <!-- Search -->
+              <div class="lg:col-span-7">
+                <label class="ui-label" th:text="#{pos.search.label}">Search</label>
+                <div class="relative">
+                  <input id="searchBox" name="q"
+                         th:value="${q}"
+                         class="ui-input toolbar-search-input search-pill-input w-full"
+                         th:placeholder="#{pos.search.placeholder}"
+                         placeholder="Search product (press / to focus)"/>
+                </div>
+              </div>
+
+              <!-- Category -->
+              <div class="lg:col-span-3">
+                <label class="ui-label" th:text="#{pos.category}">Category</label>
+                <select id="categorySelect" name="categoryId"
+                        class="ui-select w-full px-3 py-2.5 bg-white
+                               focus:outline-none focus:ring-2 focus:ring-slate-300">
+                  <option value="" th:text="#{pos.category.all}">All</option>
+                  <option th:each="c : ${categories}"
+                          th:value="${c.id}"
+                          th:selected="${categoryId == c.id}"
+                          th:text="${c.name}"></option>
+                </select>
+              </div>
+
+              <!-- Filter button -->
+              <div class="lg:col-span-2">
+                <button class="ui-btn ui-btn-primary h-[42px] w-full px-5 text-sm
+                               hover:bg-slate-800 transition active:scale-[0.99]">
+                  <span th:text="#{common.filter}">Filter</span>
+                </button>
+              </div>
+            </form>
+
+            <form action="/pos/quick-add" method="post" data-quick-add
+                  hx-post="/pos/quick-add" hx-target="#cartPanel" hx-swap="outerHTML"
+                  class="toolbar-quick-form xl:col-span-2">
+              <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+              <input type="hidden" name="q" value=""/>
+              <label class="ui-label" th:text="#{pos.quickAdd}">Quick add</label>
+              <button class="ui-btn ui-btn-secondary h-[42px] w-full px-4 text-xs
+                             hover:bg-slate-50 transition active:scale-[0.99]"
+                      th:text="#{pos.quickAdd.fromSearch}">
+                Add from search
+              </button>
+            </form>
+
+            <!-- Barcode input form (same action/method) -->
+            <form id="barcodeForm" action="/pos/scan" method="post"
+                  hx-post="/pos/scan"
+                  hx-target="#cartContainer"
+                  hx-swap="outerHTML"
+                  hx-on="htmx:afterRequest: this.reset()"
+                  class="toolbar-barcode-form xl:col-span-3 flex flex-col sm:flex-row sm:items-end gap-2">
+              <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+              <div class="min-w-0 flex-1">
+                <label class="ui-label" th:text="#{pos.barcode}">Barcode</label>
+                <div class="relative">
+                  <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
+                    <!-- barcode icon -->
+                    <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M4 7v10"/>
+                      <path d="M7 7v10"/>
+                      <path d="M10 7v10"/>
+                      <path d="M13 7v10"/>
+                      <path d="M16 7v10"/>
+                      <path d="M19 7v10"/>
+                    </svg>
+                  </span>
+                  <input name="barcode" id="barcodeInput"
+                         class="ui-input toolbar-barcode-input w-full pl-10 py-2.5 bg-white
+                                focus:outline-none focus:ring-2 focus:ring-slate-300"
+                         th:placeholder="#{pos.barcode.placeholder}"
+                         placeholder="Scan barcode & Enter"
+                         autocomplete="off"/>
+                  <span class="toolbar-shortcut-chip font-mono">F8</span>
+                </div>
+              </div>
+
+              <button class="toolbar-scan-btn ui-btn ui-btn-primary h-[42px] px-5 text-sm
+                             hover:bg-slate-800 transition active:scale-[0.99]">
+                <span th:text="#{pos.scan}">Scan</span>
+              </button>
+              <button type="button"
+                      th:if="${terminalSettings != null and terminalSettings.cameraScannerEnabled}"
+                      data-action="camera-toggle"
+                      class="ui-btn ui-btn-secondary h-[42px] px-4 text-xs
+                             hover:bg-slate-50 transition active:scale-[0.99]"
+                      th:text="#{pos.camera}">
+                Camera
+              </button>
+            </form>
+          </div>
+
+          <div id="cameraScanPanel"
+               th:if="${terminalSettings != null and terminalSettings.cameraScannerEnabled}"
+               class="hidden rounded-2xl border border-slate-200 bg-slate-50 p-3">
+            <div class="flex items-center justify-between gap-3">
+              <div class="text-xs font-semibold text-slate-700" th:text="#{pos.cameraScanner}">Camera scanner</div>
+              <button type="button"
+                      data-action="camera-stop"
+                      class="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600 hover:bg-slate-100 transition">
+                <span th:text="#{pos.stop}">Stop</span>
+              </button>
+            </div>
+            <video id="cameraScanVideo"
+                   class="mt-2 w-full max-h-64 rounded-xl border border-slate-200 bg-black/80 object-contain"
+                   autoplay
+                   muted
+                   playsinline></video>
+            <div id="cameraScanStatus" class="mt-2 text-xs text-slate-500" th:text="#{pos.ready}">Ready</div>
+          </div>
+
+          <!-- Shortcut hint -->
+          <div class="toolbar-shortcuts text-xs text-slate-500 flex flex-wrap items-center gap-2">
+            <span th:text="#{common.shortcuts} + ':'">Shortcuts:</span>
+            <span class="inline-flex items-center gap-1">
+              <span class="font-mono rounded-md border border-slate-200 bg-white px-2 py-0.5">/</span>
+              <span th:text="#{pos.shortcuts.focusSearch}">focus search</span>
+            </span>
+            <span class="text-slate-400">·</span>
+            <span class="inline-flex items-center gap-1">
+              <span class="font-mono rounded-md border border-slate-200 bg-white px-2 py-0.5">F8</span>
+              <span th:text="#{pos.shortcuts.focusBarcode}">focus barcode</span>
+            </span>
+            <span class="text-slate-400">·</span>
+            <span class="inline-flex items-center gap-1">
+              <span class="font-mono rounded-md border border-slate-200 bg-white px-2 py-0.5">F2</span>
+              <span th:text="#{pos.shortcuts.checkout}">checkout</span>
+            </span>
+            <span class="text-slate-400">·</span>
+            <span class="inline-flex items-center gap-1">
+              <span class="font-mono rounded-md border border-slate-200 bg-white px-2 py-0.5">⌘/Ctrl+K</span>
+              <span th:text="#{pos.shortcuts.clearCart}">clear cart</span>
+            </span>
+          </div>
+
+          <div class="toolbar-totals-shell rounded-2xl border border-slate-200 bg-white p-2.5 shadow-sm">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="quickTotals">
+              <div class="quick-total-cell rounded-xl bg-slate-50">
+                <div class="text-[11px] uppercase tracking-wide text-slate-500" th:text="#{pos.subtotal}">Subtotal</div>
+                <div id="qtSubtotal" class="quick-total-value text-sm font-semibold text-slate-900">$0.00</div>
+              </div>
+              <div class="quick-total-cell rounded-xl bg-slate-50">
+                <div class="text-[11px] uppercase tracking-wide text-slate-500" th:text="#{pos.discount}">Discount</div>
+                <div id="qtDiscount" class="quick-total-value text-sm font-semibold text-slate-900">$0.00</div>
+              </div>
+              <div class="quick-total-cell rounded-xl bg-slate-50">
+                <div class="text-[11px] uppercase tracking-wide text-slate-500" th:text="#{pos.tax}">Tax</div>
+                <div id="qtTax" class="quick-total-value text-sm font-semibold text-slate-900">$0.00</div>
+              </div>
+              <div class="quick-total-cell is-total rounded-xl bg-slate-900 text-white">
+                <div class="text-[11px] uppercase tracking-wide text-white/70" th:text="#{pos.total}">Total</div>
+                <div id="qtTotal" class="quick-total-value text-sm font-semibold">$0.00</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div id="posSplitLayout" class="grid grid-cols-12 gap-4 lg:flex-1 lg:min-h-0">
+        <!-- Products -->
+        <section id="productPanel" class="enterprise-panel surface-products col-span-12 lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden lg:min-h-0 lg:min-w-0 lg:flex lg:flex-col">
+          <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+            <div>
+              <div class="text-base font-semibold" th:text="#{pos.products}">Products</div>
+              <div class="text-sm text-slate-500" th:text="#{pos.products.subtitle}">Click an item to add to cart</div>
+            </div>
+          </div>
+
+          <div id="productPanelBody"
+               class="p-4 lg:min-h-0 lg:min-w-0 lg:flex-1 lg:overflow-y-auto lg:overscroll-contain split-scroll"
+               tabindex="0"
+               th:aria-label="#{pos.products}">
+            <div id="pinnedSection" class="mb-4 hidden">
+              <div class="flex items-center justify-between">
+                <div class="text-sm font-semibold text-slate-800" th:text="#{pos.pinnedItems}">Pinned items</div>
+                <button type="button"
+                        class="text-xs font-semibold text-slate-500 hover:text-slate-800 transition"
+                        data-action="clear-pins"
+                        th:text="#{common.clear}">
+                  Clear
+                </button>
+              </div>
+              <div id="pinnedGrid" class="mt-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+            </div>
+            <div id="recentSection" class="mb-4 hidden">
+              <div class="flex items-center justify-between">
+                <div class="text-sm font-semibold text-slate-800" th:text="#{pos.recentItems}">Recent items</div>
+                <button type="button"
+                        class="text-xs font-semibold text-slate-500 hover:text-slate-800 transition"
+                        data-action="clear-recents"
+                        th:text="#{common.clear}">
+                  Clear
+                </button>
+              </div>
+              <div id="recentGrid" class="mt-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+            </div>
+            <div class="mb-4 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+              <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div class="text-xs text-slate-600">
+                  <span th:text="#{pos.showing}">Showing</span>
+                  <span id="productVisibleCount" class="font-semibold text-slate-800">0</span>
+                  <span th:text="#{pos.of}">of</span>
+                  <span id="productTotalCount" class="font-semibold text-slate-800">0</span>
+                  <span th:text="#{pos.productsLower}">products</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                  <select id="productSort"
+                          class="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700
+                                 focus:outline-none focus:ring-2 focus:ring-slate-300">
+                    <option value="server" th:text="#{pos.defaultOrder}">Default order</option>
+                    <option value="name-asc" th:text="#{pos.sort.nameAsc}">Name A-Z</option>
+                    <option value="price-asc" th:text="#{pos.sort.priceAsc}">Price low-high</option>
+                    <option value="price-desc" th:text="#{pos.sort.priceDesc}">Price high-low</option>
+                    <option value="stock-desc" th:text="#{pos.sort.stockDesc}">Stock high-low</option>
+                  </select>
+                  <div class="inline-flex items-center rounded-lg border border-slate-200 bg-white p-1">
+                    <button type="button" data-density="comfortable"
+                            class="density-toggle rounded-md px-2 py-1 text-[11px] font-semibold text-slate-600 transition hover:bg-slate-100">
+                      <span th:text="#{pos.density.cozy}">Cozy</span>
+                    </button>
+                    <button type="button" data-density="compact"
+                            class="density-toggle rounded-md px-2 py-1 text-[11px] font-semibold text-slate-600 transition hover:bg-slate-100">
+                      <span th:text="#{pos.density.compact}">Compact</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="mt-3 flex flex-wrap items-center gap-2">
+                <button type="button" data-stock-filter="all"
+                        class="stock-filter rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 transition">
+                  <span th:text="#{pos.stockFilter.all}">All</span>
+                </button>
+                <button type="button" data-stock-filter="in-stock"
+                        class="stock-filter rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 transition">
+                  <span th:text="#{pos.stockFilter.inStock}">In stock</span>
+                </button>
+                <button type="button" data-stock-filter="low-stock"
+                        class="stock-filter rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 transition">
+                  <span th:text="#{pos.stockFilter.lowStock}">Low stock</span>
+                </button>
+                <button type="button" data-stock-filter="out-of-stock"
+                        class="stock-filter rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 transition">
+                  <span th:text="#{pos.stockFilter.outOfStock}">Out of stock</span>
+                </button>
+              </div>
+            </div>
+            <div th:replace="~{pos/fragments :: productGridWrap}"></div>
+            <div id="productFilterEmpty"
+                 class="mt-4 hidden rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-7 text-sm text-slate-600">
+              <div class="mx-auto flex max-w-sm flex-col items-center gap-3 text-center">
+                <div class="h-12 w-12 rounded-2xl border border-slate-200 bg-white grid place-items-center text-slate-400">
+                  <svg viewBox="0 0 24 24" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <path d="M3 5h18"/>
+                    <path d="M7 12h10"/>
+                    <path d="M10 19h4"/>
+                  </svg>
+                </div>
+                <span th:text="#{pos.noProductsThisPage}">No products match the selected filter on this page.</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Cart -->
+        <aside id="cartPanelShell" class="enterprise-panel surface-cart col-span-12 lg:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden lg:min-h-0 lg:min-w-0 lg:flex lg:flex-col">
+          <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+            <div>
+              <div class="text-base font-semibold" th:text="#{pos.cart}">Cart</div>
+              <div class="text-sm text-slate-500" th:text="#{pos.cart.subtitle}">Review items and checkout</div>
+            </div>
+            <button type="button"
+                    data-action="clear-cart"
+                    class="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition">
+              <span th:text="#{pos.clearCart}">Clear cart</span>
+            </button>
+          </div>
+
+          <div id="cartPanelBody"
+               class="p-4 lg:min-h-0 lg:min-w-0 lg:flex-1 lg:overflow-y-auto lg:overscroll-contain split-scroll"
+               tabindex="0"
+               th:aria-label="#{pos.cart}">
+            <div th:replace="~{pos/fragments :: cartContainer}"></div>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </div>
+
+  <script th:inline="javascript">
+    /* ── Dark mode toggle ─────────────────────────────────────────── */
+    const THEME_KEY = "pos.theme";
+    const applyTheme = (theme) => {
+      const html = document.documentElement;
+      html.setAttribute("data-theme-transitioning", "");
+      html.setAttribute("data-theme", theme);
+      const sunIcon = document.getElementById("themeIconSun");
+      const moonIcon = document.getElementById("themeIconMoon");
+      if (sunIcon && moonIcon) {
+        sunIcon.classList.toggle("hidden", theme !== "dark");
+        moonIcon.classList.toggle("hidden", theme === "dark");
+      }
+      try { localStorage.setItem(THEME_KEY, theme); } catch {}
+      requestAnimationFrame(() => {
+        setTimeout(() => html.removeAttribute("data-theme-transitioning"), 400);
+      });
+    };
+    const getPreferredTheme = () => {
+      try {
+        const stored = localStorage.getItem(THEME_KEY);
+        if (stored === "dark" || stored === "light") return stored;
+      } catch {}
+      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    };
+    applyTheme(getPreferredTheme());
+    document.addEventListener("DOMContentLoaded", () => {
+      const btn = document.getElementById("themeToggleBtn");
+      if (btn) {
+        btn.addEventListener("click", () => {
+          const current = document.documentElement.getAttribute("data-theme") || "light";
+          applyTheme(current === "dark" ? "light" : "dark");
+        });
+      }
+    });
+    /* ── End dark mode toggle ─────────────────────────────────────── */
+
+    const I18N = Object.freeze({
+      noImage: /*[[#{pos.noImage}]]*/ "No image",
+      outOfStock: /*[[#{pos.outOfStock}]]*/ "Out of stock",
+      lowStock: /*[[#{pos.lowStock}]]*/ "Low stock",
+      inStock: /*[[#{pos.inStock}]]*/ "In stock",
+      addToCart: /*[[#{pos.addToCart}]]*/ "Add to cart",
+      pinItem: /*[[#{pos.pinItem}]]*/ "Pin item",
+      unitBox: /*[[#{common.unit.box}]]*/ "Box",
+      unitCase: /*[[#{common.unit.case}]]*/ "Case",
+      tapToAdd: /*[[#{pos.tapToAdd}]]*/ "Tap to add",
+      productLabelFallback: /*[[#{pos.products}]]*/ "Product",
+      skuPrefix: /*[[#{pos.skuPrefix('{0}')}]]*/ "SKU: {0}",
+      noSkuBarcode: /*[[#{pos.noSkuBarcode}]]*/ "No SKU/Barcode",
+      wholesale: /*[[#{pos.wholesale}]]*/ "Wholesale",
+      stock: /*[[#{pos.stock}]]*/ "Stock",
+      lowAt: /*[[#{pos.lowAt}]]*/ "Low @",
+      wholesaleMin: /*[[#{pos.wholesaleMin}]]*/ "Wholesale min",
+      commonAdd: /*[[#{common.add}]]*/ "Add",
+      commonRemove: /*[[#{common.remove}]]*/ "Remove",
+      commonEdit: /*[[#{common.edit}]]*/ "Edit",
+      noProductsFound: /*[[#{pos.noProductsFound}]]*/ "No products found.",
+      requestFailed: /*[[#{pos.error.requestFailed}]]*/ "Request failed.",
+      feedUnable: /*[[#{pos.feed.unable}]]*/ "Unable to load products.",
+      posChange: /*[[#{pos.change}]]*/ "Change",
+      posRemaining: /*[[#{pos.remaining}]]*/ "Remaining",
+      amountReceivedLabel: /*[[#{pos.amountReceived}]]*/ "Amount received",
+      rateLabel: /*[[#{pos.rate}]]*/ "Rate",
+      cashReceivedInvalid: /*[[#{pos.error.enterCashReceived}]]*/ "Enter the amount received from the customer.",
+      cashLessThanTotal: /*[[#{pos.error.cashLessThanTotal}]]*/ "Entered cash is less than the total bill.",
+      cashValidRequired: /*[[#{pos.error.enterValidCashAmount}]]*/ "Enter valid cash amount to continue.",
+      clearCartConfirmText: /*[[#{pos.confirmClearCart}]]*/ "Clear the cart? This will remove all items and reset discounts, tax, and customer.",
+      cameraStopped: /*[[#{pos.camera.stopped}]]*/ "Stopped",
+      cameraScanned: /*[[#{pos.camera.scanned}]]*/ "Scanned",
+      cameraScanFailed: /*[[#{pos.camera.failed}]]*/ "Camera scan failed. Try keyboard scanner.",
+      cameraUnsupported: /*[[#{pos.camera.unsupported}]]*/ "Camera fallback requires a browser with BarcodeDetector support.",
+      cameraScanning: /*[[#{pos.camera.scanning}]]*/ "Scanning...",
+      cameraPermissionError: /*[[#{pos.camera.permissionError}]]*/ "Unable to access camera. Check permissions."
+    });
+
+    const templateReplace = (template, value) => template.replace("{0}", value ?? "");
+    const isTypingTarget = (target) => {
+      if (!target) return false;
+      if (target.isContentEditable) return true;
+      const tag = target.tagName ? target.tagName.toLowerCase() : "";
+      return ["input", "textarea", "select"].includes(tag);
+    };
+
+    const shouldIgnoreShortcuts = (event) => {
+      return isTypingTarget(event.target) || isTypingTarget(document.activeElement);
+    };
+
+    const desktopSplitQuery = window.matchMedia("(min-width: 1024px)");
+    const isDesktopSplitScroll = () => desktopSplitQuery.matches;
+    const getProductScrollContainer = () => isDesktopSplitScroll() ? document.getElementById("productPanelBody") : null;
+    const getCartScrollContainer = () => isDesktopSplitScroll() ? document.getElementById("cartPanelBody") : null;
+
+    const updateSplitLayoutMetrics = () => {
+      const root = document.documentElement;
+      const header = document.getElementById("posHeader");
+      const toolbar = document.getElementById("posToolbar");
+      const main = document.getElementById("posMain");
+      const headerH = header ? header.getBoundingClientRect().height : 0;
+      const toolbarH = toolbar ? toolbar.getBoundingClientRect().height : 0;
+      const toolbarStyle = toolbar ? window.getComputedStyle(toolbar) : null;
+      const toolbarGap = toolbarStyle ? Number.parseFloat(toolbarStyle.marginBottom || "0") : 0;
+      const mainStyle = main ? window.getComputedStyle(main) : null;
+      const mainPadTop = mainStyle ? Number.parseFloat(mainStyle.paddingTop || "0") : 0;
+      const mainPadBottom = mainStyle ? Number.parseFloat(mainStyle.paddingBottom || "0") : 0;
+      root.style.setProperty("--pos-header-h", `${Math.max(0, Math.round(headerH))}px`);
+      root.style.setProperty("--pos-toolbar-h", `${Math.max(0, Math.round(toolbarH))}px`);
+      root.style.setProperty("--pos-toolbar-gap", `${Math.max(0, Math.round(toolbarGap))}px`);
+      root.style.setProperty("--pos-main-y-pad", `${Math.max(0, Math.round(mainPadTop + mainPadBottom))}px`);
+    };
+
+    const openCheckout = () => {
+      const section = document.getElementById("checkoutSection");
+      if (!section) return;
+      const cartScroll = getCartScrollContainer();
+      if (cartScroll && cartScroll.contains(section)) {
+        const offsetTop = Math.max(0, section.offsetTop - 12);
+        cartScroll.scrollTo({ top: offsetTop, behavior: "smooth" });
+      } else {
+        section.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      const focusTarget = document.getElementById("checkoutCashButton") || section.querySelector("button");
+      if (focusTarget) focusTarget.focus();
+    };
+
+    // Keyboard shortcuts
+    window.addEventListener("keydown", (e) => {
+      if (shouldIgnoreShortcuts(e)) return;
+      if (e.key === "/") {
+        e.preventDefault();
+        document.getElementById("searchBox").focus();
+        return;
+      }
+      if (e.key === "F8") {
+        e.preventDefault();
+        document.getElementById("barcodeInput").focus();
+        return;
+      }
+      if (e.key === "F2") {
+        e.preventDefault();
+        openCheckout();
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && (e.key === "k" || e.key === "K")) {
+        e.preventDefault();
+        confirmClearCart();
+        return;
+      }
+      if (e.key === "Delete" || e.key === "Backspace") {
+        e.preventDefault();
+        removeSelectedCartItem();
+        return;
+      }
+      if (e.key === "+" || e.code === "NumpadAdd" || (e.key === "=" && e.shiftKey)) {
+        e.preventDefault();
+        adjustSelectedQty(1);
+        return;
+      }
+      if (e.key === "-" || e.code === "NumpadSubtract") {
+        e.preventDefault();
+        adjustSelectedQty(-1);
+        return;
+      }
+    });
+
+    const getBaseCurrency = () => {
+      const panel = getCartPanel();
+      const symbol = (panel && panel.dataset.baseSymbol) || document.body.dataset.baseSymbol || "$";
+      const code = (panel && panel.dataset.baseCode) || document.body.dataset.baseCode || "USD";
+      const decimalsRaw = (panel && panel.dataset.baseDecimals) || document.body.dataset.baseDecimals || "2";
+      const decimals = Number.parseInt(decimalsRaw, 10);
+      return { symbol, code, decimals: Number.isFinite(decimals) ? decimals : 2 };
+    };
+
+    const formatCurrency = (value, currency) => {
+      const num = Number.parseFloat(value);
+      if (!Number.isFinite(num)) return "-";
+      const decimals = Number.isFinite(currency?.decimals) ? currency.decimals : 2;
+      const fixed = num.toFixed(decimals);
+      if (currency?.symbol) return `${currency.symbol}${fixed}`;
+      if (currency?.code) return `${fixed} ${currency.code}`;
+      return fixed;
+    };
+
+    const formatMoney = (value) => formatCurrency(value, getBaseCurrency());
+
+    const getCartPanel = () => document.getElementById("cartPanel");
+
+    const productSortKey = "pos.products.sort";
+    const productDensityKey = "pos.products.density";
+    const productStockFilterKey = "pos.products.stock-filter";
+
+    const readStorage = (key, fallback) => {
+      try {
+        const value = localStorage.getItem(key);
+        return value === null ? fallback : value;
+      } catch {
+        return fallback;
+      }
+    };
+
+    const writeStorage = (key, value) => {
+      try {
+        localStorage.setItem(key, value);
+      } catch {
+        // ignore storage errors
+      }
+    };
+
+    const terminalIdKey = "pos.terminal.id";
+    let clientCheckoutId = null;
+
+    const generateTerminalId = () => {
+      const random = Math.random().toString(36).slice(2, 8).toUpperCase();
+      return `TERM-${random}`;
+    };
+
+    const getTerminalId = () => {
+      let current = readStorage(terminalIdKey, "").trim();
+      if (!current) {
+        const preferred = (document.body.dataset.preferredTerminalId || "").trim();
+        current = preferred || generateTerminalId();
+        writeStorage(terminalIdKey, current);
+      }
+      return current;
+    };
+
+    const syncTerminalIdFields = (root) => {
+      const scope = root || document;
+      const terminalId = getTerminalId();
+      document.body.dataset.terminalId = terminalId;
+      scope.querySelectorAll(".terminal-id-field").forEach((input) => {
+        if (input instanceof HTMLInputElement && input.value !== terminalId) {
+          input.value = terminalId;
+        }
+      });
+      return terminalId;
+    };
+
+    const generateClientCheckoutId = () => {
+      if (window.crypto && typeof window.crypto.randomUUID === "function") {
+        return window.crypto.randomUUID();
+      }
+      return `chk_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+    };
+
+    const syncClientCheckoutIdFields = (root) => {
+      const panel = getCartPanel();
+      const hasCheckoutSuccess = !!panel?.querySelector("[data-checkout-success='true']");
+      const hasCartItems = !!panel?.querySelector("[data-cart-item]");
+      if (!clientCheckoutId || hasCheckoutSuccess || !hasCartItems) {
+        clientCheckoutId = generateClientCheckoutId();
+      }
+      const scope = root || document;
+      scope.querySelectorAll(".client-checkout-id-field").forEach((input) => {
+        if (input instanceof HTMLInputElement && input.value !== clientCheckoutId) {
+          input.value = clientCheckoutId;
+        }
+      });
+      return clientCheckoutId;
+    };
+
+    let terminalHeaderBound = false;
+    const bindHtmxTerminalHeader = () => {
+      if (terminalHeaderBound || !window.htmx) return;
+      terminalHeaderBound = true;
+      document.body.addEventListener("htmx:configRequest", (event) => {
+        if (!event || !event.detail || !event.detail.headers) return;
+        event.detail.headers["X-Terminal-Id"] = getTerminalId();
+      });
+    };
+
+    const getProductGrid = () => document.getElementById("productGrid");
+
+    const getProductCards = () => {
+      const grid = getProductGrid();
+      if (!grid) return [];
+      return Array.from(grid.querySelectorAll("[data-product-card='true']"));
+    };
+
+    const setProductCounts = (visible, total) => {
+      const visibleEl = document.getElementById("productVisibleCount");
+      const totalEl = document.getElementById("productTotalCount");
+      if (visibleEl) visibleEl.textContent = String(visible);
+      if (totalEl) totalEl.textContent = String(total);
+      const emptyEl = document.getElementById("productFilterEmpty");
+      if (emptyEl) {
+        const shouldShow = total > 0 && visible === 0;
+        emptyEl.classList.toggle("hidden", !shouldShow);
+      }
+    };
+
+    const parseCardNumber = (value) => {
+      const num = Number.parseFloat(value || "0");
+      return Number.isFinite(num) ? num : 0;
+    };
+
+    const compareCards = (a, b, mode) => {
+      const orderA = Number.parseInt(a.dataset.order || "0", 10);
+      const orderB = Number.parseInt(b.dataset.order || "0", 10);
+      const nameA = (a.dataset.name || "").toLowerCase();
+      const nameB = (b.dataset.name || "").toLowerCase();
+      const priceA = parseCardNumber(a.dataset.price);
+      const priceB = parseCardNumber(b.dataset.price);
+      const stockA = parseCardNumber(a.dataset.stock);
+      const stockB = parseCardNumber(b.dataset.stock);
+      if (mode === "server") return orderA - orderB;
+      if (mode === "name-asc") return nameA.localeCompare(nameB);
+      if (mode === "price-asc") return priceA - priceB;
+      if (mode === "price-desc") return priceB - priceA;
+      if (mode === "stock-desc") return stockB - stockA;
+      return orderA - orderB;
+    };
+
+    const syncDensityButtons = (mode) => {
+      document.querySelectorAll(".density-toggle").forEach((btn) => {
+        const active = btn.getAttribute("data-density") === mode;
+        btn.classList.toggle("bg-slate-900", active);
+        btn.classList.toggle("text-white", active);
+        btn.classList.toggle("hover:bg-slate-800", active);
+        btn.classList.toggle("text-slate-600", !active);
+      });
+    };
+
+    const syncStockFilterButtons = (mode) => {
+      document.querySelectorAll(".stock-filter").forEach((btn) => {
+        const active = btn.getAttribute("data-stock-filter") === mode;
+        btn.classList.toggle("bg-slate-900", active);
+        btn.classList.toggle("bg-white", !active);
+        btn.classList.toggle("border-slate-900", active);
+        btn.classList.toggle("border-slate-200", !active);
+        btn.classList.toggle("text-white", active);
+        btn.classList.toggle("hover:bg-slate-800", active);
+        btn.classList.toggle("text-slate-600", !active);
+        btn.classList.toggle("hover:bg-slate-100", !active);
+      });
+    };
+
+    const shouldShowCard = (card, stockFilter) => {
+      const stock = parseCardNumber(card.dataset.stock);
+      const low = card.dataset.lowStock === "true";
+      const out = card.dataset.outOfStock === "true" || stock <= 0;
+      if (stockFilter === "in-stock") return stock > 0;
+      if (stockFilter === "low-stock") return stock > 0 && low;
+      if (stockFilter === "out-of-stock") return out;
+      return true;
+    };
+
+    const applyProductListingState = () => {
+      const grid = getProductGrid();
+      if (!grid) {
+        setProductCounts(0, 0);
+        return;
+      }
+      const cards = getProductCards();
+      const sort = readStorage(productSortKey, "server");
+      const stockFilter = readStorage(productStockFilterKey, "all");
+      const density = readStorage(productDensityKey, "comfortable");
+
+      const sortSelect = document.getElementById("productSort");
+      if (sortSelect && sortSelect.value !== sort) {
+        sortSelect.value = sort;
+      }
+
+      const sorted = [...cards].sort((a, b) => compareCards(a, b, sort));
+      sorted.forEach((card) => grid.appendChild(card));
+
+      let visible = 0;
+      cards.forEach((card) => {
+        const show = shouldShowCard(card, stockFilter);
+        card.classList.toggle("hidden", !show);
+        if (show) visible += 1;
+      });
+
+      grid.setAttribute("data-density", density);
+      syncDensityButtons(density);
+      syncStockFilterButtons(stockFilter);
+      setProductCounts(visible, cards.length);
+    };
+
+    const flashElement = (el, className) => {
+      if (!el) return;
+      el.classList.remove(className);
+      void el.offsetWidth;
+      el.classList.add(className);
+      window.setTimeout(() => el.classList.remove(className), 520);
+    };
+
+    let lastQuickTotalValue = null;
+
+    const updateQuickTotals = () => {
+      const panel = getCartPanel();
+      const subtotalEl = document.getElementById("qtSubtotal");
+      const discountEl = document.getElementById("qtDiscount");
+      const taxEl = document.getElementById("qtTax");
+      const totalEl = document.getElementById("qtTotal");
+      if (!subtotalEl || !discountEl || !taxEl || !totalEl) return;
+      if (!panel) {
+        subtotalEl.textContent = "-";
+        discountEl.textContent = "-";
+        taxEl.textContent = "-";
+        totalEl.textContent = "-";
+        lastQuickTotalValue = null;
+        return;
+      }
+      const subtotal = Number.parseFloat(panel.dataset.subtotal || "0");
+      const discount = Number.parseFloat(panel.dataset.discount || "0");
+      const tax = Number.parseFloat(panel.dataset.tax || "0");
+      const total = Number.parseFloat(panel.dataset.total || "0");
+      subtotalEl.textContent = formatMoney(subtotal);
+      discountEl.textContent = formatMoney(discount);
+      taxEl.textContent = formatMoney(tax);
+      totalEl.textContent = formatMoney(total);
+      if (lastQuickTotalValue != null && Math.abs(total - lastQuickTotalValue) > 0.0001) {
+        flashElement(totalEl.closest(".quick-total-cell"), "quick-total-flash");
+      }
+      lastQuickTotalValue = total;
+    };
+
+    let selectedCartId = null;
+
+    const setSelectedCartItem = (id) => {
+      selectedCartId = id || null;
+      document.querySelectorAll("[data-cart-item]").forEach((el) => {
+        const active = selectedCartId && el.dataset.productId === selectedCartId;
+        el.setAttribute("aria-selected", active ? "true" : "false");
+        el.classList.toggle("ring-2", active);
+        el.classList.toggle("ring-slate-900/20", active);
+        el.classList.toggle("border-slate-300", active);
+        el.classList.toggle("cart-item-active", active);
+      });
+    };
+
+    const restoreCartSelection = () => {
+      if (!selectedCartId) return;
+      const exists = document.querySelector(`[data-cart-item][data-product-id="${CSS.escape(selectedCartId)}"]`);
+      if (!exists) {
+        selectedCartId = null;
+        return;
+      }
+      setSelectedCartItem(selectedCartId);
+    };
+
+    const getSelectedCartElement = () => {
+      if (!selectedCartId) return null;
+      return document.querySelector(`[data-cart-item][data-product-id="${CSS.escape(selectedCartId)}"]`);
+    };
+
+    const submitCartAction = (item, action) => {
+      if (!item) return false;
+      const form = item.querySelector(`form[data-cart-action="${action}"]`);
+      if (!form) return false;
+      if (typeof form.requestSubmit === "function") {
+        form.requestSubmit();
+      } else {
+        form.submit();
+      }
+      return true;
+    };
+
+    const adjustSelectedQty = (direction) => {
+      const item = getSelectedCartElement();
+      if (!item) return;
+      if (direction > 0) submitCartAction(item, "increase");
+      if (direction < 0) submitCartAction(item, "decrease");
+    };
+
+    const removeSelectedCartItem = () => {
+      const item = getSelectedCartElement();
+      if (!item) return;
+      submitCartAction(item, "remove");
+    };
+
+    const getSelectedCurrency = () => {
+      const panel = getCartPanel();
+      if (!panel) return null;
+      const select = panel.querySelector("#cashCurrency");
+      if (!select) return null;
+      const option = select.selectedOptions && select.selectedOptions[0];
+      const rate = option ? Number.parseFloat(option.getAttribute("data-rate") || "0") : 0;
+      const decimals = option ? Number.parseInt(option.getAttribute("data-decimals") || "2", 10) : 2;
+      return {
+        code: option ? option.value : "",
+        symbol: option ? option.getAttribute("data-symbol") : "",
+        rate: Number.isFinite(rate) ? rate : 0,
+        decimals: Number.isFinite(decimals) ? decimals : 2
+      };
+    };
+
+    const syncCashHidden = () => {
+      const panel = getCartPanel();
+      if (!panel) return;
+      const currency = getSelectedCurrency();
+      const input = panel.querySelector("#cashReceived");
+      const codeInput = panel.querySelector("#cashCurrencyCode");
+      const rateInput = panel.querySelector("#cashCurrencyRate");
+      const foreignInput = panel.querySelector("#cashForeignAmount");
+      if (!currency || !codeInput || !rateInput || !foreignInput) return;
+      const received = Number.parseFloat(input?.value || "0");
+      codeInput.value = currency.code || "";
+      rateInput.value = currency.rate ? currency.rate.toString() : "";
+      foreignInput.value = Number.isFinite(received) ? received.toString() : "";
+    };
+
+    const cashCurrencyKey = "pos.cash.currency";
+
+    const applyStoredCurrency = () => {
+      const panel = getCartPanel();
+      if (!panel) return;
+      const select = panel.querySelector("#cashCurrency");
+      if (!select) return;
+      const stored = localStorage.getItem(cashCurrencyKey);
+      if (stored) {
+        select.value = stored;
+      }
+    };
+
+    const cashTenderTolerance = 0.000001;
+    const setFieldInvalidState = (field, invalid) => {
+      if (!field) return;
+      if (invalid) {
+        field.setAttribute("aria-invalid", "true");
+      } else {
+        field.removeAttribute("aria-invalid");
+      }
+    };
+
+    const getCashTenderState = () => {
+      const panel = getCartPanel();
+      if (!panel) return null;
+      const input = panel.querySelector("#cashReceived");
+      if (!input) return null;
+
+      const base = getBaseCurrency();
+      const currency = getSelectedCurrency() || base;
+      const rate = currency.rate && currency.rate > 0 ? currency.rate : 1;
+      const totalBaseRaw = Number.parseFloat(panel.dataset.total || "0");
+      const totalBase = Number.isFinite(totalBaseRaw) ? totalBaseRaw : 0;
+      const totalForeign = rate > 0 ? totalBase / rate : totalBase;
+
+      const rawValue = (input.value || "").trim();
+      const parsedReceived = rawValue === "" ? Number.NaN : Number.parseFloat(rawValue);
+      const receivedForeign = Number.isFinite(parsedReceived) ? parsedReceived : 0;
+      const diffForeign = receivedForeign - totalForeign;
+      const diffBase = diffForeign * rate;
+      const hasValue = rawValue.length > 0;
+      const hasValidValue = hasValue && Number.isFinite(parsedReceived) && parsedReceived >= 0;
+      return {
+        panel,
+        input,
+        base,
+        currency,
+        rate,
+        totalBase,
+        totalForeign,
+        receivedForeign,
+        diffForeign,
+        diffBase,
+        hasValue,
+        hasValidValue
+      };
+    };
+
+    const validateCashTenderBeforeCheckout = () => {
+      const tender = getCashTenderState();
+      if (!tender || !tender.input) return true;
+      const { input, totalBase, hasValue, hasValidValue, diffForeign } = tender;
+      if (totalBase <= 0) {
+        input.setCustomValidity("");
+        setFieldInvalidState(input, false);
+        return true;
+      }
+      if (!hasValue || !hasValidValue) {
+        input.setCustomValidity(I18N.cashReceivedInvalid);
+        setFieldInvalidState(input, true);
+        input.reportValidity();
+        return false;
+      }
+      if (diffForeign < -cashTenderTolerance) {
+        input.setCustomValidity(I18N.cashLessThanTotal);
+        setFieldInvalidState(input, true);
+        input.reportValidity();
+        return false;
+      }
+      input.setCustomValidity("");
+      setFieldInvalidState(input, false);
+      return true;
+    };
+
+    const updateCashChange = () => {
+      const tender = getCashTenderState();
+      if (!tender) return;
+      const { panel, input, base, currency, rate, totalBase, totalForeign, receivedForeign, diffForeign, diffBase, hasValue, hasValidValue } = tender;
+      const changeEl = panel.querySelector("#cashChange");
+      const statusEl = panel.querySelector("#cashStatus");
+      const totalForeignEl = panel.querySelector("#cashTotalForeign");
+      const changeBaseEl = panel.querySelector("#cashChangeBase");
+      const rateTextEl = panel.querySelector("#cashRateText");
+      const focusTotalEl = panel.querySelector("#paymentFocusTotal");
+      const focusReceivedEl = panel.querySelector("#paymentFocusReceived");
+      const focusStatusEl = panel.querySelector("#paymentFocusStatus");
+      const focusChangeEl = panel.querySelector("#paymentFocusChange");
+      const focusChangeBaseEl = panel.querySelector("#paymentFocusChangeBase");
+      if (!input || !changeEl || !statusEl) return;
+      const effectiveDiffForeign = Math.abs(diffForeign) <= cashTenderTolerance ? 0 : diffForeign;
+      const statusText = effectiveDiffForeign >= 0 ? I18N.posChange : I18N.posRemaining;
+      if (effectiveDiffForeign >= 0) {
+        statusEl.textContent = statusText;
+        changeEl.textContent = formatCurrency(effectiveDiffForeign, currency);
+      } else {
+        statusEl.textContent = statusText;
+        changeEl.textContent = formatCurrency(Math.abs(effectiveDiffForeign), currency);
+      }
+      if (input && currency && currency.code) {
+        input.placeholder = `${I18N.amountReceivedLabel} (${currency.code})`;
+      }
+      if (totalForeignEl) totalForeignEl.textContent = formatCurrency(totalForeign, currency);
+      if (changeBaseEl) changeBaseEl.textContent = formatCurrency(Math.abs(diffBase), base);
+      if (focusTotalEl) focusTotalEl.textContent = formatMoney(totalBase);
+      if (focusReceivedEl) focusReceivedEl.textContent = hasValue && hasValidValue
+        ? formatCurrency(receivedForeign, currency)
+        : "-";
+      if (focusStatusEl) focusStatusEl.textContent = statusText;
+      if (focusChangeEl) focusChangeEl.textContent = formatCurrency(Math.abs(effectiveDiffForeign), currency);
+      if (focusChangeBaseEl) focusChangeBaseEl.textContent = formatCurrency(Math.abs(diffBase), base);
+      if (rateTextEl) {
+        const rateText = Number.isFinite(rate)
+          ? rate.toFixed(Math.max(4, base.decimals || 2))
+          : "-";
+        rateTextEl.textContent = `${I18N.rateLabel}: 1 ${currency.code || ''} = ${rateText} ${base.code || ''}`;
+      }
+      let hasCashTenderError = false;
+      if (totalBase > 0 && (!hasValue || !hasValidValue)) {
+        input.setCustomValidity(I18N.cashReceivedInvalid);
+        hasCashTenderError = true;
+      } else if (effectiveDiffForeign < 0) {
+        input.setCustomValidity(I18N.cashLessThanTotal);
+        hasCashTenderError = true;
+      } else {
+        input.setCustomValidity("");
+      }
+      setFieldInvalidState(input, hasCashTenderError);
+      const checkoutCashButton = panel.querySelector("#checkoutCashButton");
+      if (checkoutCashButton) {
+        checkoutCashButton.disabled = hasCashTenderError;
+        if (hasCashTenderError) {
+          checkoutCashButton.title = I18N.cashValidRequired;
+        } else {
+          checkoutCashButton.removeAttribute("title");
+        }
+      }
+      syncCashHidden();
+    };
+
+    const pinKey = "pos.pinned.v1";
+    const maxPins = 12;
+    const recentKey = "pos.recent.v1";
+    const maxRecent = 10;
+
+    const loadPins = () => {
+      try {
+        const raw = localStorage.getItem(pinKey);
+        const list = raw ? JSON.parse(raw) : [];
+        return Array.isArray(list) ? list : [];
+      } catch {
+        return [];
+      }
+    };
+
+    const savePins = (pins) => {
+      try {
+        localStorage.setItem(pinKey, JSON.stringify(pins));
+      } catch {
+        // ignore storage failures
+      }
+    };
+
+    const escapeHtml = (value) => {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    };
+
+    const getCsrfField = () => {
+      const input = document.querySelector("#cartPanel input[name*='csrf']") || document.querySelector("input[name*='csrf']");
+      if (!input) return null;
+      const name = input.getAttribute("name");
+      const value = input.value;
+      if (!name || !value) return null;
+      return { name, value };
+    };
+
+    const injectCsrfIntoForms = (root) => {
+      if (!root) return;
+      const csrf = getCsrfField();
+      if (!csrf) return;
+      root.querySelectorAll("form").forEach((form) => {
+        const hasToken = Array.from(form.elements || []).some((el) => el.name === csrf.name);
+        if (hasToken) return;
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = csrf.name;
+        input.value = csrf.value;
+        form.prepend(input);
+      });
+    };
+
+    const productFeedSessionKey = "pos.productFeed.state.v1";
+    const productFeedState = {
+      size: 24,
+      hasMore: false,
+      nextCursor: "",
+      inFlightKey: null,
+      activeAbort: null,
+      observer: null,
+      listenersBound: false,
+      restored: false,
+      retryTimer: null,
+      scrollTarget: null,
+      scrollHandler: null,
+      resizeHandler: null,
+      mediaHandler: null,
+      layoutObserver: null,
+      pageCache: new Map(),
+      loadedItems: [],
+      loadedIds: new Set(),
+      filterKey: ""
+    };
+
+    const parseBool = (value) => String(value || "").toLowerCase() === "true";
+    const parseNumberOrNull = (value) => {
+      if (value === null || value === undefined || value === "") return null;
+      const parsed = Number.parseFloat(value);
+      return Number.isFinite(parsed) ? parsed : null;
+    };
+    const parseIntOrNull = (value) => {
+      if (value === null || value === undefined || value === "") return null;
+      const parsed = Number.parseInt(value, 10);
+      return Number.isFinite(parsed) ? parsed : null;
+    };
+    const normalizeFeedQuery = (value) => {
+      if (!value) return "";
+      return value.trim().toLowerCase();
+    };
+    const normalizeCategory = (value) => {
+      const raw = value == null ? "" : String(value).trim();
+      return raw || "";
+    };
+    const getProductGridWrap = () => document.getElementById("productGridWrap");
+    const getFeedSentinel = () => document.getElementById("productFeedSentinel");
+    const getFeedEndpoint = () => {
+      const wrap = getProductGridWrap();
+      return (wrap?.dataset.feedEndpoint || "/pos/products/feed").trim();
+    };
+    const feedFilterKey = (filters) => `${normalizeFeedQuery(filters.q)}|${normalizeCategory(filters.categoryId)}`;
+    const makeFeedPageKey = (filters, cursor, size) => `${feedFilterKey(filters)}|${cursor || "start"}|${size}`;
+
+    const getFeedScrollMetrics = () => {
+      const container = getProductScrollContainer();
+      if (container) {
+        return {
+          scrollTop: Math.max(0, container.scrollTop || 0),
+          clientHeight: Math.max(1, container.clientHeight || 1),
+          scrollHeight: Math.max(1, container.scrollHeight || 1)
+        };
+      }
+      const doc = document.documentElement;
+      return {
+        scrollTop: Math.max(0, window.scrollY || doc.scrollTop || 0),
+        clientHeight: Math.max(1, window.innerHeight || doc.clientHeight || 1),
+        scrollHeight: Math.max(1, doc.scrollHeight || 1)
+      };
+    };
+
+    const getFeedScrollOffset = () => {
+      const container = getProductScrollContainer();
+      return container ? Math.max(0, container.scrollTop || 0) : Math.max(0, window.scrollY || 0);
+    };
+
+    const setFeedScrollOffset = (offset) => {
+      const targetOffset = Number.isFinite(offset) ? Math.max(0, offset) : 0;
+      const container = getProductScrollContainer();
+      if (container) {
+        container.scrollTo({ top: targetOffset, behavior: "auto" });
+        return;
+      }
+      window.scrollTo({ top: targetOffset, behavior: "auto" });
+    };
+
+    const getFeedFiltersFromControls = () => {
+      const search = document.getElementById("searchBox");
+      const category = document.getElementById("categorySelect");
+      return {
+        q: normalizeFeedQuery(search?.value || ""),
+        categoryId: normalizeCategory(category?.value || "")
+      };
+    };
+
+    const getFeedFiltersFromDataset = () => {
+      const wrap = getProductGridWrap();
+      if (!wrap) return getFeedFiltersFromControls();
+      return {
+        q: normalizeFeedQuery(wrap.dataset.feedQ || ""),
+        categoryId: normalizeCategory(wrap.dataset.feedCategoryId || "")
+      };
+    };
+
+    const updateFeedDataset = ({ q, categoryId, hasMore, nextCursor }) => {
+      const wrap = getProductGridWrap();
+      if (!wrap) return;
+      wrap.dataset.feedQ = normalizeFeedQuery(q);
+      wrap.dataset.feedCategoryId = normalizeCategory(categoryId);
+      wrap.dataset.feedHasMore = hasMore ? "true" : "false";
+      wrap.dataset.feedNextCursor = nextCursor || "";
+    };
+
+    const updateFeedUrl = ({ q, categoryId }) => {
+      const url = new URL(window.location.href);
+      if (q) url.searchParams.set("q", q);
+      else url.searchParams.delete("q");
+      if (categoryId) url.searchParams.set("categoryId", categoryId);
+      else url.searchParams.delete("categoryId");
+      url.searchParams.delete("page");
+      window.history.replaceState({}, "", `${url.pathname}${url.search}`);
+    };
+
+    const syncSearchControls = ({ q, categoryId }) => {
+      const search = document.getElementById("searchBox");
+      const category = document.getElementById("categorySelect");
+      if (search) search.value = q || "";
+      if (category) category.value = categoryId || "";
+    };
+
+    const showFeedStatus = ({ loading = false, error = "", end = false } = {}) => {
+      const skeleton = document.getElementById("productFeedSkeleton");
+      const errorEl = document.getElementById("productFeedError");
+      const errorText = document.getElementById("productFeedErrorText");
+      const endEl = document.getElementById("productFeedEnd");
+      if (skeleton) skeleton.classList.toggle("hidden", !loading);
+      if (errorEl) errorEl.classList.toggle("hidden", !error);
+      if (errorText && error) errorText.textContent = error;
+      if (endEl) endEl.classList.toggle("hidden", !end);
+    };
+
+    const productImageHtml = (item) => {
+      if (item.imageUrl) {
+        return `<img src="${escapeHtml(item.imageUrl)}" alt="" loading="lazy" decoding="async" class="product-image h-full w-full object-contain object-center block"/>`;
+      }
+      return `<div class="h-full w-full grid place-items-center text-slate-400">
+                <div class="flex flex-col items-center gap-2 text-slate-400">
+                  <svg viewBox="0 0 24 24" class="h-10 w-10" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M3 7h3l2-2h8l2 2h3v12H3V7z"></path>
+                    <circle cx="12" cy="13" r="3.5"></circle>
+                  </svg>
+                  <span class="text-xs">${escapeHtml(I18N.noImage)}</span>
+                </div>
+              </div>`;
+    };
+
+    const categoryBadgeHtml = (item) => {
+      const categoryName = (item.categoryName || "").trim();
+      if (!categoryName) return "";
+      return `<div class="rounded-full border border-slate-200 bg-white/95 px-2.5 py-1 text-slate-600">${escapeHtml(categoryName)}</div>`;
+    };
+
+    const stockBadgeHtml = (item) => {
+      const stockQty = Number.isFinite(item.stockQty) ? item.stockQty : 0;
+      const lowThreshold = parseIntOrNull(item.lowStockThreshold);
+      const lowThresholdReached = stockQty > 0 && lowThreshold != null && stockQty <= lowThreshold;
+      if (stockQty <= 0) {
+        return `<div class="rounded-full bg-red-100 px-2.5 py-1 text-red-700">${escapeHtml(I18N.outOfStock)}</div>`;
+      }
+      if (lowThresholdReached || item.lowStock) {
+        return `<div class="rounded-full border border-red-300 bg-white/95 px-2.5 py-1 text-red-700">${escapeHtml(I18N.lowStock)}</div>`;
+      }
+      if (stockQty < 20) {
+        return `<div class="rounded-full bg-amber-100 px-2.5 py-1 text-amber-800">${escapeHtml(I18N.lowStock)}</div>`;
+      }
+      if (stockQty > 50) {
+        return `<div class="rounded-full bg-emerald-100 px-2.5 py-1 text-emerald-700">${escapeHtml(I18N.inStock)}</div>`;
+      }
+      return `<div class="rounded-full bg-slate-100 px-2.5 py-1 text-slate-700">${escapeHtml(I18N.inStock)}</div>`;
+    };
+
+    const buildProductCardHtml = (item, order) => {
+      const idRaw = item.id;
+      const id = escapeHtml(idRaw);
+      const nameRaw = item.name || I18N.productLabelFallback;
+      const name = escapeHtml(nameRaw);
+      const skuRaw = item.sku || item.barcode || "";
+      const sku = escapeHtml(skuRaw);
+      const barcode = escapeHtml(item.barcode || "");
+      const price = Number.parseFloat(item.price || 0);
+      const wholesalePrice = parseNumberOrNull(item.wholesalePrice);
+      const stockQty = Number.isFinite(item.stockQty) ? item.stockQty : 0;
+      const lowStockThreshold = parseIntOrNull(item.lowStockThreshold);
+      const wholesaleMinQty = parseIntOrNull(item.wholesaleMinQty);
+      const unitsPerBox = parseIntOrNull(item.unitsPerBox);
+      const unitsPerCase = parseIntOrNull(item.unitsPerCase);
+      const imageUrl = escapeHtml(item.imageUrl || "");
+      const categoryNameRaw = (item.categoryName || "").trim();
+      const categoryName = escapeHtml(categoryNameRaw);
+      const cardSkuLabel = skuRaw ? templateReplace(I18N.skuPrefix, skuRaw) : I18N.noSkuBarcode;
+      const editUrl = `/products/${encodeURIComponent(String(idRaw))}/edit`;
+      const manageQuery = (skuRaw || nameRaw || "").trim();
+      const stockManageUrl = `/products?q=${encodeURIComponent(manageQuery)}&sort=stock&dir=asc`;
+      return `
+        <form method="post"
+              action="/pos/cart/add/${id}"
+              hx-post="/pos/cart/add/${id}"
+              hx-target="#cartPanel"
+              hx-swap="outerHTML"
+              class="product-card-wrapper h-full w-full"
+              data-recent-item="true"
+              data-product-card="true"
+              data-order="${order}"
+              data-recent-id="${id}"
+              data-recent-name="${name}"
+              data-recent-sku="${sku}"
+              data-recent-price="${escapeHtml(price)}"
+              data-recent-image="${imageUrl}"
+              data-name="${name}"
+              data-sku="${sku}"
+              data-barcode="${barcode}"
+              data-price="${escapeHtml(price)}"
+              data-wholesale-price="${wholesalePrice == null ? "" : escapeHtml(wholesalePrice)}"
+              data-wholesale-min-qty="${wholesaleMinQty == null ? "" : escapeHtml(wholesaleMinQty)}"
+              data-stock="${escapeHtml(stockQty)}"
+              data-low-stock-threshold="${lowStockThreshold == null ? "" : escapeHtml(lowStockThreshold)}"
+              data-low-stock="${item.lowStock ? "true" : "false"}"
+              data-out-of-stock="${stockQty <= 0 ? "true" : "false"}"
+              data-units-per-box="${unitsPerBox == null ? "" : escapeHtml(unitsPerBox)}"
+              data-units-per-case="${unitsPerCase == null ? "" : escapeHtml(unitsPerCase)}"
+              data-image-url="${imageUrl}"
+              data-category-name="${categoryName}">
+          <input type="hidden" name="qty" value="1" data-card-qty-input="true"/>
+          <div class="group block h-full w-full text-left cursor-pointer" data-action="add-product-card" title="${escapeHtml(I18N.addToCart)}" aria-label="${escapeHtml(I18N.addToCart)}">
+            <div class="relative h-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm flex flex-col transition hover:shadow-lg">
+              <div class="product-image-wrap relative aspect-[4/3] overflow-hidden bg-transparent flex items-center justify-center p-3">
+                ${productImageHtml(item)}
+                <div class="absolute left-3 top-3 flex flex-wrap items-center gap-2 text-[11px] font-semibold">
+                  ${categoryBadgeHtml(item)}
+                  ${stockBadgeHtml(item)}
+                </div>
+                <div class="absolute right-3 top-3 flex items-start gap-2">
+                  <div class="pin-toggle h-10 w-10 rounded-full bg-white/90 border border-slate-200 shadow-sm grid place-items-center text-slate-700 hover:bg-slate-900 hover:text-white transition"
+                       role="button" tabindex="0" aria-pressed="false" title="${escapeHtml(I18N.pinItem)}"
+                       data-product-id="${id}" data-product-name="${name}" data-product-sku="${sku}" data-product-price="${escapeHtml(price)}" data-product-image="${imageUrl}">
+                    <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M6 7h12l-1 6H7L6 7z"></path>
+                      <path d="M9 13l-1.5 7L12 17l4.5 3L15 13"></path>
+                    </svg>
+                  </div>
+                  <div class="product-admin-actions flex items-center gap-1 rounded-full border border-slate-200 bg-white/95 p-1 shadow-sm" data-ignore-card-submit="true">
+                    <a href="${escapeHtml(editUrl)}"
+                       class="product-action-btn h-8 w-8 rounded-full grid place-items-center text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition"
+                       title="${escapeHtml(I18N.commonEdit)}"
+                       aria-label="${escapeHtml(I18N.commonEdit)}">
+                      <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5"></path>
+                        <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                      </svg>
+                    </a>
+                    <a href="${escapeHtml(stockManageUrl)}"
+                       class="product-action-btn h-8 w-8 rounded-full grid place-items-center text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition"
+                       title="${escapeHtml(I18N.stock)}"
+                       aria-label="${escapeHtml(I18N.stock)}">
+                      <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 7h18"></path>
+                        <path d="M6 7v12"></path>
+                        <path d="M12 7v12"></path>
+                        <path d="M18 7v12"></path>
+                        <path d="M4 19h16"></path>
+                      </svg>
+                    </a>
+                  </div>
+                </div>
+                <div class="absolute inset-x-3 bottom-3 flex items-center justify-end gap-2">
+                  <div class="card-qty-stepper inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white/95 px-1.5 py-1 text-xs font-semibold text-slate-700 shadow-sm"
+                       data-ignore-card-submit="true">
+                    <button type="button"
+                            data-action="card-qty-dec"
+                            class="h-7 w-7 rounded-lg border border-slate-200 bg-white text-sm text-slate-700 hover:bg-slate-100 transition"
+                            title="${escapeHtml(I18N.commonRemove)}"
+                            aria-label="${escapeHtml(I18N.commonRemove)}">-</button>
+                    <span data-card-qty-value="true" class="min-w-[20px] text-center font-semibold text-slate-900">1</span>
+                    <button type="button"
+                            data-action="card-qty-inc"
+                            class="h-7 w-7 rounded-lg border border-slate-200 bg-white text-sm text-slate-700 hover:bg-slate-100 transition"
+                            title="${escapeHtml(I18N.commonAdd)}"
+                            aria-label="${escapeHtml(I18N.commonAdd)}">+</button>
+                  </div>
+                  <button type="submit"
+                          data-action="card-add"
+                          class="product-add-fab inline-flex items-center gap-1.5 rounded-xl border border-slate-900 bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-slate-800 transition">
+                    <span class="text-sm leading-none">+</span>
+                    <span>${escapeHtml(I18N.commonAdd)}</span>
+                  </button>
+                </div>
+              </div>
+              <div class="product-content p-4 flex flex-1 flex-col">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <div class="product-title text-[17px] font-semibold text-slate-900 leading-snug line-clamp-2">${name}</div>
+                    <div class="mt-1 text-[11px] text-slate-400 truncate">${escapeHtml(cardSkuLabel)}</div>
+                  </div>
+                  <div class="shrink-0 text-right">
+                    <div class="text-2xl font-extrabold text-slate-900 tracking-tight">${escapeHtml(formatMoney(price))}</div>
+                    ${wholesalePrice == null ? "" : `<div class="mt-1 text-[11px] leading-4 text-slate-500"><div>${escapeHtml(I18N.wholesale)} <span class="font-semibold text-slate-800">${escapeHtml(formatMoney(wholesalePrice))}</span></div>${wholesaleMinQty == null ? "" : `<div>(${escapeHtml(I18N.wholesaleMin)} <span class="font-semibold text-slate-700">${escapeHtml(wholesaleMinQty)}</span>)</div>`}</div>`}
+                  </div>
+                </div>
+                <div class="product-meta mt-3 space-y-1.5 text-[11px] leading-5 text-slate-600">
+                  <div><span class="font-semibold text-slate-700">${escapeHtml(I18N.stock)}</span>: <span class="font-semibold text-slate-900">${escapeHtml(stockQty)}</span>${lowStockThreshold == null ? "" : `<span class="ml-1.5 text-slate-500">(${escapeHtml(I18N.lowAt)} <span class="font-semibold text-slate-700">${escapeHtml(lowStockThreshold)}</span>)</span>`}</div>
+                  ${(unitsPerBox || unitsPerCase) ? `<div class="text-slate-500">${unitsPerBox ? `<span class="font-semibold text-slate-700">${escapeHtml(I18N.unitBox)}</span>: <span class="font-semibold text-slate-800">${escapeHtml(unitsPerBox)}</span>` : ""}${unitsPerBox && unitsPerCase ? `<span class="mx-1 text-slate-300">|</span>` : ""}${unitsPerCase ? `<span class="font-semibold text-slate-700">${escapeHtml(I18N.unitCase)}</span>: <span class="font-semibold text-slate-800">${escapeHtml(unitsPerCase)}</span>` : ""}</div>` : ""}
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      `;
+    };
+
+    const clampCardQty = (value) => {
+      const parsed = Number.parseInt(String(value ?? "1"), 10);
+      if (!Number.isFinite(parsed)) return 1;
+      return Math.max(1, Math.min(99, parsed));
+    };
+
+    const setProductCardQty = (form, qty) => {
+      if (!form) return;
+      const safeQty = clampCardQty(qty);
+      const qtyInput = form.querySelector("input[data-card-qty-input='true']");
+      if (qtyInput) qtyInput.value = String(safeQty);
+      form.dataset.qty = String(safeQty);
+      const qtyLabel = form.querySelector("[data-card-qty-value='true']");
+      if (qtyLabel) qtyLabel.textContent = String(safeQty);
+    };
+
+    const adjustProductCardQty = (triggerEl, delta) => {
+      const form = triggerEl?.closest("form[data-product-card='true']");
+      if (!form) return;
+      const qtyInput = form.querySelector("input[data-card-qty-input='true']");
+      const currentQty = clampCardQty(qtyInput ? qtyInput.value : form.dataset.qty);
+      setProductCardQty(form, currentQty + delta);
+    };
+
+    const syncProductCardQtyControls = (root = document) => {
+      root.querySelectorAll("form[data-product-card='true']").forEach((form) => {
+        const qtyInput = form.querySelector("input[data-card-qty-input='true']");
+        setProductCardQty(form, qtyInput ? qtyInput.value : form.dataset.qty);
+      });
+    };
+
+    const readProductItemFromForm = (form) => {
+      if (!form) return null;
+      const id = parseIntOrNull(form.dataset.recentId || form.dataset.productId || "");
+      if (!id) return null;
+      const price = parseNumberOrNull(form.dataset.price);
+      return {
+        id,
+        name: form.dataset.name || form.dataset.recentName || "",
+        sku: form.dataset.sku || form.dataset.recentSku || "",
+        barcode: form.dataset.barcode || "",
+        price: price == null ? 0 : price,
+        wholesalePrice: parseNumberOrNull(form.dataset.wholesalePrice),
+        wholesaleMinQty: parseIntOrNull(form.dataset.wholesaleMinQty),
+        stockQty: parseIntOrNull(form.dataset.stock) ?? 0,
+        lowStockThreshold: parseIntOrNull(form.dataset.lowStockThreshold),
+        lowStock: parseBool(form.dataset.lowStock),
+        unitsPerBox: parseIntOrNull(form.dataset.unitsPerBox),
+        unitsPerCase: parseIntOrNull(form.dataset.unitsPerCase),
+        imageUrl: form.dataset.imageUrl || form.dataset.recentImage || "",
+        categoryName: form.dataset.categoryName || ""
+      };
+    };
+
+    const collectFeedItemsFromDom = () => {
+      const cards = Array.from(document.querySelectorAll("#productGrid form[data-product-card='true']"));
+      return cards
+        .map(readProductItemFromForm)
+        .filter((item) => item && item.id);
+    };
+
+    const setLoadedFeedItems = (items, replace = false) => {
+      if (replace) {
+        productFeedState.loadedItems = [];
+        productFeedState.loadedIds = new Set();
+      }
+      items.forEach((item) => {
+        if (!item || !item.id) return;
+        if (productFeedState.loadedIds.has(item.id)) return;
+        productFeedState.loadedIds.add(item.id);
+        productFeedState.loadedItems.push(item);
+      });
+    };
+
+    const renderFeedItems = (items, replace = false) => {
+      const grid = getProductGrid();
+      if (!grid) return;
+      if (replace) grid.innerHTML = "";
+      const orderStart = grid.querySelectorAll("form[data-product-card='true']").length;
+      const html = items.map((item, idx) => buildProductCardHtml(item, orderStart + idx)).join("");
+      if (!html && replace) {
+        grid.innerHTML = `
+          <div data-feed-empty="true" class="col-span-full rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-sm text-slate-600">
+            <div class="mx-auto flex max-w-sm flex-col items-center gap-3 text-center">
+              <div class="h-12 w-12 rounded-2xl border border-slate-200 bg-white grid place-items-center text-slate-400">
+                <svg viewBox="0 0 24 24" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <rect x="3" y="5" width="18" height="14" rx="2"></rect>
+                  <path d="m8 12 2.5 2.5L16 9"></path>
+                </svg>
+              </div>
+              <span>${escapeHtml(I18N.noProductsFound)}</span>
+            </div>
+          </div>`;
+      } else if (html) {
+        const empty = grid.querySelector("[data-feed-empty='true']");
+        if (empty) empty.remove();
+        grid.insertAdjacentHTML("beforeend", html);
+        injectCsrfIntoForms(grid);
+        if (window.htmx) window.htmx.process(grid);
+      }
+      syncProductCardQtyControls(grid);
+      applyProductListingState();
+      syncPinToggles();
+    };
+
+    const cacheFeedPage = (key, data) => {
+      if (!key) return;
+      if (productFeedState.pageCache.has(key)) {
+        productFeedState.pageCache.delete(key);
+      }
+      productFeedState.pageCache.set(key, data);
+      if (productFeedState.pageCache.size > 80) {
+        const oldestKey = productFeedState.pageCache.keys().next().value;
+        productFeedState.pageCache.delete(oldestKey);
+      }
+    };
+
+    const persistFeedState = () => {
+      const wrap = getProductGridWrap();
+      if (!wrap) return;
+      const state = {
+        q: normalizeFeedQuery(wrap.dataset.feedQ || ""),
+        categoryId: normalizeCategory(wrap.dataset.feedCategoryId || ""),
+        nextCursor: wrap.dataset.feedNextCursor || "",
+        hasMore: parseBool(wrap.dataset.feedHasMore),
+        loadedItems: productFeedState.loadedItems,
+        scrollOffset: getFeedScrollOffset(),
+        ts: Date.now()
+      };
+      try {
+        sessionStorage.setItem(productFeedSessionKey, JSON.stringify(state));
+      } catch {
+        // ignore storage errors
+      }
+    };
+
+    const restoreFeedState = () => {
+      if (productFeedState.restored) return false;
+      productFeedState.restored = true;
+      try {
+        const raw = sessionStorage.getItem(productFeedSessionKey);
+        if (!raw) return false;
+        const parsed = JSON.parse(raw);
+        if (!parsed || !Array.isArray(parsed.loadedItems)) return false;
+        if (!parsed.ts || Date.now() - parsed.ts > 10 * 60 * 1000) return false;
+        const activeFilters = getFeedFiltersFromDataset();
+        if (feedFilterKey(activeFilters) !== feedFilterKey(parsed)) return false;
+        setLoadedFeedItems(parsed.loadedItems, true);
+        renderFeedItems(parsed.loadedItems, true);
+        productFeedState.hasMore = !!parsed.hasMore;
+        productFeedState.nextCursor = parsed.nextCursor || "";
+        updateFeedDataset({
+          q: activeFilters.q,
+          categoryId: activeFilters.categoryId,
+          hasMore: productFeedState.hasMore,
+          nextCursor: productFeedState.nextCursor
+        });
+        showFeedStatus({ loading: false, error: "", end: !productFeedState.hasMore });
+        const restoredOffset = Number.isFinite(parsed.scrollOffset)
+          ? parsed.scrollOffset
+          : (Number.isFinite(parsed.scrollY) ? parsed.scrollY : 0);
+        if (restoredOffset > 0) {
+          window.requestAnimationFrame(() => {
+            setFeedScrollOffset(restoredOffset);
+          });
+        }
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
+    const sleep = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
+
+    const fetchFeedPage = async ({ cursor = "", reset = false, filters = null, reason = "scroll", updateUrl = false } = {}) => {
+      const wrap = getProductGridWrap();
+      if (!wrap) return;
+      const resolvedFilters = filters || getFeedFiltersFromControls();
+      const filterKey = feedFilterKey(resolvedFilters);
+      const pageKey = makeFeedPageKey(resolvedFilters, cursor, productFeedState.size);
+
+      if (productFeedState.inFlightKey && !reset) return;
+      if (productFeedState.inFlightKey === pageKey) return;
+
+      if (reset && productFeedState.activeAbort) {
+        productFeedState.activeAbort.abort();
+      }
+
+      if (reset) {
+        productFeedState.loadedItems = [];
+        productFeedState.loadedIds = new Set();
+        productFeedState.hasMore = true;
+        productFeedState.nextCursor = "";
+        showFeedStatus({ loading: false, error: "", end: false });
+        renderFeedItems([], true);
+        syncSearchControls(resolvedFilters);
+        updateFeedDataset({
+          q: resolvedFilters.q,
+          categoryId: resolvedFilters.categoryId,
+          hasMore: true,
+          nextCursor: ""
+        });
+      }
+
+      if (updateUrl) {
+        updateFeedUrl(resolvedFilters);
+      }
+
+      if (productFeedState.pageCache.has(pageKey)) {
+        const cached = productFeedState.pageCache.get(pageKey);
+        const items = Array.isArray(cached.items) ? cached.items : [];
+        setLoadedFeedItems(items, false);
+        renderFeedItems(items, false);
+        productFeedState.hasMore = !!cached.hasMore;
+        productFeedState.nextCursor = cached.nextCursor || "";
+        updateFeedDataset({
+          q: resolvedFilters.q,
+          categoryId: resolvedFilters.categoryId,
+          hasMore: productFeedState.hasMore,
+          nextCursor: productFeedState.nextCursor
+        });
+        showFeedStatus({ loading: false, error: "", end: !productFeedState.hasMore });
+        persistFeedState();
+        return;
+      }
+
+      const endpoint = getFeedEndpoint();
+      const params = new URLSearchParams();
+      if (resolvedFilters.q) params.set("q", resolvedFilters.q);
+      if (resolvedFilters.categoryId) params.set("categoryId", resolvedFilters.categoryId);
+      if (cursor) params.set("cursor", cursor);
+      params.set("size", String(productFeedState.size));
+      const url = `${endpoint}?${params.toString()}`;
+      const controller = new AbortController();
+      productFeedState.activeAbort = controller;
+      productFeedState.inFlightKey = pageKey;
+      productFeedState.filterKey = filterKey;
+      showFeedStatus({ loading: true, error: "", end: false });
+
+      let responseData = null;
+      let errorMessage = "";
+      const retryDelays = [0, 250, 750];
+
+      for (let attempt = 0; attempt < retryDelays.length; attempt++) {
+        if (attempt > 0) {
+          await sleep(retryDelays[attempt]);
+        }
+        try {
+          const response = await fetch(url, {
+            method: "GET",
+            headers: {
+              "Accept": "application/json",
+              "X-Terminal-Id": getTerminalId()
+            },
+            credentials: "same-origin",
+            signal: controller.signal
+          });
+          if (!response.ok) {
+            const body = await response.text();
+            const message = body && body.trim() ? body.trim() : `${I18N.requestFailed} (${response.status})`;
+            if (response.status >= 500 || response.status === 429) {
+              errorMessage = message;
+              continue;
+            }
+            throw new Error(message);
+          }
+          responseData = await response.json();
+          break;
+        } catch (error) {
+          if (controller.signal.aborted) {
+            return;
+          }
+          errorMessage = error instanceof Error ? error.message : I18N.feedUnable;
+          if (attempt === retryDelays.length - 1) {
+            break;
+          }
+        }
+      }
+
+      if (controller.signal.aborted) {
+        return;
+      }
+
+      if (!responseData || !Array.isArray(responseData.items)) {
+        showFeedStatus({ loading: false, error: errorMessage || I18N.feedUnable, end: false });
+        productFeedState.inFlightKey = null;
+        productFeedState.activeAbort = null;
+        return;
+      }
+
+      const items = responseData.items.map((item) => ({
+        id: item.id,
+        name: item.name || "",
+        sku: item.sku || "",
+        barcode: item.barcode || "",
+        price: parseNumberOrNull(item.price) ?? 0,
+        wholesalePrice: parseNumberOrNull(item.wholesalePrice),
+        wholesaleMinQty: parseIntOrNull(item.wholesaleMinQty),
+        stockQty: parseIntOrNull(item.stockQty) ?? 0,
+        lowStockThreshold: parseIntOrNull(item.lowStockThreshold),
+        lowStock: !!item.lowStock,
+        unitsPerBox: parseIntOrNull(item.unitsPerBox),
+        unitsPerCase: parseIntOrNull(item.unitsPerCase),
+        imageUrl: item.imageUrl || "",
+        categoryName: item.categoryName || ""
+      }));
+
+      setLoadedFeedItems(items, false);
+      renderFeedItems(items, false);
+      productFeedState.hasMore = !!responseData.hasMore;
+      productFeedState.nextCursor = responseData.nextCursor || "";
+      updateFeedDataset({
+        q: resolvedFilters.q,
+        categoryId: resolvedFilters.categoryId,
+        hasMore: productFeedState.hasMore,
+        nextCursor: productFeedState.nextCursor
+      });
+      cacheFeedPage(pageKey, {
+        items,
+        nextCursor: productFeedState.nextCursor,
+        hasMore: productFeedState.hasMore
+      });
+      showFeedStatus({ loading: false, error: "", end: !productFeedState.hasMore });
+      persistFeedState();
+
+      productFeedState.inFlightKey = null;
+      productFeedState.activeAbort = null;
+
+      if (reason !== "scroll") {
+        window.requestAnimationFrame(() => {
+          setFeedScrollOffset(0);
+        });
+      }
+    };
+
+    const maybeLoadNextFeedPage = () => {
+      const wrap = getProductGridWrap();
+      if (!wrap) return;
+      const hasMore = parseBool(wrap.dataset.feedHasMore);
+      if (!hasMore) {
+        showFeedStatus({ loading: false, error: "", end: true });
+        return;
+      }
+      if (productFeedState.inFlightKey) return;
+      const metrics = getFeedScrollMetrics();
+      const ratio = (metrics.scrollTop + metrics.clientHeight) / metrics.scrollHeight;
+      if (ratio < 0.8) return;
+      const filters = getFeedFiltersFromDataset();
+      fetchFeedPage({
+        cursor: wrap.dataset.feedNextCursor || "",
+        reset: false,
+        filters,
+        reason: "scroll",
+        updateUrl: false
+      });
+    };
+
+    const resetFeedWithFilters = (filters, { updateUrl = true } = {}) => {
+      fetchFeedPage({
+        cursor: "",
+        reset: true,
+        filters,
+        reason: "filter",
+        updateUrl
+      });
+    };
+
+    const bindFeedObserver = () => {
+      const sentinel = getFeedSentinel();
+      if (!sentinel) return;
+      if (productFeedState.observer) {
+        productFeedState.observer.disconnect();
+      }
+      const observerRoot = getProductScrollContainer();
+      productFeedState.observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          maybeLoadNextFeedPage();
+        });
+      }, { root: observerRoot || null, rootMargin: "0px 0px 20% 0px", threshold: 0 });
+      productFeedState.observer.observe(sentinel);
+    };
+
+    const bindFeedListeners = () => {
+      if (!productFeedState.scrollHandler) {
+        productFeedState.scrollHandler = () => {
+          const now = Date.now();
+          const last = Number.parseInt(document.body.dataset.feedScrollTs || "0", 10);
+          if (now - last < 150) return;
+          document.body.dataset.feedScrollTs = String(now);
+          maybeLoadNextFeedPage();
+        };
+      }
+
+      const nextTarget = getProductScrollContainer() || window;
+      if (productFeedState.scrollTarget !== nextTarget) {
+        if (productFeedState.scrollTarget && productFeedState.scrollHandler) {
+          productFeedState.scrollTarget.removeEventListener("scroll", productFeedState.scrollHandler);
+        }
+        productFeedState.scrollTarget = nextTarget;
+        if (productFeedState.scrollTarget && productFeedState.scrollHandler) {
+          productFeedState.scrollTarget.addEventListener("scroll", productFeedState.scrollHandler, { passive: true });
+        }
+      }
+
+      if (productFeedState.listenersBound) return;
+      productFeedState.listenersBound = true;
+
+      window.addEventListener("pagehide", persistFeedState);
+      window.addEventListener("beforeunload", persistFeedState);
+
+      productFeedState.resizeHandler = () => {
+        updateSplitLayoutMetrics();
+        bindFeedListeners();
+        bindFeedObserver();
+      };
+      window.addEventListener("resize", productFeedState.resizeHandler, { passive: true });
+
+      productFeedState.mediaHandler = () => {
+        updateSplitLayoutMetrics();
+        bindFeedListeners();
+        bindFeedObserver();
+        maybeLoadNextFeedPage();
+      };
+      if (typeof desktopSplitQuery.addEventListener === "function") {
+        desktopSplitQuery.addEventListener("change", productFeedState.mediaHandler);
+      } else if (typeof desktopSplitQuery.addListener === "function") {
+        desktopSplitQuery.addListener(productFeedState.mediaHandler);
+      }
+
+      if (!productFeedState.layoutObserver && "ResizeObserver" in window) {
+        productFeedState.layoutObserver = new ResizeObserver(() => {
+          updateSplitLayoutMetrics();
+        });
+        const header = document.getElementById("posHeader");
+        const toolbar = document.getElementById("posToolbar");
+        if (header) productFeedState.layoutObserver.observe(header);
+        if (toolbar) productFeedState.layoutObserver.observe(toolbar);
+      }
+    };
+
+    const initInfiniteProductFeed = () => {
+      const wrap = getProductGridWrap();
+      if (!wrap) return;
+      updateSplitLayoutMetrics();
+      bindFeedListeners();
+      bindFeedObserver();
+      const currentFilters = getFeedFiltersFromDataset();
+      productFeedState.filterKey = feedFilterKey(currentFilters);
+      productFeedState.hasMore = parseBool(wrap.dataset.feedHasMore);
+      productFeedState.nextCursor = wrap.dataset.feedNextCursor || "";
+      if (!restoreFeedState()) {
+        const domItems = collectFeedItemsFromDom();
+        setLoadedFeedItems(domItems, true);
+        showFeedStatus({ loading: false, error: "", end: !productFeedState.hasMore && domItems.length > 0 });
+      }
+      persistFeedState();
+    };
+
+    const buildPostBody = (params) => {
+      const body = new URLSearchParams();
+      Object.entries(params || {}).forEach(([key, value]) => {
+        if (value !== null && value !== undefined) body.append(key, value.toString());
+      });
+      const csrf = getCsrfField();
+      if (csrf) body.append(csrf.name, csrf.value);
+      return body;
+    };
+
+    const postJson = async (url, params) => {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "X-Terminal-Id": getTerminalId()
+        },
+        body: buildPostBody(params)
+      });
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || `${I18N.requestFailed} (${response.status})`);
+      }
+      return response.json();
+    };
+
+    const setBridgeStatus = (message, isError) => {
+      const statusEl = document.querySelector("[data-bridge-status='true']");
+      if (!statusEl) return;
+      statusEl.textContent = message || "";
+      statusEl.classList.toggle("text-emerald-700", !isError);
+      statusEl.classList.toggle("text-rose-700", !!isError);
+    };
+
+    const resolveBridgeUrl = (value) => {
+      const explicit = (value || "").trim();
+      if (explicit) return explicit;
+      const fromBody = (document.body.dataset.terminalBridgeUrl || "").trim();
+      if (fromBody) return fromBody;
+      return "http://127.0.0.1:18765";
+    };
+
+    const bridgeFetch = async (baseUrl, path, payload) => {
+      const trimmed = resolveBridgeUrl(baseUrl).replace(/\/+$/, "");
+      const response = await fetch(`${trimmed}${path}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload || {})
+      });
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || I18N.requestFailed);
+      }
+      return response.json().catch(() => ({}));
+    };
+
+    const printReceiptViaBridge = async (saleId, reprint = false) => {
+      if (!saleId) return;
+      const payloadResponse = await postJson(`/pos/checkout/${saleId}/print`, {
+        terminalId: getTerminalId(),
+        reprint: reprint ? "true" : "false"
+      });
+
+      const mode = (payloadResponse.printerMode || "PDF").toUpperCase();
+      if (mode !== "BRIDGE") {
+        if (payloadResponse.pdfUrl) window.open(payloadResponse.pdfUrl, "_blank", "noopener,noreferrer");
+        setBridgeStatus("Bridge disabled. Downloaded PDF fallback.", false);
+        return;
+      }
+
+      try {
+        await bridgeFetch(payloadResponse.bridgeUrl, "/print", payloadResponse.payload);
+        setBridgeStatus("Receipt sent to printer.", false);
+      } catch (error) {
+        if (payloadResponse.pdfUrl) window.open(payloadResponse.pdfUrl, "_blank", "noopener,noreferrer");
+        setBridgeStatus("Bridge unavailable. Used PDF fallback.", true);
+      }
+    };
+
+    const openDrawerViaBridge = async (saleId) => {
+      const drawerResponse = await postJson("/pos/drawer/open", {
+        terminalId: getTerminalId(),
+        saleId: saleId || ""
+      });
+      const mode = (drawerResponse.printerMode || "PDF").toUpperCase();
+      if (mode !== "BRIDGE") {
+        setBridgeStatus("Bridge disabled. Open drawer manually.", true);
+        return;
+      }
+      try {
+        await bridgeFetch(drawerResponse.bridgeUrl, "/drawer/open", {
+          terminalId: drawerResponse.terminalId,
+          saleId: saleId || null
+        });
+        setBridgeStatus("Drawer open command sent.", false);
+      } catch (error) {
+        setBridgeStatus("Bridge unavailable. Open drawer manually.", true);
+      }
+    };
+
+    const renderPins = () => {
+      const section = document.getElementById("pinnedSection");
+      const grid = document.getElementById("pinnedGrid");
+      if (!section || !grid) return;
+      const pins = loadPins();
+      if (!pins.length) {
+        section.classList.add("hidden");
+        grid.innerHTML = "";
+        return;
+      }
+      section.classList.remove("hidden");
+      grid.innerHTML = pins.map((p) => {
+        const name = escapeHtml(p.name || "Item");
+        const sku = escapeHtml(p.sku || "");
+        const price = formatMoney(p.price || 0);
+        const image = p.image
+          ? `<img src="${escapeHtml(p.image)}" alt="" class="h-full w-full object-contain object-center block">`
+          : `<div class="h-full w-full grid place-items-center text-slate-400">
+               <svg viewBox="0 0 24 24" class="h-8 w-8" fill="none" stroke="currentColor" stroke-width="1.5">
+                 <path d="M3 7h3l2-2h8l2 2h3v12H3V7z"/>
+                 <circle cx="12" cy="13" r="3.5"/>
+               </svg>
+             </div>`;
+        return `
+          <div class="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div class="h-24 bg-slate-50 border-b border-slate-200 overflow-hidden flex items-center justify-center p-2">
+              ${image}
+            </div>
+            <button type="button" data-unpin-id="${escapeHtml(p.id)}"
+                    class="absolute right-2 top-2 rounded-full bg-white/90 border border-slate-200 p-1.5 text-slate-500 hover:text-slate-900 hover:bg-white transition">
+              <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M6 6l12 12"/>
+                <path d="M18 6l-12 12"/>
+              </svg>
+            </button>
+            <div class="p-3">
+              <div class="text-sm font-semibold text-slate-900 line-clamp-2">${name}</div>
+              <div class="text-xs text-slate-500">${price}</div>
+              <form action="/pos/cart/add/${escapeHtml(p.id)}" method="post"
+                    hx-post="/pos/cart/add/${escapeHtml(p.id)}" hx-target="#cartPanel" hx-swap="outerHTML"
+                    data-recent-item="true"
+                    data-recent-id="${escapeHtml(p.id)}"
+                    data-recent-name="${name}"
+                    data-recent-sku="${sku}"
+                    data-recent-price="${escapeHtml(p.price || 0)}"
+                    data-recent-image="${escapeHtml(p.image || '')}"
+                    class="mt-2">
+                <button class="w-full rounded-xl bg-slate-900 text-white px-3 py-1.5 text-xs font-semibold hover:bg-slate-800 transition">
+                  Add
+                </button>
+              </form>
+            </div>
+          </div>
+        `;
+      }).join("");
+      injectCsrfIntoForms(grid);
+      if (window.htmx) window.htmx.process(grid);
+    };
+
+    let clearingCart = false;
+
+    const postCartForm = async (url, params, swap) => {
+      const body = buildPostBody(params);
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "HX-Request": "true",
+          "X-Terminal-Id": getTerminalId()
+        },
+        body
+      });
+      if (!swap) return;
+      const html = await response.text();
+      const panel = getCartPanel();
+      if (panel) {
+        panel.outerHTML = html;
+      }
+      if (window.htmx) window.htmx.process(document.getElementById("cartPanel"));
+      afterCartSwap();
+    };
+
+    const clearCart = async () => {
+      if (clearingCart) return;
+      const panel = getCartPanel();
+      if (!panel) return;
+      clearingCart = true;
+      try {
+        const ids = Array.from(panel.querySelectorAll("[data-cart-item]"))
+          .map((el) => el.dataset.productId)
+          .filter(Boolean);
+        for (const id of ids) {
+          await postCartForm("/pos/cart/update", { productId: id, qty: 0 }, false);
+        }
+        await postCartForm("/pos/cart/discount", { discountType: "AMOUNT", discountValue: "0", discountReason: "" }, false);
+        await postCartForm("/pos/cart/tax", { taxRate: "0" }, false);
+        await postCartForm("/pos/cart/customer/clear", {}, true);
+        selectedCartId = null;
+      } finally {
+        clearingCart = false;
+      }
+    };
+
+    const confirmClearCart = () => {
+      const ok = window.confirm(I18N.clearCartConfirmText);
+      if (ok) clearCart();
+    };
+
+    let autoPrintInFlight = false;
+
+    const runCheckoutAutoPrint = async () => {
+      if (autoPrintInFlight) return;
+      const success = document.querySelector("[data-checkout-success='true']");
+      if (!success) return;
+      const saleId = (success.getAttribute("data-checkout-sale-id") || "").trim();
+      if (!saleId) return;
+      const autoPrint = (success.getAttribute("data-auto-print") || "").toLowerCase() === "true";
+      if (!autoPrint) return;
+      const key = `pos.autoprint.${saleId}`;
+      try {
+        if (sessionStorage.getItem(key) === "1") return;
+      } catch {
+        // ignore
+      }
+      autoPrintInFlight = true;
+      try {
+        await printReceiptViaBridge(saleId, false);
+        try {
+          sessionStorage.setItem(key, "1");
+        } catch {
+          // ignore storage failures
+        }
+      } finally {
+        autoPrintInFlight = false;
+      }
+    };
+
+    const isPosContextInput = (target) => {
+      if (!target) return false;
+      if (target.id === "barcodeInput") return false;
+      return isTypingTarget(target);
+    };
+
+    let barcodeRefocusUntil = 0;
+    let barcodeRefocusTimer = null;
+    let barcodeTypingIntervals = [];
+    let barcodeLastKeyAt = 0;
+    let barcodeAutoSubmitTimer = null;
+    let lastCartPanelTotal = null;
+    const addSubmitTimestamps = new WeakMap();
+    let pendingRecentRender = false;
+    let posStaticUiReady = false;
+
+    const scheduleBarcodeRefocus = (delayMs = 180) => {
+      if (barcodeRefocusTimer) window.clearTimeout(barcodeRefocusTimer);
+      barcodeRefocusTimer = window.setTimeout(() => {
+        const input = document.getElementById("barcodeInput");
+        if (!input) return;
+        if (Date.now() < barcodeRefocusUntil) return;
+        const active = document.activeElement;
+        if (isPosContextInput(active)) return;
+        if (active === input) return;
+        input.focus({ preventScroll: true });
+      }, delayMs);
+    };
+
+    const bindBarcodeScannerBehavior = () => {
+      const form = document.getElementById("barcodeForm");
+      const input = document.getElementById("barcodeInput");
+      if (!form || !input) return;
+      if (input.dataset.boundScanner === "true") return;
+      input.dataset.boundScanner = "true";
+
+      input.addEventListener("keydown", (event) => {
+        const now = performance.now();
+        if (event.key && event.key.length === 1) {
+          if (barcodeLastKeyAt > 0) {
+            barcodeTypingIntervals.push(now - barcodeLastKeyAt);
+            if (barcodeTypingIntervals.length > 12) {
+              barcodeTypingIntervals = barcodeTypingIntervals.slice(-12);
+            }
+          }
+          barcodeLastKeyAt = now;
+        }
+        if (event.key === "Enter") {
+          event.preventDefault();
+          if (typeof form.requestSubmit === "function") form.requestSubmit();
+          else form.submit();
+        }
+      });
+
+      input.addEventListener("input", () => {
+        if (barcodeAutoSubmitTimer) window.clearTimeout(barcodeAutoSubmitTimer);
+        const value = (input.value || "").trim();
+        if (!value) return;
+        const fastIntervals = barcodeTypingIntervals.filter((delta) => delta > 0 && delta < 40).length;
+        const likelyScanner = fastIntervals >= 4 && value.length >= 5;
+        if (!likelyScanner) return;
+        barcodeAutoSubmitTimer = window.setTimeout(() => {
+          if (typeof form.requestSubmit === "function") form.requestSubmit();
+          else form.submit();
+          barcodeTypingIntervals = [];
+          barcodeLastKeyAt = 0;
+        }, 70);
+      });
+
+      input.addEventListener("blur", () => {
+        barcodeTypingIntervals = [];
+        barcodeLastKeyAt = 0;
+        scheduleBarcodeRefocus(120);
+      });
+
+      scheduleBarcodeRefocus(40);
+    };
+
+    const initPosStaticUi = () => {
+      if (posStaticUiReady) return;
+      posStaticUiReady = true;
+      updateSplitLayoutMetrics();
+      initInfiniteProductFeed();
+      syncProductCardQtyControls(document);
+      applyProductListingState();
+      renderPins();
+      renderRecents();
+      syncPinToggles();
+      bindBarcodeScannerBehavior();
+    };
+
+    const refreshCartUi = () => {
+      syncTerminalIdFields(document);
+      syncClientCheckoutIdFields(document);
+      applyStoredCurrency();
+      updateCashChange();
+      updateQuickTotals();
+      if (pendingRecentRender) {
+        renderRecents();
+        pendingRecentRender = false;
+      }
+      const panel = getCartPanel();
+      if (panel) {
+        const nextTotal = Number.parseFloat(panel.dataset.total || "0");
+        if (lastCartPanelTotal != null && Math.abs(nextTotal - lastCartPanelTotal) > 0.0001) {
+          flashElement(panel, "cart-updated");
+          const firstItem = panel.querySelector("[data-cart-item]");
+          if (firstItem) flashElement(firstItem, "cart-item-added");
+        }
+        lastCartPanelTotal = nextTotal;
+      } else {
+        lastCartPanelTotal = null;
+      }
+      restoreCartSelection();
+      scheduleBarcodeRefocus();
+      runCheckoutAutoPrint();
+    };
+
+    const afterCartSwap = () => {
+      initPosStaticUi();
+      refreshCartUi();
+    };
+
+    const cameraEnabled = (document.body.dataset.cameraScanEnabled || "").toLowerCase() === "true";
+    const cameraState = {
+      active: false,
+      stream: null,
+      detector: null,
+      rafId: null
+    };
+
+    const setCameraStatus = (message, isError) => {
+      const status = document.getElementById("cameraScanStatus");
+      if (!status) return;
+      status.textContent = message || "";
+      status.classList.toggle("text-slate-500", !isError);
+      status.classList.toggle("text-rose-600", !!isError);
+    };
+
+    const stopCameraScanner = () => {
+      cameraState.active = false;
+      if (cameraState.rafId) {
+        window.cancelAnimationFrame(cameraState.rafId);
+        cameraState.rafId = null;
+      }
+      if (cameraState.stream) {
+        cameraState.stream.getTracks().forEach((track) => track.stop());
+        cameraState.stream = null;
+      }
+      const panel = document.getElementById("cameraScanPanel");
+      if (panel) panel.classList.add("hidden");
+      const video = document.getElementById("cameraScanVideo");
+      if (video) {
+        video.pause();
+        video.srcObject = null;
+      }
+      setCameraStatus(I18N.cameraStopped, false);
+      scheduleBarcodeRefocus(40);
+    };
+
+    const runCameraLoop = async () => {
+      if (!cameraState.active) return;
+      const video = document.getElementById("cameraScanVideo");
+      if (!video || !cameraState.detector) return;
+      try {
+        const codes = await cameraState.detector.detect(video);
+        if (codes && codes.length > 0) {
+          const value = (codes[0].rawValue || "").trim();
+          if (value) {
+            const input = document.getElementById("barcodeInput");
+            const form = document.getElementById("barcodeForm");
+            if (input && form) {
+              input.value = value;
+              setCameraStatus(`${I18N.cameraScanned}: ${value}`, false);
+              stopCameraScanner();
+              if (typeof form.requestSubmit === "function") form.requestSubmit();
+              else form.submit();
+              return;
+            }
+          }
+        }
+      } catch (error) {
+        setCameraStatus(I18N.cameraScanFailed, true);
+      }
+      cameraState.rafId = window.requestAnimationFrame(runCameraLoop);
+    };
+
+    const startCameraScanner = async () => {
+      if (!cameraEnabled) return;
+      if (cameraState.active) {
+        stopCameraScanner();
+        return;
+      }
+      const panel = document.getElementById("cameraScanPanel");
+      const video = document.getElementById("cameraScanVideo");
+      if (!panel || !video) return;
+      if (!("BarcodeDetector" in window)) {
+        setCameraStatus(I18N.cameraUnsupported, true);
+        panel.classList.remove("hidden");
+        return;
+      }
+      try {
+        cameraState.detector = new window.BarcodeDetector({
+          formats: ["ean_13", "ean_8", "upc_a", "upc_e", "code_39", "code_128", "qr_code"]
+        });
+        cameraState.stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: "environment" } },
+          audio: false
+        });
+        video.srcObject = cameraState.stream;
+        await video.play();
+        panel.classList.remove("hidden");
+        cameraState.active = true;
+        setCameraStatus(I18N.cameraScanning, false);
+        runCameraLoop();
+      } catch (error) {
+        setCameraStatus(I18N.cameraPermissionError, true);
+      }
+    };
+
+    const loadRecents = () => {
+      try {
+        const raw = localStorage.getItem(recentKey);
+        const list = raw ? JSON.parse(raw) : [];
+        return Array.isArray(list) ? list : [];
+      } catch {
+        return [];
+      }
+    };
+
+    const saveRecents = (items) => {
+      try {
+        localStorage.setItem(recentKey, JSON.stringify(items));
+      } catch {
+        // ignore storage failures
+      }
+    };
+
+    const recentItemKey = (item) => {
+      const sku = (item.sku || "").trim();
+      if (sku) return `sku:${sku.toLowerCase()}`;
+      return `id:${String(item.id || "")}`;
+    };
+
+    const addRecentItem = (item, options = {}) => {
+      const shouldRender = options.render !== false;
+      if (!item || !item.id) return;
+      const list = loadRecents();
+      const key = recentItemKey(item);
+      const filtered = list.filter((i) => recentItemKey(i) !== key);
+      filtered.unshift(item);
+      saveRecents(filtered.slice(0, maxRecent));
+      if (shouldRender) {
+        renderRecents();
+      }
+    };
+
+    const renderRecents = () => {
+      const section = document.getElementById("recentSection");
+      const grid = document.getElementById("recentGrid");
+      if (!section || !grid) return;
+      const items = loadRecents();
+      if (!items.length) {
+        section.classList.add("hidden");
+        grid.innerHTML = "";
+        return;
+      }
+      section.classList.remove("hidden");
+      grid.innerHTML = items.map((item) => {
+        const name = escapeHtml(item.name || "Item");
+        const sku = escapeHtml(item.sku || "");
+        const price = formatMoney(item.price || 0);
+        const image = item.image
+          ? `<img src="${escapeHtml(item.image)}" alt="" class="h-full w-full object-contain object-center block">`
+          : `<div class="h-full w-full grid place-items-center text-slate-400">
+               <svg viewBox="0 0 24 24" class="h-8 w-8" fill="none" stroke="currentColor" stroke-width="1.5">
+                 <path d="M3 7h3l2-2h8l2 2h3v12H3V7z"/>
+                 <circle cx="12" cy="13" r="3.5"/>
+               </svg>
+             </div>`;
+        return `
+          <div class="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div class="h-24 bg-slate-50 border-b border-slate-200 overflow-hidden flex items-center justify-center p-2">
+              ${image}
+            </div>
+            <div class="p-3">
+              <div class="text-sm font-semibold text-slate-900 line-clamp-2">${name}</div>
+              <div class="text-xs text-slate-500">${price}</div>
+              <form action="/pos/cart/add/${escapeHtml(item.id)}" method="post"
+                    hx-post="/pos/cart/add/${escapeHtml(item.id)}" hx-target="#cartPanel" hx-swap="outerHTML"
+                    data-recent-item="true"
+                    data-recent-id="${escapeHtml(item.id)}"
+                    data-recent-name="${name}"
+                    data-recent-sku="${sku}"
+                    data-recent-price="${escapeHtml(item.price || 0)}"
+                    data-recent-image="${escapeHtml(item.image || '')}"
+                    class="mt-2">
+                <button class="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition">
+                  Add
+                </button>
+              </form>
+            </div>
+          </div>
+        `;
+      }).join("");
+      injectCsrfIntoForms(grid);
+      if (window.htmx) window.htmx.process(grid);
+    };
+
+    const syncPinToggles = () => {
+      const pins = loadPins();
+      const pinned = new Set(pins.map((p) => String(p.id)));
+      document.querySelectorAll(".pin-toggle").forEach((el) => {
+        const id = String(el.dataset.productId || "");
+        const active = pinned.has(id);
+        el.setAttribute("aria-pressed", active ? "true" : "false");
+        el.classList.toggle("bg-slate-900", active);
+        el.classList.toggle("border-slate-900", active);
+        el.classList.toggle("text-white", active);
+        el.classList.toggle("bg-white/90", !active);
+        el.classList.toggle("border-slate-200", !active);
+        el.classList.toggle("text-slate-700", !active);
+      });
+    };
+
+    const togglePin = (el) => {
+      const data = {
+        id: String(el.dataset.productId || ""),
+        name: el.dataset.productName || "Item",
+        sku: el.dataset.productSku || "",
+        price: el.dataset.productPrice || "0",
+        image: el.dataset.productImage || ""
+      };
+      if (!data.id) return;
+      const pins = loadPins();
+      const idx = pins.findIndex((p) => String(p.id) === data.id);
+      if (idx >= 0) {
+        pins.splice(idx, 1);
+      } else {
+        pins.unshift(data);
+      }
+      const trimmed = pins.slice(0, maxPins);
+      savePins(trimmed);
+      renderPins();
+      syncPinToggles();
+    };
+
+    const isAddToCartForm = (form) => {
+      if (!(form instanceof HTMLFormElement)) return false;
+      const action = form.getAttribute("hx-post") || form.getAttribute("action") || "";
+      return action.includes("/pos/cart/add/");
+    };
+
+    document.addEventListener("click", (e) => {
+      const feedRetryBtn = e.target.closest("[data-action='feed-retry']");
+      if (feedRetryBtn) {
+        e.preventDefault();
+        const wrap = getProductGridWrap();
+        if (!wrap) return;
+        const filters = getFeedFiltersFromDataset();
+        fetchFeedPage({
+          cursor: wrap.dataset.feedNextCursor || "",
+          reset: false,
+          filters,
+          reason: "retry",
+          updateUrl: false
+        });
+        return;
+      }
+
+      const printReceiptBtn = e.target.closest("[data-action='print-receipt']");
+      if (printReceiptBtn) {
+        e.preventDefault();
+        const saleId = printReceiptBtn.getAttribute("data-sale-id");
+        printReceiptViaBridge(saleId, false).catch(() => {
+          setBridgeStatus("Unable to print receipt. Use PDF fallback.", true);
+        });
+        return;
+      }
+
+      const reprintBtn = e.target.closest("[data-action='reprint-receipt']");
+      if (reprintBtn) {
+        e.preventDefault();
+        const saleId = reprintBtn.getAttribute("data-sale-id");
+        printReceiptViaBridge(saleId, true).catch(() => {
+          setBridgeStatus("Unable to reprint receipt. Use PDF fallback.", true);
+        });
+        return;
+      }
+
+      const openDrawerBtn = e.target.closest("[data-action='open-drawer']");
+      if (openDrawerBtn) {
+        e.preventDefault();
+        const saleId = openDrawerBtn.getAttribute("data-sale-id");
+        openDrawerViaBridge(saleId).catch(() => {
+          setBridgeStatus("Unable to open drawer automatically.", true);
+        });
+        return;
+      }
+
+      const manualDrawerBtn = e.target.closest("[data-action='drawer-manual']");
+      if (manualDrawerBtn) {
+        e.preventDefault();
+        setBridgeStatus("Please open drawer manually at the register.", true);
+        return;
+      }
+
+      const cameraToggle = e.target.closest("[data-action='camera-toggle']");
+      if (cameraToggle) {
+        e.preventDefault();
+        startCameraScanner();
+        return;
+      }
+
+      const cameraStop = e.target.closest("[data-action='camera-stop']");
+      if (cameraStop) {
+        e.preventDefault();
+        stopCameraScanner();
+        return;
+      }
+
+      const pin = e.target.closest(".pin-toggle");
+      if (pin) {
+        e.preventDefault();
+        e.stopPropagation();
+        togglePin(pin);
+        return;
+      }
+
+      const productActionLink = e.target.closest(".product-admin-actions a.product-action-btn");
+      if (productActionLink) {
+        e.stopPropagation();
+        const href = productActionLink.getAttribute("href");
+        if (!href) return;
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+        e.preventDefault();
+        window.location.assign(href);
+        return;
+      }
+
+      const qtyDecBtn = e.target.closest("[data-action='card-qty-dec']");
+      if (qtyDecBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        adjustProductCardQty(qtyDecBtn, -1);
+        return;
+      }
+
+      const qtyIncBtn = e.target.closest("[data-action='card-qty-inc']");
+      if (qtyIncBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        adjustProductCardQty(qtyIncBtn, 1);
+        return;
+      }
+
+      const addButton = e.target.closest("button");
+      if (addButton) {
+        const submitType = (addButton.getAttribute("type") || "submit").toLowerCase();
+        if (submitType === "submit") {
+          const addForm = addButton.closest("form");
+          if (addForm && isAddToCartForm(addForm)) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof addForm.requestSubmit === "function") {
+              addForm.requestSubmit(addButton);
+            } else {
+              const submitEvent = new Event("submit", { bubbles: true, cancelable: true });
+              if (addForm.dispatchEvent(submitEvent)) {
+                addForm.submit();
+              }
+            }
+            return;
+          }
+        }
+      }
+
+      const productCard = e.target.closest("form[data-product-card='true']");
+      if (productCard && !e.target.closest("button, input, select, textarea, a, [data-ignore-card-submit='true']")) {
+        e.preventDefault();
+        if (typeof productCard.requestSubmit === "function") {
+          productCard.requestSubmit();
+        } else {
+          productCard.submit();
+        }
+        return;
+      }
+
+      const unpin = e.target.closest("[data-unpin-id]");
+      if (unpin) {
+        e.preventDefault();
+        const id = String(unpin.getAttribute("data-unpin-id"));
+        const pins = loadPins().filter((p) => String(p.id) !== id);
+        savePins(pins);
+        renderPins();
+        syncPinToggles();
+        return;
+      }
+
+      const clearPins = e.target.closest("[data-action='clear-pins']");
+      if (clearPins) {
+        e.preventDefault();
+        savePins([]);
+        renderPins();
+        syncPinToggles();
+        return;
+      }
+
+      const clearRecents = e.target.closest("[data-action='clear-recents']");
+      if (clearRecents) {
+        e.preventDefault();
+        saveRecents([]);
+        renderRecents();
+        return;
+      }
+
+      const clearCartBtn = e.target.closest("[data-action='clear-cart']");
+      if (clearCartBtn) {
+        e.preventDefault();
+        confirmClearCart();
+        return;
+      }
+
+      const stockFilterBtn = e.target.closest("[data-stock-filter]");
+      if (stockFilterBtn) {
+        e.preventDefault();
+        const filter = stockFilterBtn.getAttribute("data-stock-filter") || "all";
+        writeStorage(productStockFilterKey, filter);
+        applyProductListingState();
+        return;
+      }
+
+      const densityBtn = e.target.closest("[data-density]");
+      if (densityBtn) {
+        e.preventDefault();
+        const density = densityBtn.getAttribute("data-density") || "comfortable";
+        writeStorage(productDensityKey, density);
+        applyProductListingState();
+        return;
+      }
+
+      const discountBtn = e.target.closest(".discount-quick");
+      if (discountBtn) {
+        e.preventDefault();
+        const panel = getCartPanel();
+        if (!panel) return;
+        const pct = Number.parseFloat(discountBtn.getAttribute("data-discount-pct") || "0");
+        const typeSelect = panel.querySelector("select[name='discountType']");
+        const input = panel.querySelector("input[name='discountValue']");
+        if (!input) return;
+        if (typeSelect) typeSelect.value = "PERCENT";
+        input.value = Number.isFinite(pct) ? pct.toFixed(2) : "0.00";
+        if (input.form) input.form.requestSubmit();
+        return;
+      }
+
+      const cashBtn = e.target.closest(".cash-quick");
+      if (cashBtn) {
+        e.preventDefault();
+        const panel = getCartPanel();
+        if (!panel) return;
+        const input = panel.querySelector("#cashReceived");
+        if (!input) return;
+        const total = Number.parseFloat(panel.dataset.total || "0");
+        if (!Number.isFinite(total)) return;
+        const currency = getSelectedCurrency() || getBaseCurrency();
+        const rate = currency.rate && currency.rate > 0 ? currency.rate : 1;
+        const add = Number.parseFloat(cashBtn.getAttribute("data-cash-add") || "0");
+        const exact = cashBtn.getAttribute("data-cash-mode") === "exact";
+        const valueBase = exact ? total : total + add;
+        const valueForeign = rate > 0 ? valueBase / rate : valueBase;
+        input.value = valueForeign.toFixed(currency.decimals || 2);
+        updateCashChange();
+        return;
+      }
+
+      const cartItem = e.target.closest("[data-cart-item]");
+      if (cartItem && !e.target.closest("button, input, select, textarea, a, form")) {
+        setSelectedCartItem(cartItem.dataset.productId || null);
+      }
+    });
+
+    document.addEventListener("submit", (e) => {
+      const form = e.target;
+      if (!(form instanceof HTMLFormElement)) return;
+      if (isAddToCartForm(form)) {
+        const now = Date.now();
+        const last = addSubmitTimestamps.get(form) || 0;
+        if (now - last < 180) {
+          e.preventDefault();
+          return;
+        }
+        addSubmitTimestamps.set(form, now);
+      }
+      if (form.matches("[data-product-feed-form='true']")) {
+        e.preventDefault();
+        const filters = getFeedFiltersFromControls();
+        resetFeedWithFilters(filters, { updateUrl: true });
+        return;
+      }
+      if (form.matches("[data-cash-checkout-form='true']")) {
+        syncCashHidden();
+        if (!validateCashTenderBeforeCheckout()) {
+          e.preventDefault();
+          return;
+        }
+      }
+      if (form.matches("[data-quick-add]")) {
+        const input = form.querySelector("input[name='q']");
+        const source = document.getElementById("searchBox");
+        if (input && source) input.value = source.value;
+      }
+      if (form.matches("[data-recent-item]")) {
+        const item = {
+          id: form.dataset.recentId,
+          name: form.dataset.recentName,
+          sku: form.dataset.recentSku,
+          price: form.dataset.recentPrice,
+          image: form.dataset.recentImage
+        };
+        // Avoid re-rendering recent cards during the same submit event:
+        // replacing the active form can cancel the outgoing add-to-cart request.
+        addRecentItem(item, { render: false });
+        pendingRecentRender = true;
+      }
+    }, true);
+
+    document.addEventListener("input", (e) => {
+      if (e.target && e.target.id === "cashReceived") {
+        updateCashChange();
+      }
+    });
+
+    document.addEventListener("change", (e) => {
+      if (e.target && e.target.id === "categorySelect") {
+        const form = e.target.closest("form[data-product-feed-form='true']");
+        if (form) {
+          const filters = getFeedFiltersFromControls();
+          resetFeedWithFilters(filters, { updateUrl: true });
+          return;
+        }
+      }
+      if (e.target && e.target.id === "cashCurrency") {
+        try {
+          localStorage.setItem(cashCurrencyKey, e.target.value || "");
+        } catch {
+          // ignore storage errors
+        }
+        const panel = getCartPanel();
+        const input = panel ? panel.querySelector("#cashReceived") : null;
+        if (input) {
+          const code = e.target.value || "";
+          input.placeholder = code ? `${I18N.amountReceivedLabel} (${code})` : I18N.amountReceivedLabel;
+        }
+        updateCashChange();
+        return;
+      }
+      if (e.target && e.target.id === "productSort") {
+        const sort = e.target.value || "server";
+        writeStorage(productSortKey, sort);
+        applyProductListingState();
+      }
+    });
+
+    document.addEventListener("focusin", (e) => {
+      const target = e.target;
+      if (!target) return;
+      if (target.id === "barcodeInput") {
+        barcodeRefocusUntil = 0;
+        return;
+      }
+      if (isTypingTarget(target)) {
+        barcodeRefocusUntil = Date.now() + 20000;
+      }
+    });
+
+    document.addEventListener("pointerdown", (e) => {
+      const target = e.target;
+      if (!target) return;
+      if (target.closest("#cameraScanPanel")) return;
+      if (isTypingTarget(target) && target.id !== "barcodeInput") {
+        barcodeRefocusUntil = Date.now() + 20000;
+        return;
+      }
+      scheduleBarcodeRefocus(300);
+    });
+
+    document.addEventListener("htmx:afterSwap", (e) => {
+      if (!e.target) return;
+      if (e.target.id === "productGridWrap") {
+        syncProductCardQtyControls(document);
+        applyProductListingState();
+        syncPinToggles();
+        return;
+      }
+      if (["cartPanel", "cartContainer"].includes(e.target.id)) {
+        afterCartSwap();
+      }
+    });
+
+    document.addEventListener("DOMContentLoaded", () => {
+      bindHtmxTerminalHeader();
+      afterCartSwap();
+      scheduleBarcodeRefocus(80);
+    });
+
+    window.addEventListener("beforeunload", () => {
+      stopCameraScanner();
+    });
+
+    // Fallback: if HTMX didn't load (offline/CDN blocked), do minimal AJAX swaps.
+    (function () {
+      if (window.htmx) return;
+
+      const toQueryString = (formData) => {
+        const params = new URLSearchParams();
+        for (const [key, value] of formData.entries()) {
+          if (value !== null && value !== undefined) params.append(key, value.toString());
+        }
+        return params.toString();
+      };
+
+      const resolveTarget = (el) => {
+        const selector = el.getAttribute("hx-target");
+        if (!selector) return null;
+        return document.querySelector(selector);
+      };
+
+      const performSwap = (target, html, swap) => {
+        if (!target) return;
+        if (swap === "outerHTML") {
+          target.outerHTML = html;
+        } else {
+          target.innerHTML = html;
+        }
+      };
+
+      const afterRequest = (el) => {
+        const hxOn = el.getAttribute("hx-on");
+        if (hxOn && hxOn.includes("afterRequest") && typeof el.reset === "function") {
+          el.reset();
+        }
+      };
+
+      const ajaxRequest = async (options) => {
+        const { url, method, body, triggerEl, target, swap, pushUrl } = options;
+        const headers = { "HX-Request": "true", "X-Terminal-Id": getTerminalId() };
+        if (target && target.id) headers["HX-Target"] = target.id;
+
+        const response = await fetch(url, { method, body, headers });
+        const html = await response.text();
+        performSwap(target, html, swap);
+        afterCartSwap();
+        if (pushUrl) history.pushState({}, "", url);
+        if (triggerEl) afterRequest(triggerEl);
+      };
+
+      const submitForm = async (form, triggerEl) => {
+        const method = (form.getAttribute("hx-post") ? "POST" : "GET").toUpperCase();
+        const urlAttr = form.getAttribute("hx-post") || form.getAttribute("hx-get") || form.action;
+        const swap = form.getAttribute("hx-swap") || "innerHTML";
+        const pushUrl = form.getAttribute("hx-push-url") === "true";
+        const target = resolveTarget(form);
+        const formData = new FormData(form);
+
+        if (method === "GET") {
+          const qs = toQueryString(formData);
+          const url = qs ? `${urlAttr}?${qs}` : urlAttr;
+          return await ajaxRequest({ url, method, triggerEl: form, target, swap, pushUrl });
+        }
+
+        return await ajaxRequest({ url: urlAttr, method, body: formData, triggerEl: form, target, swap, pushUrl });
+      };
+
+      document.addEventListener("submit", (e) => {
+        if (window.htmx) return;
+        const form = e.target;
+        if (!(form instanceof HTMLFormElement)) return;
+        if (!form.hasAttribute("hx-post") && !form.hasAttribute("hx-get")) return;
+        e.preventDefault();
+        submitForm(form, form).catch(() => form.submit());
+      });
+
+      document.addEventListener("change", (e) => {
+        if (window.htmx) return;
+        const form = e.target && e.target.closest("form");
+        if (!form) return;
+        const trigger = form.getAttribute("hx-trigger");
+        if (!trigger || !trigger.includes("change")) return;
+        if (trigger.includes("from:#categorySelect") && !e.target.matches("#categorySelect")) return;
+        submitForm(form, form).catch(() => form.submit());
+      });
+
+      document.addEventListener("click", (e) => {
+        if (window.htmx) return;
+        const link = e.target.closest("a[hx-get]");
+        if (!link) return;
+        e.preventDefault();
+        const url = link.getAttribute("hx-get") || link.getAttribute("href");
+        const target = resolveTarget(link);
+        const swap = link.getAttribute("hx-swap") || "innerHTML";
+        const pushUrl = link.getAttribute("hx-push-url") === "true";
+        ajaxRequest({ url, method: "GET", target, swap, pushUrl, triggerEl: link })
+          .catch(() => { window.location.href = url; });
+      });
+    })();
+  </script>
+</body>
+</html>

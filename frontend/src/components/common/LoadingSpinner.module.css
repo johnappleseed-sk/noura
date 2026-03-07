@@ -1,0 +1,32 @@
+.wrapper {
+  width: min(420px, 90vw);
+  margin: 3rem auto;
+  padding: 2rem;
+  border-radius: var(--radius-lg);
+  background: #ffffff;
+  border: 1px solid var(--border-soft);
+  box-shadow: var(--shadow-soft);
+  display: grid;
+  justify-items: center;
+  gap: 0.75rem;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 3px solid rgba(255, 98, 0, 0.2);
+  border-top-color: var(--brand-orange);
+  animation: spin 0.8s linear infinite;
+}
+
+.wrapper p {
+  margin: 0;
+  color: var(--text-regular);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

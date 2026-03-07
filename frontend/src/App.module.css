@@ -1,0 +1,26 @@
+.appShell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.mainArea {
+  position: relative;
+  flex: 1;
+  padding: 1rem 0 2.5rem;
+}
+
+.backgroundGlow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 8% 0%, rgba(255, 125, 43, 0.24), transparent 34%),
+    radial-gradient(circle at 95% 30%, rgba(255, 206, 71, 0.24), transparent 30%),
+    linear-gradient(180deg, #f8f8f8 0%, #f4f4f4 100%);
+}
+
+.contentLayer {
+  position: relative;
+  z-index: 1;
+}

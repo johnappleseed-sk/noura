@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/enterprise/*"]
+    },
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "noEmit": false,
+    "allowImportingTsExtensions": false,
+    "isolatedModules": false,
+    "types": ["jest", "node", "@testing-library/jest-dom", "react", "react-dom"]
+  },
+  "include": ["src/enterprise/**/*", "jest.setup.ts"]
+}

@@ -1,0 +1,88 @@
+.grid {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: 1fr;
+}
+
+.panel {
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+  border: 1px solid var(--border-soft);
+  background:
+    linear-gradient(180deg, #ffffff 0%, #fff7ef 100%),
+    var(--panel-accent);
+  background-blend-mode: screen, normal;
+  box-shadow: var(--shadow-soft);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.panel:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(255, 98, 0, 0.18);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.header h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  color: #111827;
+}
+
+.cta {
+  border: 1px solid rgba(255, 98, 0, 0.25);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--brand-orange);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.65rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.panel p {
+  margin: 0.6rem 0 0;
+  color: var(--text-regular);
+  font-size: 0.87rem;
+}
+
+.priceList {
+  margin: 0.8rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.priceList li {
+  border-radius: 12px;
+  padding: 0.45rem;
+  background: #fff;
+  border: 1px solid rgba(255, 98, 0, 0.18);
+  display: grid;
+  gap: 0.25rem;
+}
+
+.priceList span {
+  font-size: 0.76rem;
+  color: var(--text-soft);
+}
+
+.priceList strong {
+  color: var(--brand-orange-strong);
+  font-size: 1rem;
+}
+
+@media (min-width: 860px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

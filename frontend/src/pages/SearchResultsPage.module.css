@@ -1,0 +1,59 @@
+.page {
+  padding-top: 1rem;
+}
+
+.container {
+  width: min(var(--max-content), 94vw);
+  margin: 0 auto;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.header {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-soft);
+  background: #fff;
+  box-shadow: var(--shadow-soft);
+  padding: 1rem;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.header p {
+  margin: 0.4rem 0 0;
+  font-size: 0.88rem;
+  color: var(--text-soft);
+}
+
+.results {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.stateCard {
+  border-radius: var(--radius-lg);
+  border: 1px dashed rgba(255, 98, 0, 0.35);
+  background: #fff;
+  padding: 1.2rem;
+}
+
+.stateCard h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.stateCard p {
+  margin: 0.35rem 0 0;
+  color: var(--text-regular);
+  font-size: 0.88rem;
+}
+
+@media (min-width: 860px) {
+  .results {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
