@@ -3,7 +3,7 @@ package com.noura.platform.controller;
 import com.noura.platform.common.api.ApiResponse;
 import com.noura.platform.dto.cart.CartDto;
 import com.noura.platform.dto.cart.CartTotalsDto;
-import com.noura.platform.service.CartService;
+import com.noura.platform.service.UnifiedOrderService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -24,18 +24,18 @@ import static org.mockito.Mockito.when;
 class CartControllerTest {
 
     @Mock
-    private CartService cartService;
+    private UnifiedOrderService unifiedOrderService;
 
     @Test
     void clearItems_shouldReturnUpdatedCart() {
-        CartController controller = new CartController(cartService);
+        CartController controller = new CartController(unifiedOrderService);
         CartDto cart = new CartDto(
                 UUID.randomUUID(),
                 null,
                 List.of(),
                 new CartTotalsDto(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, null)
         );
-        when(cartService.clearCart()).thenReturn(cart);
+        when(unifiedOrderService.clearCart()).thenReturn(cart);
 
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setRequestURI("/api/v1/cart/items");
@@ -44,7 +44,7 @@ class CartControllerTest {
 
         assertEquals("Cart cleared", response.getMessage());
         assertSame(cart, response.getData());
-        verify(cartService, times(1)).clearCart();
+        verify(unifiedOrderService, times(1)).clearCart();
     }
 }
 

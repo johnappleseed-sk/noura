@@ -2,7 +2,7 @@ package com.noura.platform.commerce.service;
 
 import com.noura.platform.commerce.entity.Product;
 import com.noura.platform.commerce.entity.StockMovement;
-import com.noura.platform.commerce.entity.StockMovementType;
+import com.noura.platform.domain.enums.StockMovementType;
 import com.noura.platform.commerce.repository.AppUserRepo;
 import com.noura.platform.commerce.repository.ProductRepo;
 import com.noura.platform.commerce.repository.StockMovementRepo;

@@ -12,6 +12,7 @@ import com.noura.platform.repository.UserAccountRepository;
 import com.noura.platform.security.SecurityUtils;
 import com.noura.platform.service.NotificationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,7 +29,7 @@ public class NotificationServiceImpl implements NotificationService {
     private final NotificationRepository notificationRepository;
     private final UserAccountRepository userAccountRepository;
     private final NotificationMapper notificationMapper;
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final ObjectProvider<RedisTemplate<String, Object>> redisTemplateProvider;
     private final AppProperties appProperties;
     private final SimpMessagingTemplate messagingTemplate;
 
@@ -114,7 +115,7 @@ public class NotificationServiceImpl implements NotificationService {
         notification.setRead(false);
         Notification saved = notificationRepository.save(notification);
         NotificationDto dto = notificationMapper.toDto(saved);
-        redisTemplate.convertAndSend(appProperties.getNotifications().getRedisChannel(), dto);
+        publishToRedis(dto);
         messagingTemplate.convertAndSendToUser(target.getEmail(), "/queue/notifications", dto);
         return dto;
     }
@@ -137,8 +138,15 @@ public class NotificationServiceImpl implements NotificationService {
                 false,
                 java.time.Instant.now()
         );
-        redisTemplate.convertAndSend(appProperties.getNotifications().getRedisChannel(), dto);
+        publishToRedis(dto);
         messagingTemplate.convertAndSend("/topic/notifications", dto);
+    }
+
+    private void publishToRedis(NotificationDto dto) {
+        RedisTemplate<String, Object> redisTemplate = redisTemplateProvider.getIfAvailable();
+        if (redisTemplate != null) {
+            redisTemplate.convertAndSend(appProperties.getNotifications().getRedisChannel(), dto);
+        }
     }
 
     /**

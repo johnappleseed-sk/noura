@@ -14,6 +14,12 @@ import com.noura.platform.commerce.returns.domain.ReturnRequest;
 import com.noura.platform.commerce.returns.domain.ReturnStatus;
 import com.noura.platform.commerce.returns.infrastructure.ReturnItemRepo;
 import com.noura.platform.commerce.returns.infrastructure.ReturnRequestRepo;
+import com.noura.platform.dto.returns.CreateReturnItemRequest;
+import com.noura.platform.dto.returns.CreateReturnRequest;
+import com.noura.platform.dto.returns.ReceiveItemsRequest;
+import com.noura.platform.dto.returns.ReturnItemDto;
+import com.noura.platform.dto.returns.ReturnItemQuantity;
+import com.noura.platform.dto.returns.ReturnRequestDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -474,68 +480,4 @@ public class ReturnService {
         );
     }
 
-    // ===============================
-    // DTOs
-    // ===============================
-
-    public record CreateReturnRequest(
-            Long orderId,
-            String reason,
-            String reasonDetails,
-            String customerNotes,
-            List<CreateReturnItemRequest> items
-    ) {}
-
-    public record CreateReturnItemRequest(
-            Long orderItemId,
-            Integer quantity
-    ) {}
-
-    public record ReceiveItemsRequest(
-            List<ReturnItemQuantity> itemQuantities
-    ) {}
-
-    public record ReturnItemQuantity(
-            Long returnItemId,
-            Integer quantityReceived,
-            String conditionNotes
-    ) {}
-
-    public record ReturnRequestDto(
-            Long id,
-            String returnNumber,
-            Long orderId,
-            String orderNumber,
-            Long customerId,
-            String status,
-            String reason,
-            String reasonDetails,
-            String customerNotes,
-            String staffNotes,
-            BigDecimal refundAmount,
-            String currencyCode,
-            String returnTrackingNumber,
-            String returnCarrier,
-            String reviewedBy,
-            LocalDateTime reviewedAt,
-            LocalDateTime itemsReceivedAt,
-            LocalDateTime refundedAt,
-            LocalDateTime createdAt,
-            LocalDateTime updatedAt,
-            List<ReturnItemDto> items
-    ) {}
-
-    public record ReturnItemDto(
-            Long id,
-            Long orderItemId,
-            String productName,
-            String sku,
-            int quantityRequested,
-            Integer quantityReceived,
-            Integer quantityApproved,
-            BigDecimal unitRefundAmount,
-            BigDecimal lineRefundAmount,
-            String conditionNotes,
-            boolean restock
-    ) {}
 }

@@ -6,6 +6,11 @@ import com.noura.platform.commerce.entity.UserAuditLog;
 import com.noura.platform.commerce.entity.UserRole;
 import com.noura.platform.commerce.repository.AppUserRepo;
 import com.noura.platform.commerce.repository.UserAuditLogRepo;
+import com.noura.platform.dto.auth.LoginResult;
+import com.noura.platform.dto.auth.LoginStatus;
+import com.noura.platform.dto.auth.OtpResult;
+import com.noura.platform.dto.auth.OtpStatus;
+import com.noura.platform.dto.auth.RegisterResult;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
@@ -727,146 +732,5 @@ public class AuthService {
             }
         }
         return metadata;
-    }
-
-    public record RegisterResult(Long userId,
-                                 String username,
-                                 String email,
-                                 UserRole role,
-                                 List<String> permissions) {
-    }
-
-    public record LoginResult(LoginStatus status,
-                              Long userId,
-                              String challengeToken,
-                              boolean firstTimeSetup,
-                              String otpauthUrl,
-                              String qrDataUrl,
-                              Long lockedMinutes) {
-        /**
-         * Executes the invalidCredentials operation.
-         *
-         * @return {@code LoginResult} Result produced by this operation.
-         * <p>Possible exceptions: Runtime exceptions from downstream dependencies may propagate unchanged.</p>
-         * <p>Edge cases: Null, empty, and boundary inputs are handled by the existing control flow and validations.</p>
-         */
-        private static LoginResult invalidCredentials() {
-            return new LoginResult(LoginStatus.INVALID_CREDENTIALS, null, null, false, null, null, null);
-        }
-
-        /**
-         * Executes the disabled operation.
-         *
-         * @return {@code LoginResult} Result produced by this operation.
-         * <p>Possible exceptions: Runtime exceptions from downstream dependencies may propagate unchanged.</p>
-         * <p>Edge cases: Null, empty, and boundary inputs are handled by the existing control flow and validations.</p>
-         */
-        private static LoginResult disabled() {
-            return new LoginResult(LoginStatus.DISABLED, null, null, false, null, null, null);
-        }
-
-        /**
-         * Executes the locked operation.
-         *
-         * @param lockedMinutes Parameter of type {@code long} used by this operation.
-         * @return {@code LoginResult} Result produced by this operation.
-         * <p>Possible exceptions: Runtime exceptions from downstream dependencies may propagate unchanged.</p>
-         * <p>Edge cases: Null, empty, and boundary inputs are handled by the existing control flow and validations.</p>
-         */
-        private static LoginResult locked(long lockedMinutes) {
-            return new LoginResult(LoginStatus.LOCKED, null, null, false, null, null, lockedMinutes);
-        }
-
-        /**
-         * Executes the otpRequired operation.
-         *
-         * @param challengeToken Parameter of type {@code String} used by this operation.
-         * @param firstTimeSetup Parameter of type {@code boolean} used by this operation.
-         * @param otpauthUrl Parameter of type {@code String} used by this operation.
-         * @param qrDataUrl Parameter of type {@code String} used by this operation.
-         * @return {@code LoginResult} Result produced by this operation.
-         * <p>Possible exceptions: Runtime exceptions from downstream dependencies may propagate unchanged.</p>
-         * <p>Edge cases: Null, empty, and boundary inputs are handled by the existing control flow and validations.</p>
-         */
-        private static LoginResult otpRequired(Long userId,
-                                               String challengeToken,
-                                               boolean firstTimeSetup,
-                                               String otpauthUrl,
-                                               String qrDataUrl) {
-            return new LoginResult(LoginStatus.OTP_REQUIRED, userId, challengeToken, firstTimeSetup, otpauthUrl, qrDataUrl, null);
-        }
-    }
-
-    public record OtpResult(OtpStatus status,
-                            String accessToken,
-                            long expiresInSeconds,
-                            UserRole role,
-                            List<String> permissions,
-                            Long lockedMinutes) {
-        /**
-         * Executes the invalidOtp operation.
-         *
-         * @return {@code OtpResult} Result produced by this operation.
-         * <p>Possible exceptions: Runtime exceptions from downstream dependencies may propagate unchanged.</p>
-         * <p>Edge cases: Null, empty, and boundary inputs are handled by the existing control flow and validations.</p>
-         */
-        private static OtpResult invalidOtp() {
-            return new OtpResult(OtpStatus.INVALID_OTP, null, 0, null, List.of(), null);
-        }
-
-        /**
-         * Executes the disabled operation.
-         *
-         * @return {@code OtpResult} Result produced by this operation.
-         * <p>Possible exceptions: Runtime exceptions from downstream dependencies may propagate unchanged.</p>
-         * <p>Edge cases: Null, empty, and boundary inputs are handled by the existing control flow and validations.</p>
-         */
-        private static OtpResult disabled() {
-            return new OtpResult(OtpStatus.DISABLED, null, 0, null, List.of(), null);
-        }
-
-        /**
-         * Executes the locked operation.
-         *
-         * @param lockedMinutes Parameter of type {@code long} used by this operation.
-         * @return {@code OtpResult} Result produced by this operation.
-         * <p>Possible exceptions: Runtime exceptions from downstream dependencies may propagate unchanged.</p>
-         * <p>Edge cases: Null, empty, and boundary inputs are handled by the existing control flow and validations.</p>
-         */
-        private static OtpResult locked(long lockedMinutes) {
-            return new OtpResult(OtpStatus.LOCKED, null, 0, null, List.of(), lockedMinutes);
-        }
-
-        /**
-         * Executes the success operation.
-         *
-         * @param accessToken Parameter of type {@code String} used by this operation.
-         * @param expiresInSeconds Parameter of type {@code long} used by this operation.
-         * @param role Parameter of type {@code UserRole} used by this operation.
-         * @param permissions Parameter of type {@code List<String>} used by this operation.
-         * @return {@code OtpResult} Result produced by this operation.
-         * <p>Possible exceptions: Runtime exceptions from downstream dependencies may propagate unchanged.</p>
-         * <p>Edge cases: Null, empty, and boundary inputs are handled by the existing control flow and validations.</p>
-         */
-        private static OtpResult success(String accessToken,
-                                         long expiresInSeconds,
-                                         UserRole role,
-                                         List<String> permissions) {
-            return new OtpResult(OtpStatus.SUCCESS, accessToken, expiresInSeconds, role, permissions, null);
-        }
-    }
-
-    public enum LoginStatus {
-        INVALID_CREDENTIALS,
-        DISABLED,
-        LOCKED,
-        OTP_REQUIRED
-    }
-
-    public enum OtpStatus {
-        INVALID_OTP,
-        DISABLED,
-        LOCKED,
-        SUCCESS
     }
 }

@@ -100,7 +100,7 @@ public class JwtTokenProvider {
         byte[] keyBytes;
         try {
             keyBytes = Decoders.BASE64.decode(configuredSecret);
-        } catch (IllegalArgumentException ignored) {
+        } catch (RuntimeException ignored) {
             keyBytes = configuredSecret.getBytes(StandardCharsets.UTF_8);
         }
         if (keyBytes.length < 32) {

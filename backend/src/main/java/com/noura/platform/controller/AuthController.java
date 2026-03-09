@@ -2,7 +2,7 @@ package com.noura.platform.controller;
 
 import com.noura.platform.common.api.ApiResponse;
 import com.noura.platform.dto.auth.*;
-import com.noura.platform.service.AuthService;
+import com.noura.platform.service.UnifiedAuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("${app.api.version-prefix:/api/v1}/auth")
 public class AuthController {
 
-    private final AuthService authService;
+    private final UnifiedAuthService authService;
 
     /**
      * Executes register.

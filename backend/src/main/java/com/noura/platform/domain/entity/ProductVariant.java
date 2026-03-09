@@ -43,7 +43,7 @@ public class ProductVariant extends AuditableEntity {
     private String sku;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb", nullable = false)
+    @Column(columnDefinition = "json", nullable = false)
     private Map<String, Object> attributes = new LinkedHashMap<>();
 
     @Column(name = "price_override", precision = 14, scale = 2)

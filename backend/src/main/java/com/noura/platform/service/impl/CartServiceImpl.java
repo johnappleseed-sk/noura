@@ -2,9 +2,26 @@ package com.noura.platform.service.impl;
 
 import com.noura.platform.common.exception.NotFoundException;
 import com.noura.platform.common.exception.UnauthorizedException;
-import com.noura.platform.domain.entity.*;
-import com.noura.platform.dto.cart.*;
-import com.noura.platform.repository.*;
+import com.noura.platform.domain.entity.Cart;
+import com.noura.platform.domain.entity.CartItem;
+import com.noura.platform.domain.entity.Product;
+import com.noura.platform.domain.entity.ProductInventory;
+import com.noura.platform.domain.entity.Store;
+import com.noura.platform.domain.entity.UserAccount;
+import com.noura.platform.dto.cart.AddCartItemRequest;
+import com.noura.platform.dto.cart.ApplyCouponRequest;
+import com.noura.platform.dto.cart.CartDto;
+import com.noura.platform.dto.cart.CartItemDto;
+import com.noura.platform.dto.cart.CartTotalsDto;
+import com.noura.platform.dto.cart.UpdateCartItemRequest;
+import com.noura.platform.dto.order.CheckoutPaymentRequest;
+import com.noura.platform.dto.order.CheckoutShippingRequest;
+import com.noura.platform.repository.CartItemRepository;
+import com.noura.platform.repository.CartRepository;
+import com.noura.platform.repository.ProductInventoryRepository;
+import com.noura.platform.repository.ProductRepository;
+import com.noura.platform.repository.StoreRepository;
+import com.noura.platform.repository.UserAccountRepository;
 import com.noura.platform.service.PricingService;
 import com.noura.platform.security.SecurityUtils;
 import com.noura.platform.service.CartService;
@@ -36,7 +53,7 @@ public class CartServiceImpl implements CartService {
     @Override
     public CartDto getMyCart() {
         Cart cart = currentCart();
-        return toCartDto(cart, null);
+        return toCartDto(cart);
     }
 
     /**
@@ -78,7 +95,7 @@ public class CartServiceImpl implements CartService {
         }
         item.setQuantity(nextQuantity);
         cartItemRepository.save(item);
-        return toCartDto(cart, null);
+        return toCartDto(cart);
     }
 
     /**
@@ -101,7 +118,7 @@ public class CartServiceImpl implements CartService {
         }
         item.setQuantity(request.quantity());
         cartItemRepository.save(item);
-        return toCartDto(item.getCart(), null);
+        return toCartDto(item.getCart());
     }
 
     /**
@@ -120,7 +137,7 @@ public class CartServiceImpl implements CartService {
         }
         Cart cart = item.getCart();
         cartItemRepository.delete(item);
-        return toCartDto(cart, null);
+        return toCartDto(cart);
     }
 
     /**
@@ -134,8 +151,14 @@ public class CartServiceImpl implements CartService {
         Cart cart = currentCart();
         cartItemRepository.deleteByCartId(cart.getId());
         cart.setStore(null);
+        cart.setFulfillmentMethod(null);
+        cart.setShippingAddressSnapshot(null);
+        cart.setPaymentReference(null);
+        cart.setCouponCode(null);
+        cart.setB2bInvoice(false);
+        cart.setIdempotencyKey(null);
         cartRepository.save(cart);
-        return toCartDto(cart, null);
+        return toCartDto(cart);
     }
 
     /**
@@ -146,11 +169,54 @@ public class CartServiceImpl implements CartService {
      */
     @Override
     public CartDto applyCoupon(ApplyCouponRequest request) {
-        String normalized = request.couponCode().trim().toUpperCase();
+        String normalized = normalizeCouponCode(request.couponCode());
         Cart cart = currentCart();
         List<CartItem> items = cartItemRepository.findByCartId(cart.getId());
         pricingService.calculateTotals(items, cart.getStore(), normalized);
-        return toCartDto(cart, normalized);
+        cart.setCouponCode(normalized);
+        cartRepository.save(cart);
+        return toCartDto(cart);
+    }
+
+    /**
+     * Applies shipping draft fields.
+     */
+    @Override
+    @Transactional
+    public CartDto updateShippingDraft(CheckoutShippingRequest request) {
+        Cart cart = currentCart();
+        if (request.storeId() != null) {
+            if (cart.getStore() != null && !cart.getStore().getId().equals(request.storeId())) {
+                throw new UnauthorizedException("STORE_CONFLICT", "Cart already belongs to another store");
+            }
+            Store store = storeRepository.findById(request.storeId())
+                    .orElseThrow(() -> new NotFoundException("STORE_NOT_FOUND", "Store not found"));
+            cart.setStore(store);
+        }
+        cart.setFulfillmentMethod(request.fulfillmentMethod());
+        cart.setShippingAddressSnapshot(request.shippingAddressSnapshot().trim());
+        cartRepository.save(cart);
+        return toCartDto(cart);
+    }
+
+    /**
+     * Applies payment draft fields.
+     */
+    @Override
+    @Transactional
+    public CartDto updatePaymentDraft(CheckoutPaymentRequest request) {
+        Cart cart = currentCart();
+        String normalizedCoupon = normalizeCouponCode(request.couponCode());
+        if (normalizedCoupon != null) {
+            List<CartItem> items = cartItemRepository.findByCartId(cart.getId());
+            pricingService.calculateTotals(items, cart.getStore(), normalizedCoupon);
+            cart.setCouponCode(normalizedCoupon);
+        }
+        cart.setPaymentReference(normalizeNullable(request.paymentReference()));
+        cart.setB2bInvoice(request.b2bInvoice());
+        cart.setIdempotencyKey(normalizeNullable(request.idempotencyKey()));
+        cartRepository.save(cart);
+        return toCartDto(cart);
     }
 
     /**
@@ -175,7 +241,7 @@ public class CartServiceImpl implements CartService {
      * @param couponCode The coupon code value.
      * @return The mapped DTO representation.
      */
-    private CartDto toCartDto(Cart cart, String couponCode) {
+    private CartDto toCartDto(Cart cart) {
         List<CartItem> items = cartItemRepository.findByCartId(cart.getId());
         List<CartItemDto> lines = items.stream()
                 .map(item -> new CartItemDto(
@@ -187,8 +253,19 @@ public class CartServiceImpl implements CartService {
                         item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity()))
                 ))
                 .toList();
-        CartTotalsDto totals = pricingService.calculateTotals(items, cart.getStore(), couponCode);
+        CartTotalsDto totals = pricingService.calculateTotals(items, cart.getStore(), cart.getCouponCode());
         return new CartDto(cart.getId(), cart.getStore() == null ? null : cart.getStore().getId(), lines, totals);
+    }
+
+    private String normalizeCouponCode(String couponCode) {
+        if (couponCode == null || couponCode.isBlank()) {
+            return null;
+        }
+        return couponCode.trim().toUpperCase();
+    }
+
+    private String normalizeNullable(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 
     /**

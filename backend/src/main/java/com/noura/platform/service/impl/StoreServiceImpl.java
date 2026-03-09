@@ -45,6 +45,7 @@ public class StoreServiceImpl implements StoreService {
      * @return A paginated result set.
      */
     @Override
+    @Transactional(readOnly = true)
     @Cacheable(cacheNames = "stores", key = "'list:' + #service + ':' + #openNow + ':' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + #pageable.sort")
     public Page<StoreDto> listStores(String service, Boolean openNow, Pageable pageable) {
         Specification<Store> spec = Specification.where((root, query, cb) -> cb.isTrue(root.get("active")));
@@ -120,6 +121,7 @@ public class StoreServiceImpl implements StoreService {
      * @return A list of matching items.
      */
     @Override
+    @Transactional(readOnly = true)
     @Cacheable(cacheNames = "stores", key = "'nearest:' + #latitude + ':' + #longitude + ':' + #limit")
     public List<StoreDto> findNearest(BigDecimal latitude, BigDecimal longitude, int limit) {
         return storeRepository.findAll()

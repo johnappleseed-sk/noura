@@ -2,7 +2,7 @@ package com.noura.platform.controller;
 
 import com.noura.platform.common.api.ApiResponse;
 import com.noura.platform.dto.cart.*;
-import com.noura.platform.service.CartService;
+import com.noura.platform.service.UnifiedOrderService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +15,7 @@ import java.util.UUID;
 @RequestMapping("${app.api.version-prefix:/api/v1}/cart")
 public class CartController {
 
-    private final CartService cartService;
+    private final UnifiedOrderService unifiedOrderService;
 
     /**
      * Retrieves my cart.
@@ -25,7 +25,7 @@ public class CartController {
      */
     @GetMapping
     public ApiResponse<CartDto> myCart(HttpServletRequest http) {
-        return ApiResponse.ok("Cart", cartService.getMyCart(), http.getRequestURI());
+        return ApiResponse.ok("Cart", unifiedOrderService.getMyCart(), http.getRequestURI());
     }
 
     /**
@@ -37,7 +37,7 @@ public class CartController {
      */
     @PostMapping("/items")
     public ApiResponse<CartDto> addItem(@Valid @RequestBody AddCartItemRequest request, HttpServletRequest http) {
-        return ApiResponse.ok("Item added to cart", cartService.addItem(request), http.getRequestURI());
+        return ApiResponse.ok("Item added to cart", unifiedOrderService.addCartItem(request), http.getRequestURI());
     }
 
     /**
@@ -54,7 +54,7 @@ public class CartController {
             @Valid @RequestBody UpdateCartItemRequest request,
             HttpServletRequest http
     ) {
-        return ApiResponse.ok("Cart item updated", cartService.updateItem(cartItemId, request), http.getRequestURI());
+        return ApiResponse.ok("Cart item updated", unifiedOrderService.updateCartItem(cartItemId, request), http.getRequestURI());
     }
 
     /**
@@ -66,7 +66,7 @@ public class CartController {
      */
     @DeleteMapping("/items/{cartItemId}")
     public ApiResponse<CartDto> removeItem(@PathVariable UUID cartItemId, HttpServletRequest http) {
-        return ApiResponse.ok("Cart item removed", cartService.removeItem(cartItemId), http.getRequestURI());
+        return ApiResponse.ok("Cart item removed", unifiedOrderService.removeCartItem(cartItemId), http.getRequestURI());
     }
 
     /**
@@ -77,7 +77,7 @@ public class CartController {
      */
     @DeleteMapping("/items")
     public ApiResponse<CartDto> clearItems(HttpServletRequest http) {
-        return ApiResponse.ok("Cart cleared", cartService.clearCart(), http.getRequestURI());
+        return ApiResponse.ok("Cart cleared", unifiedOrderService.clearCart(), http.getRequestURI());
     }
 
     /**
@@ -89,6 +89,6 @@ public class CartController {
      */
     @PostMapping("/coupon")
     public ApiResponse<CartDto> applyCoupon(@Valid @RequestBody ApplyCouponRequest request, HttpServletRequest http) {
-        return ApiResponse.ok("Coupon applied", cartService.applyCoupon(request), http.getRequestURI());
+        return ApiResponse.ok("Coupon applied", unifiedOrderService.applyCoupon(request), http.getRequestURI());
     }
 }

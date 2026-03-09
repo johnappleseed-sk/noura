@@ -1,0 +1,57 @@
+spring:
+  config:
+    activate:
+      on-profile: local-mysql
+  datasource:
+    url: jdbc:mysql://localhost:3306/noura?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: root
+    password:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+  flyway:
+    enabled: false
+  cache:
+    type: simple
+  session:
+    store-type: none
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisReactiveAutoConfiguration
+      - org.springframework.boot.actuate.autoconfigure.data.redis.RedisHealthContributorAutoConfiguration
+
+app:
+  redis:
+    enabled: false
+  jwt:
+    secret: noura_local_mysql_secret_key_2026_at_least_32_chars_long
+    issuer: noura-local-mysql
+  cors:
+    allowed-origins: http://localhost:5173,http://localhost:3001,http://127.0.0.1:5173,http://127.0.0.1:3001
+
+management:
+  health:
+    elasticsearch:
+      enabled: false
+
+inventory:
+  datasource:
+    url: ${INVENTORY_DB_URL:jdbc:mysql://localhost:3306/noura_inventory?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+    username: ${INVENTORY_DB_USERNAME:${DB_USERNAME:root}}
+    password: ${INVENTORY_DB_PASSWORD:${DB_PASSWORD:}}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  security:
+    jwt:
+      secret: ${INVENTORY_JWT_SECRET:inventory-monolith-local-secret-key-change-me-123456789}
+      access-token-minutes: ${INVENTORY_JWT_ACCESS_TOKEN_MINUTES:720}
+      allowed-clock-skew-seconds: ${INVENTORY_JWT_ALLOWED_CLOCK_SKEW_SECONDS:60}
+    dev-header-auth-enabled: ${INVENTORY_DEV_HEADER_AUTH_ENABLED:false}
+    seed-admin:
+      enabled: true
+      username: ${INVENTORY_ADMIN_USERNAME:inventory.admin}
+      email: ${INVENTORY_ADMIN_EMAIL:inventory.admin@noura.local}
+      password: ${INVENTORY_ADMIN_PASSWORD:Admin123!}
+      full-name: ${INVENTORY_ADMIN_FULL_NAME:Inventory Admin}

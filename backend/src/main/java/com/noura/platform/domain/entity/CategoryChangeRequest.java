@@ -44,7 +44,7 @@ public class CategoryChangeRequest extends AuditableEntity {
     private UserAccount reviewedBy;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "payload_json", columnDefinition = "jsonb", nullable = false)
+    @Column(name = "payload_json", columnDefinition = "json", nullable = false)
     private Map<String, Object> payload = new LinkedHashMap<>();
 
     @Column(length = 1000)

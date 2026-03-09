@@ -15,7 +15,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class CorsStartupValidator {
 
-    private static final Set<String> LOCAL_PROFILES = Set.of("local", "test");
+    private static final Set<String> LOCAL_PROFILES = Set.of("local", "local-mysql", "test");
 
     private final AppProperties appProperties;
     private final Environment environment;

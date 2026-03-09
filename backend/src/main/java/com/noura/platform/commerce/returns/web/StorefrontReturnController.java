@@ -4,11 +4,13 @@ import com.noura.platform.commerce.api.v1.dto.common.ApiEnvelope;
 import com.noura.platform.commerce.api.v1.support.ApiTrace;
 import com.noura.platform.commerce.customers.domain.StorefrontCustomerPrincipal;
 import com.noura.platform.commerce.returns.application.ReturnService;
+import com.noura.platform.dto.returns.ReturnRequestDto;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,6 +28,7 @@ import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 /**
  * Storefront API controller for customer return requests.
  */
+@Profile("legacy-storefront")
 @RestController
 @RequestMapping("/api/storefront/v1/returns")
 @Validated
@@ -37,17 +40,17 @@ public class StorefrontReturnController {
     }
 
     @PostMapping
-    public ApiEnvelope<ReturnService.ReturnRequestDto> createReturn(@Valid @RequestBody CreateReturnRequest body,
+    public ApiEnvelope<ReturnRequestDto> createReturn(@Valid @RequestBody CreateReturnRequest body,
                                                                    Authentication authentication,
                                                                    HttpServletRequest request) {
         Long customerId = resolveCustomerId(authentication);
-        var result = returnService.createReturnRequest(customerId, new ReturnService.CreateReturnRequest(
+        var result = returnService.createReturnRequest(customerId, new com.noura.platform.dto.returns.CreateReturnRequest(
                 body.orderId(),
                 body.reason(),
                 body.reasonDetails(),
                 body.customerNotes(),
                 body.items().stream()
-                        .map(i -> new ReturnService.CreateReturnItemRequest(i.orderItemId(), i.quantity()))
+                        .map(i -> new com.noura.platform.dto.returns.CreateReturnItemRequest(i.orderItemId(), i.quantity()))
                         .toList()
         ));
         return ApiEnvelope.success(
@@ -59,7 +62,7 @@ public class StorefrontReturnController {
     }
 
     @GetMapping
-    public ApiEnvelope<List<ReturnService.ReturnRequestDto>> listReturns(Authentication authentication,
+    public ApiEnvelope<List<ReturnRequestDto>> listReturns(Authentication authentication,
                                                                         HttpServletRequest request) {
         Long customerId = resolveCustomerId(authentication);
         return ApiEnvelope.success(
@@ -71,7 +74,7 @@ public class StorefrontReturnController {
     }
 
     @GetMapping("/{returnId}")
-    public ApiEnvelope<ReturnService.ReturnRequestDto> getReturn(@PathVariable Long returnId,
+    public ApiEnvelope<ReturnRequestDto> getReturn(@PathVariable Long returnId,
                                                                 Authentication authentication,
                                                                 HttpServletRequest request) {
         Long customerId = resolveCustomerId(authentication);
@@ -84,7 +87,7 @@ public class StorefrontReturnController {
     }
 
     @PostMapping("/{returnId}/cancel")
-    public ApiEnvelope<ReturnService.ReturnRequestDto> cancelReturn(@PathVariable Long returnId,
+    public ApiEnvelope<ReturnRequestDto> cancelReturn(@PathVariable Long returnId,
                                                                    Authentication authentication,
                                                                    HttpServletRequest request) {
         Long customerId = resolveCustomerId(authentication);

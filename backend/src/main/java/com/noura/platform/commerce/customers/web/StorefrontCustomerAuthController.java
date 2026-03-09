@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,6 +21,7 @@ import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
 import org.springframework.web.server.ResponseStatusException;
 
+@Profile("legacy-storefront")
 @RestController
 @RequestMapping("/api/storefront/v1/customers")
 public class StorefrontCustomerAuthController {

@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * REST controller for multi-store management.
  */
-@RestController
+@RestController("multiStoreController")
 @RequestMapping("/api/stores")
 public class StoreController {
 

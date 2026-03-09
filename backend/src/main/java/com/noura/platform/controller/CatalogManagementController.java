@@ -3,7 +3,7 @@ package com.noura.platform.controller;
 import com.noura.platform.common.api.ApiResponse;
 import com.noura.platform.domain.enums.CategoryChangeRequestStatus;
 import com.noura.platform.dto.catalog.*;
-import com.noura.platform.service.CatalogManagementService;
+import com.noura.platform.service.UnifiedCatalogService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CatalogManagementController {
 
-    private final CatalogManagementService catalogManagementService;
+    private final UnifiedCatalogService unifiedCatalogService;
 
     /**
      * Creates category.
@@ -34,7 +34,7 @@ public class CatalogManagementController {
             HttpServletRequest http
     ) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok("Category created", catalogManagementService.createCategory(request), http.getRequestURI()));
+                .body(ApiResponse.ok("Category created", unifiedCatalogService.createCategory(request), http.getRequestURI()));
     }
 
     /**
@@ -48,7 +48,7 @@ public class CatalogManagementController {
             @RequestParam(required = false) String locale,
             HttpServletRequest http
     ) {
-        return ApiResponse.ok("Category tree", catalogManagementService.categoryTree(locale), http.getRequestURI());
+        return ApiResponse.ok("Category tree", unifiedCatalogService.categoryTree(locale), http.getRequestURI());
     }
 
     /**
@@ -65,7 +65,7 @@ public class CatalogManagementController {
             @Valid @RequestBody CategoryUpdateRequest request,
             HttpServletRequest http
     ) {
-        return ApiResponse.ok("Category updated", catalogManagementService.updateCategory(categoryId, request), http.getRequestURI());
+        return ApiResponse.ok("Category updated", unifiedCatalogService.updateCategory(categoryId, request), http.getRequestURI());
     }
 
     /**
@@ -81,7 +81,7 @@ public class CatalogManagementController {
             HttpServletRequest http
     ) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok("Attribute created", catalogManagementService.createAttribute(request), http.getRequestURI()));
+                .body(ApiResponse.ok("Attribute created", unifiedCatalogService.createAttribute(request), http.getRequestURI()));
     }
 
     /**
@@ -97,7 +97,7 @@ public class CatalogManagementController {
             HttpServletRequest http
     ) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok("Attribute set created", catalogManagementService.createAttributeSet(request), http.getRequestURI()));
+                .body(ApiResponse.ok("Attribute set created", unifiedCatalogService.createAttributeSet(request), http.getRequestURI()));
     }
 
     /**
@@ -118,7 +118,7 @@ public class CatalogManagementController {
     ) {
         return ApiResponse.ok(
                 "Category translation saved",
-                catalogManagementService.upsertCategoryTranslation(categoryId, locale, request),
+                unifiedCatalogService.upsertCategoryTranslation(categoryId, locale, request),
                 http.getRequestURI()
         );
     }
@@ -137,7 +137,7 @@ public class CatalogManagementController {
     ) {
         return ApiResponse.ok(
                 "Category translations",
-                catalogManagementService.categoryTranslations(categoryId),
+                unifiedCatalogService.categoryTranslations(categoryId),
                 http.getRequestURI()
         );
     }
@@ -157,7 +157,7 @@ public class CatalogManagementController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok(
                         "Channel category mapping saved",
-                        catalogManagementService.createChannelCategoryMapping(request),
+                        unifiedCatalogService.createChannelCategoryMapping(request),
                         http.getRequestURI()
                 ));
     }
@@ -176,7 +176,7 @@ public class CatalogManagementController {
     ) {
         return ApiResponse.ok(
                 "Category channel mappings",
-                catalogManagementService.categoryChannelMappings(categoryId),
+                unifiedCatalogService.categoryChannelMappings(categoryId),
                 http.getRequestURI()
         );
     }
@@ -196,7 +196,7 @@ public class CatalogManagementController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok(
                         "Category change request submitted",
-                        catalogManagementService.submitCategoryChangeRequest(request),
+                        unifiedCatalogService.submitCategoryChangeRequest(request),
                         http.getRequestURI()
                 ));
     }
@@ -215,7 +215,7 @@ public class CatalogManagementController {
     ) {
         return ApiResponse.ok(
                 "Category change requests",
-                catalogManagementService.categoryChangeRequests(status),
+                unifiedCatalogService.categoryChangeRequests(status),
                 http.getRequestURI()
         );
     }
@@ -236,7 +236,7 @@ public class CatalogManagementController {
     ) {
         return ApiResponse.ok(
                 "Category change request approved",
-                catalogManagementService.approveCategoryChangeRequest(requestId, request),
+                unifiedCatalogService.approveCategoryChangeRequest(requestId, request),
                 http.getRequestURI()
         );
     }
@@ -257,7 +257,7 @@ public class CatalogManagementController {
     ) {
         return ApiResponse.ok(
                 "Category change request rejected",
-                catalogManagementService.rejectCategoryChangeRequest(requestId, request),
+                unifiedCatalogService.rejectCategoryChangeRequest(requestId, request),
                 http.getRequestURI()
         );
     }
@@ -274,7 +274,7 @@ public class CatalogManagementController {
             @Valid @RequestBody CategorySuggestionRequest request,
             HttpServletRequest http
     ) {
-        return ApiResponse.ok("Category suggestions", catalogManagementService.suggestCategory(request), http.getRequestURI());
+        return ApiResponse.ok("Category suggestions", unifiedCatalogService.suggestCategory(request), http.getRequestURI());
     }
 
     /**
@@ -293,7 +293,7 @@ public class CatalogManagementController {
     ) {
         return ApiResponse.ok(
                 "Category analytics",
-                catalogManagementService.categoryAnalytics(from, to),
+                unifiedCatalogService.categoryAnalytics(from, to),
                 http.getRequestURI()
         );
     }

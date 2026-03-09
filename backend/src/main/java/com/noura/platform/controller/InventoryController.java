@@ -2,7 +2,7 @@ package com.noura.platform.controller;
 
 import com.noura.platform.common.api.ApiResponse;
 import com.noura.platform.dto.inventory.*;
-import com.noura.platform.service.InventoryService;
+import com.noura.platform.service.UnifiedInventoryService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +16,7 @@ import java.util.UUID;
 @RequestMapping("${app.api.version-prefix:/api/v1}/inventory")
 public class InventoryController {
 
-    private final InventoryService inventoryService;
+    private final UnifiedInventoryService unifiedInventoryService;
 
     /**
      * Creates warehouse.
@@ -27,7 +27,7 @@ public class InventoryController {
      */
     @PostMapping("/warehouses")
     public ApiResponse<WarehouseDto> createWarehouse(@Valid @RequestBody WarehouseRequest request, HttpServletRequest http) {
-        return ApiResponse.ok("Warehouse created", inventoryService.createWarehouse(request), http.getRequestURI());
+        return ApiResponse.ok("Warehouse created", unifiedInventoryService.createWarehouse(request), http.getRequestURI());
     }
 
     /**
@@ -38,7 +38,7 @@ public class InventoryController {
      */
     @GetMapping("/warehouses")
     public ApiResponse<List<WarehouseDto>> warehouses(HttpServletRequest http) {
-        return ApiResponse.ok("Warehouses", inventoryService.warehouses(), http.getRequestURI());
+        return ApiResponse.ok("Warehouses", unifiedInventoryService.warehouses(), http.getRequestURI());
     }
 
     /**
@@ -50,7 +50,7 @@ public class InventoryController {
      */
     @GetMapping({"/{variantId}", "/variants/{variantId}"})
     public ApiResponse<InventorySummaryDto> stock(@PathVariable UUID variantId, HttpServletRequest http) {
-        return ApiResponse.ok("Inventory summary", inventoryService.stock(variantId), http.getRequestURI());
+        return ApiResponse.ok("Inventory summary", unifiedInventoryService.stock(variantId), http.getRequestURI());
     }
 
     /**
@@ -62,7 +62,7 @@ public class InventoryController {
      */
     @PostMapping("/adjust")
     public ApiResponse<InventoryLevelDto> adjust(@Valid @RequestBody InventoryAdjustRequest request, HttpServletRequest http) {
-        return ApiResponse.ok("Inventory adjusted", inventoryService.adjust(request), http.getRequestURI());
+        return ApiResponse.ok("Inventory adjusted", unifiedInventoryService.adjust(request), http.getRequestURI());
     }
 
     /**
@@ -77,7 +77,7 @@ public class InventoryController {
             @Valid @RequestBody InventoryReserveRequest request,
             HttpServletRequest http
     ) {
-        return ApiResponse.ok("Inventory reserved", inventoryService.reserve(request), http.getRequestURI());
+        return ApiResponse.ok("Inventory reserved", unifiedInventoryService.reserve(request), http.getRequestURI());
     }
 
     /**
@@ -92,7 +92,7 @@ public class InventoryController {
             @Valid @RequestBody InventoryReservationActionRequest request,
             HttpServletRequest http
     ) {
-        return ApiResponse.ok("Reservation confirmed", inventoryService.confirm(request), http.getRequestURI());
+        return ApiResponse.ok("Reservation confirmed", unifiedInventoryService.confirm(request), http.getRequestURI());
     }
 
     /**
@@ -107,7 +107,7 @@ public class InventoryController {
             @Valid @RequestBody InventoryReservationActionRequest request,
             HttpServletRequest http
     ) {
-        return ApiResponse.ok("Reservation released", inventoryService.release(request), http.getRequestURI());
+        return ApiResponse.ok("Reservation released", unifiedInventoryService.release(request), http.getRequestURI());
     }
 
     /**
@@ -119,6 +119,6 @@ public class InventoryController {
      */
     @PostMapping("/check")
     public ApiResponse<InventoryCheckResultDto> check(@Valid @RequestBody InventoryCheckRequest request, HttpServletRequest http) {
-        return ApiResponse.ok("Inventory availability checked", inventoryService.check(request), http.getRequestURI());
+        return ApiResponse.ok("Inventory availability checked", unifiedInventoryService.check(request), http.getRequestURI());
     }
 }

@@ -4,10 +4,13 @@ import com.noura.platform.commerce.api.v1.dto.common.ApiEnvelope;
 import com.noura.platform.commerce.api.v1.support.ApiTrace;
 import com.noura.platform.commerce.customers.application.StorefrontCustomerAddressService;
 import com.noura.platform.commerce.customers.domain.StorefrontCustomerPrincipal;
+import com.noura.platform.dto.storefront.CustomerAddressDto;
+import com.noura.platform.dto.storefront.StorefrontCustomerAddressRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,6 +26,7 @@ import java.util.List;
 
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
+@Profile("legacy-storefront")
 @RestController
 @RequestMapping("/api/storefront/v1/customers/me/addresses")
 @Validated
@@ -34,7 +38,7 @@ public class StorefrontCustomerAddressController {
     }
 
     @GetMapping
-    public ApiEnvelope<List<StorefrontCustomerAddressService.CustomerAddressDto>> list(Authentication authentication,
+    public ApiEnvelope<List<CustomerAddressDto>> list(Authentication authentication,
                                                                                    HttpServletRequest requestContext) {
         Long customerId = resolveCustomerId(authentication);
         return ApiEnvelope.success(
@@ -46,12 +50,12 @@ public class StorefrontCustomerAddressController {
     }
 
     @PostMapping
-    public ApiEnvelope<StorefrontCustomerAddressService.CustomerAddressDto> create(Authentication authentication,
+    public ApiEnvelope<CustomerAddressDto> create(Authentication authentication,
                                                                                  @Valid @RequestBody CreateAddressRequest request,
                                                                                  HttpServletRequest requestContext) {
         Long customerId = resolveCustomerId(authentication);
-        StorefrontCustomerAddressService.StorefrontCustomerAddressRequest serviceRequest =
-                new StorefrontCustomerAddressService.StorefrontCustomerAddressRequest(
+        StorefrontCustomerAddressRequest serviceRequest =
+                new StorefrontCustomerAddressRequest(
                         request.label(),
                         request.recipientName(),
                         request.phone(),

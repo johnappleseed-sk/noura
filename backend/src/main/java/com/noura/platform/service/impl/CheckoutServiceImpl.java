@@ -15,6 +15,8 @@ import com.noura.platform.domain.entity.UserAccount;
 import com.noura.platform.domain.enums.ApprovalStatus;
 import com.noura.platform.domain.enums.OrderStatus;
 import com.noura.platform.dto.cart.CartTotalsDto;
+import com.noura.platform.domain.enums.FulfillmentMethod;
+import com.noura.platform.dto.order.CheckoutConfirmRequest;
 import com.noura.platform.dto.order.CheckoutRequest;
 import com.noura.platform.dto.order.OrderDto;
 import com.noura.platform.dto.order.OrderItemDto;
@@ -28,6 +30,7 @@ import com.noura.platform.repository.OrderItemRepository;
 import com.noura.platform.repository.OrderRepository;
 import com.noura.platform.repository.OrderTimelineEventRepository;
 import com.noura.platform.repository.ProductInventoryRepository;
+import com.noura.platform.repository.StoreRepository;
 import com.noura.platform.repository.UserAccountRepository;
 import com.noura.platform.security.SecurityUtils;
 import com.noura.platform.service.CheckoutService;
@@ -57,6 +60,7 @@ public class CheckoutServiceImpl implements CheckoutService {
     private final OrderTimelineEventRepository orderTimelineEventRepository;
     private final B2BCompanyProfileRepository companyProfileRepository;
     private final ApprovalRequestRepository approvalRequestRepository;
+    private final StoreRepository storeRepository;
     private final OrderMapper orderMapper;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final KafkaTemplate<String, OrderCreatedEvent> kafkaTemplate;
@@ -89,10 +93,7 @@ public class CheckoutServiceImpl implements CheckoutService {
             throw new UnauthorizedException("CART_EMPTY", "Cart is empty");
         }
 
-        Store store = cart.getStore();
-        if (request.storeId() != null && store != null && !store.getId().equals(request.storeId())) {
-            throw new UnauthorizedException("STORE_CONFLICT", "Checkout store mismatch");
-        }
+        Store store = resolveCheckoutStore(cart, request.storeId());
         CartTotalsDto totals = pricingService.calculateTotals(cartItems, store, request.couponCode());
 
         Order order = new Order();
@@ -141,8 +142,20 @@ public class CheckoutServiceImpl implements CheckoutService {
         }
 
         cartItemRepository.deleteByCartId(cart.getId());
+        clearCheckoutDraft(cart);
         publishOrderEvent(order);
         return toOrderDto(order);
+    }
+
+    @Override
+    @Transactional
+    public OrderDto checkoutFromDraft(CheckoutConfirmRequest request) {
+        UserAccount user = userAccountRepository.findByEmailIgnoreCase(SecurityUtils.currentEmail())
+                .orElseThrow(() -> new NotFoundException("USER_NOT_FOUND", "User not found"));
+        Cart cart = cartRepository.findByUser(user)
+                .orElseThrow(() -> new NotFoundException("CART_NOT_FOUND", "Cart not found"));
+        CheckoutRequest resolved = resolveCheckoutRequest(request, cart);
+        return checkout(resolved);
     }
 
     /**
@@ -224,6 +237,78 @@ public class CheckoutServiceImpl implements CheckoutService {
         event.setActor(SecurityUtils.currentEmail());
         event.setNote(note);
         orderTimelineEventRepository.save(event);
+    }
+
+    private CheckoutRequest resolveCheckoutRequest(CheckoutConfirmRequest request, Cart cart) {
+        FulfillmentMethod fulfillmentMethod = request.fulfillmentMethod() != null
+                ? request.fulfillmentMethod()
+                : cart.getFulfillmentMethod();
+        String shippingSnapshot = normalizeSnapshot(request.shippingAddressSnapshot());
+        if (shippingSnapshot == null) {
+            shippingSnapshot = normalizeSnapshot(cart.getShippingAddressSnapshot());
+        }
+        if (fulfillmentMethod == null) {
+            throw new UnauthorizedException("CHECKOUT_FULFILLMENT_REQUIRED", "Fulfillment method is required");
+        }
+        if (shippingSnapshot == null) {
+            throw new UnauthorizedException("CHECKOUT_SHIPPING_REQUIRED", "Shipping address snapshot is required");
+        }
+        String paymentReference = normalizeSnapshot(request.paymentReference());
+        if (paymentReference == null) {
+            paymentReference = normalizeSnapshot(cart.getPaymentReference());
+        }
+        String couponCode = normalizeSnapshot(request.couponCode());
+        if (couponCode == null) {
+            couponCode = normalizeSnapshot(cart.getCouponCode());
+        }
+        boolean b2bInvoice = request.b2bInvoice() != null
+                ? request.b2bInvoice()
+                : cart.isB2bInvoice();
+        String idempotencyKey = normalizeSnapshot(request.idempotencyKey());
+        if (idempotencyKey == null) {
+            idempotencyKey = normalizeSnapshot(cart.getIdempotencyKey());
+        }
+        return new CheckoutRequest(
+                fulfillmentMethod,
+                request.storeId(),
+                shippingSnapshot,
+                paymentReference,
+                couponCode,
+                b2bInvoice,
+                idempotencyKey
+        );
+    }
+
+    private Store resolveCheckoutStore(Cart cart, java.util.UUID requestedStoreId) {
+        Store store = cart.getStore();
+        if (requestedStoreId != null) {
+            if (store != null && !store.getId().equals(requestedStoreId)) {
+                throw new UnauthorizedException("STORE_CONFLICT", "Checkout store mismatch");
+            }
+            if (store == null) {
+                Store requested = storeRepository.findById(requestedStoreId)
+                        .orElseThrow(() -> new NotFoundException("STORE_NOT_FOUND", "Store not found"));
+                cart.setStore(requested);
+                cartRepository.save(cart);
+                store = requested;
+            }
+        }
+        return store;
+    }
+
+    private void clearCheckoutDraft(Cart cart) {
+        cart.setStore(null);
+        cart.setFulfillmentMethod(null);
+        cart.setShippingAddressSnapshot(null);
+        cart.setPaymentReference(null);
+        cart.setCouponCode(null);
+        cart.setB2bInvoice(false);
+        cart.setIdempotencyKey(null);
+        cartRepository.save(cart);
+    }
+
+    private String normalizeSnapshot(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 
     /**

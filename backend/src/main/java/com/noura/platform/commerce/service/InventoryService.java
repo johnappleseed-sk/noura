@@ -3,7 +3,7 @@ package com.noura.platform.commerce.service;
 import com.noura.platform.commerce.entity.Product;
 import com.noura.platform.commerce.entity.ProductVariant;
 import com.noura.platform.commerce.entity.SkuSellUnit;
-import com.noura.platform.commerce.entity.StockMovementType;
+import com.noura.platform.domain.enums.StockMovementType;
 import com.noura.platform.commerce.repository.ProductRepo;
 import com.noura.platform.commerce.repository.SkuSellUnitRepo;
 import org.springframework.stereotype.Service;

@@ -1,5 +1,6 @@
 package com.noura.platform.commerce.entity;
 
+import com.noura.platform.domain.enums.StockMovementType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

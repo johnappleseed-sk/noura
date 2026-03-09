@@ -3,8 +3,8 @@ package com.noura.platform.controller;
 import com.noura.platform.common.api.ApiResponse;
 import com.noura.platform.dto.product.SearchSuggestionDto;
 import com.noura.platform.dto.product.TrendTagDto;
-import com.noura.platform.service.ProductService;
 import com.noura.platform.service.SearchService;
+import com.noura.platform.service.UnifiedCatalogService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,7 +20,7 @@ import java.util.List;
 public class SearchController {
 
     private final SearchService searchService;
-    private final ProductService productService;
+    private final UnifiedCatalogService unifiedCatalogService;
 
     /**
      * Executes predictive.
@@ -47,6 +47,6 @@ public class SearchController {
      */
     @GetMapping("/trend-tags")
     public ApiResponse<List<TrendTagDto>> trendTags(HttpServletRequest http) {
-        return ApiResponse.ok("Trend search tags", productService.trendTags(), http.getRequestURI());
+        return ApiResponse.ok("Trend search tags", unifiedCatalogService.trendTags(), http.getRequestURI());
     }
 }

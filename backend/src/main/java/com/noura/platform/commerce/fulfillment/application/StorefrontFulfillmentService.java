@@ -6,6 +6,8 @@ import com.noura.platform.commerce.fulfillment.infrastructure.ShipmentRepo;
 import com.noura.platform.commerce.orders.domain.Order;
 import com.noura.platform.commerce.orders.domain.OrderStatus;
 import com.noura.platform.commerce.orders.infrastructure.OrderRepo;
+import com.noura.platform.dto.fulfillment.ShipmentDto;
+import com.noura.platform.dto.fulfillment.UpsertShipmentRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -179,22 +181,5 @@ public class StorefrontFulfillmentService {
 
         Shipment saved = shipmentRepo.save(shipment);
         return toDto(saved);
-    }
-
-    public record UpsertShipmentRequest(String status, String carrier, String trackingNumber, String trackingUrl,
-                                        String estimatedDeliveryAt, String notes) {
-    }
-
-    public record ShipmentDto(Long id,
-                             String status,
-                             String carrier,
-                             String trackingNumber,
-                             String trackingUrl,
-                             LocalDateTime estimatedDeliveryAt,
-                             LocalDateTime shippedAt,
-                             LocalDateTime deliveredAt,
-                             String notes,
-                             LocalDateTime createdAt,
-                             LocalDateTime updatedAt) {
     }
 }

@@ -6,6 +6,8 @@ import com.noura.platform.commerce.orders.infrastructure.OrderRepo;
 import com.noura.platform.commerce.payments.domain.PaymentTransaction;
 import com.noura.platform.commerce.payments.domain.PaymentTransactionStatus;
 import com.noura.platform.commerce.payments.infrastructure.PaymentTransactionRepo;
+import com.noura.platform.dto.payment.CreatePaymentRequest;
+import com.noura.platform.dto.payment.PaymentTransactionResult;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -220,20 +222,4 @@ public class StorefrontPaymentService {
         );
     }
 
-    public record CreatePaymentRequest(String paymentMethod,
-                                      String provider,
-                                      String providerReference) {
-    }
-
-    public record PaymentTransactionResult(Long id,
-                                          String provider,
-                                          String paymentMethod,
-                                          String status,
-                                          BigDecimal amount,
-                                          String currencyCode,
-                                          String providerReference,
-                                          String failureReason,
-                                          LocalDateTime createdAt,
-                                          LocalDateTime updatedAt) {
-    }
 }

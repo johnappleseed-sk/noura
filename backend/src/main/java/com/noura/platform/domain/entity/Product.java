@@ -48,7 +48,7 @@ public class Product extends AuditableEntity {
     private BigDecimal basePrice;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb", nullable = false)
+    @Column(columnDefinition = "json", nullable = false)
     private Map<String, Object> attributes = new LinkedHashMap<>();
 
     @Enumerated(EnumType.STRING)

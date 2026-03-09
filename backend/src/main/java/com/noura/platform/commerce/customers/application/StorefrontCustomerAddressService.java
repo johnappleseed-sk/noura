@@ -4,6 +4,8 @@ import com.noura.platform.commerce.customers.domain.CustomerAccount;
 import com.noura.platform.commerce.customers.domain.CustomerAddress;
 import com.noura.platform.commerce.customers.infrastructure.CustomerAccountRepo;
 import com.noura.platform.commerce.customers.infrastructure.CustomerAddressRepo;
+import com.noura.platform.dto.storefront.CustomerAddressDto;
+import com.noura.platform.dto.storefront.StorefrontCustomerAddressRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -155,38 +157,5 @@ public class StorefrontCustomerAddressService {
                 address.getCreatedAt(),
                 address.getUpdatedAt()
         );
-    }
-
-    public record StorefrontCustomerAddressRequest(
-            String label,
-            String recipientName,
-            String phone,
-            String line1,
-            String line2,
-            String district,
-            String city,
-            String stateProvince,
-            String postalCode,
-            String countryCode,
-            boolean defaultShipping,
-            boolean defaultBilling
-    ) {
-    }
-
-    public record CustomerAddressDto(Long id,
-                                    String label,
-                                    String recipientName,
-                                    String phone,
-                                    String line1,
-                                    String line2,
-                                    String district,
-                                    String city,
-                                    String stateProvince,
-                                    String postalCode,
-                                    String countryCode,
-                                    boolean defaultShipping,
-                                    boolean defaultBilling,
-                                    LocalDateTime createdAt,
-                                    LocalDateTime updatedAt) {
     }
 }

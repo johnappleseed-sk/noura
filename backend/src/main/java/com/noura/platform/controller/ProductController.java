@@ -4,7 +4,7 @@ import com.noura.platform.common.api.ApiResponse;
 import com.noura.platform.common.api.PageResponse;
 import com.noura.platform.common.api.PaginationUtils;
 import com.noura.platform.dto.product.*;
-import com.noura.platform.service.ProductService;
+import com.noura.platform.service.UnifiedCatalogService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -27,7 +27,7 @@ import java.util.UUID;
 @RequestMapping("${app.api.version-prefix:/api/v1}/products")
 public class ProductController {
 
-    private final ProductService productService;
+    private final UnifiedCatalogService unifiedCatalogService;
 
     /**
      * Lists products.
@@ -88,7 +88,7 @@ public class ProductController {
                 .attributeValue(attributeValue)
                 .build();
         Pageable pageable = PaginationUtils.pageOf(page, size, sortBy, direction);
-        Page<ProductDto> products = productService.listProducts(filter, pageable);
+        Page<ProductDto> products = unifiedCatalogService.listProducts(filter, pageable);
         return ApiResponse.ok("Products (" + view + " mode)", PageResponse.from(products), http.getRequestURI());
     }
 
@@ -100,7 +100,7 @@ public class ProductController {
      */
     @GetMapping("/trend-tags")
     public ApiResponse<List<TrendTagDto>> trendTags(HttpServletRequest http) {
-        return ApiResponse.ok("Trend tags", productService.trendTags(), http.getRequestURI());
+        return ApiResponse.ok("Trend tags", unifiedCatalogService.trendTags(), http.getRequestURI());
     }
 
     /**
@@ -112,7 +112,7 @@ public class ProductController {
      */
     @GetMapping("/{productId}")
     public ApiResponse<ProductDto> getProduct(@PathVariable UUID productId, HttpServletRequest http) {
-        return ApiResponse.ok("Product", productService.getProduct(productId), http.getRequestURI());
+        return ApiResponse.ok("Product", unifiedCatalogService.getProduct(productId), http.getRequestURI());
     }
 
     /**
@@ -128,7 +128,7 @@ public class ProductController {
             HttpServletRequest http
     ) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok("Product created", productService.createProduct(request), http.getRequestURI()));
+                .body(ApiResponse.ok("Product created", unifiedCatalogService.createProduct(request), http.getRequestURI()));
     }
 
     /**
@@ -145,7 +145,7 @@ public class ProductController {
             @Valid @RequestBody ProductRequest request,
             HttpServletRequest http
     ) {
-        return ApiResponse.ok("Product updated", productService.updateProduct(productId, request), http.getRequestURI());
+        return ApiResponse.ok("Product updated", unifiedCatalogService.updateProduct(productId, request), http.getRequestURI());
     }
 
     /**
@@ -162,7 +162,7 @@ public class ProductController {
             @RequestBody ProductPatchRequest request,
             HttpServletRequest http
     ) {
-        return ApiResponse.ok("Product patched", productService.patchProduct(productId, request), http.getRequestURI());
+        return ApiResponse.ok("Product patched", unifiedCatalogService.patchProduct(productId, request), http.getRequestURI());
     }
 
     /**
@@ -174,7 +174,7 @@ public class ProductController {
      */
     @DeleteMapping("/{productId}")
     public ApiResponse<Void> delete(@PathVariable UUID productId, HttpServletRequest http) {
-        productService.deleteProduct(productId);
+        unifiedCatalogService.deleteProduct(productId);
         return ApiResponse.ok("Product deleted", null, http.getRequestURI());
     }
 
@@ -187,7 +187,7 @@ public class ProductController {
      */
     @GetMapping("/{productId}/reviews")
     public ApiResponse<List<ProductReviewDto>> reviews(@PathVariable UUID productId, HttpServletRequest http) {
-        return ApiResponse.ok("Product reviews", productService.reviews(productId), http.getRequestURI());
+        return ApiResponse.ok("Product reviews", unifiedCatalogService.reviews(productId), http.getRequestURI());
     }
 
     /**
@@ -205,7 +205,7 @@ public class ProductController {
             HttpServletRequest http
     ) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok("Review added", productService.addReview(productId, request), http.getRequestURI()));
+                .body(ApiResponse.ok("Review added", unifiedCatalogService.addReview(productId, request), http.getRequestURI()));
     }
 
     /**
@@ -223,7 +223,7 @@ public class ProductController {
             HttpServletRequest http
     ) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok("Variant added", productService.addVariant(productId, request), http.getRequestURI()));
+                .body(ApiResponse.ok("Variant added", unifiedCatalogService.addVariant(productId, request), http.getRequestURI()));
     }
 
     /**
@@ -235,7 +235,7 @@ public class ProductController {
      */
     @GetMapping("/{productId}/variants")
     public ApiResponse<List<ProductVariantDto>> variants(@PathVariable UUID productId, HttpServletRequest http) {
-        return ApiResponse.ok("Product variants", productService.listVariants(productId), http.getRequestURI());
+        return ApiResponse.ok("Product variants", unifiedCatalogService.listVariants(productId), http.getRequestURI());
     }
 
     /**
@@ -253,7 +253,7 @@ public class ProductController {
             HttpServletRequest http
     ) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok("Media added", productService.addMedia(productId, request), http.getRequestURI()));
+                .body(ApiResponse.ok("Media added", unifiedCatalogService.addMedia(productId, request), http.getRequestURI()));
     }
 
     /**
@@ -270,7 +270,7 @@ public class ProductController {
             @Valid @RequestBody ProductInventoryRequest request,
             HttpServletRequest http
     ) {
-        return ApiResponse.ok("Inventory upserted", productService.upsertInventory(productId, request), http.getRequestURI());
+        return ApiResponse.ok("Inventory upserted", unifiedCatalogService.upsertInventory(productId, request), http.getRequestURI());
     }
 
     /**
@@ -282,7 +282,7 @@ public class ProductController {
      */
     @GetMapping("/{productId}/inventory")
     public ApiResponse<List<ProductInventoryDto>> inventories(@PathVariable UUID productId, HttpServletRequest http) {
-        return ApiResponse.ok("Store inventory", productService.inventories(productId), http.getRequestURI());
+        return ApiResponse.ok("Store inventory", unifiedCatalogService.inventories(productId), http.getRequestURI());
     }
 
     /**
@@ -294,7 +294,7 @@ public class ProductController {
      */
     @GetMapping("/{productId}/related")
     public ApiResponse<List<ProductDto>> related(@PathVariable UUID productId, HttpServletRequest http) {
-        return ApiResponse.ok("Related products", productService.relatedProducts(productId), http.getRequestURI());
+        return ApiResponse.ok("Related products", unifiedCatalogService.relatedProducts(productId), http.getRequestURI());
     }
 
     /**
@@ -306,6 +306,6 @@ public class ProductController {
      */
     @GetMapping("/{productId}/frequently-bought-together")
     public ApiResponse<List<ProductDto>> frequentlyBoughtTogether(@PathVariable UUID productId, HttpServletRequest http) {
-        return ApiResponse.ok("Frequently bought together", productService.frequentlyBoughtTogether(productId), http.getRequestURI());
+        return ApiResponse.ok("Frequently bought together", unifiedCatalogService.frequentlyBoughtTogether(productId), http.getRequestURI());
     }
 }

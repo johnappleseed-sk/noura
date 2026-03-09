@@ -6,7 +6,7 @@ import com.noura.platform.commerce.entity.Product;
 import com.noura.platform.commerce.entity.PurchaseOrder;
 import com.noura.platform.commerce.entity.PurchaseOrderItem;
 import com.noura.platform.commerce.entity.PurchaseOrderStatus;
-import com.noura.platform.commerce.entity.StockMovementType;
+import com.noura.platform.domain.enums.StockMovementType;
 import com.noura.platform.commerce.entity.Supplier;
 import com.noura.platform.commerce.repository.AppUserRepo;
 import com.noura.platform.commerce.repository.GoodsReceiptRepo;

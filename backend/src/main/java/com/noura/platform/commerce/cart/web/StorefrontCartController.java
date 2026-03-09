@@ -2,8 +2,11 @@ package com.noura.platform.commerce.cart.web;
 
 import com.noura.platform.commerce.api.v1.dto.common.ApiEnvelope;
 import com.noura.platform.commerce.api.v1.support.ApiTrace;
-import com.noura.platform.commerce.cart.application.StorefrontCartService;
 import com.noura.platform.commerce.customers.domain.StorefrontCustomerPrincipal;
+import com.noura.platform.dto.storefront.StorefrontAddCartItemRequest;
+import com.noura.platform.dto.storefront.StorefrontCartDto;
+import com.noura.platform.dto.storefront.StorefrontUpdateCartItemRequest;
+import com.noura.platform.service.UnifiedOrderService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
@@ -20,36 +23,38 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.context.annotation.Profile;
 
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
+@Profile("legacy-storefront")
 @RestController
 @RequestMapping("/api/storefront/v1/cart")
 @Validated
 public class StorefrontCartController {
-    private final StorefrontCartService storefrontCartService;
+    private final UnifiedOrderService unifiedOrderService;
 
-    public StorefrontCartController(StorefrontCartService storefrontCartService) {
-        this.storefrontCartService = storefrontCartService;
+    public StorefrontCartController(UnifiedOrderService unifiedOrderService) {
+        this.unifiedOrderService = unifiedOrderService;
     }
 
     @GetMapping
-    public ApiEnvelope<StorefrontCartService.CartDto> get(Authentication authentication, HttpServletRequest request) {
+    public ApiEnvelope<StorefrontCartDto> get(Authentication authentication, HttpServletRequest request) {
         Long customerId = resolveCustomerId(authentication);
         return ApiEnvelope.success(
                 "STOREFRONT_CART_GET_OK",
                 "Cart fetched successfully.",
-                storefrontCartService.getOrCreateCart(customerId),
+                unifiedOrderService.getOrCreateStorefrontCart(customerId),
                 ApiTrace.resolve(request)
         );
     }
 
     @PostMapping("/items")
-    public ApiEnvelope<StorefrontCartService.CartDto> addItem(@Valid @RequestBody AddCartItemRequest body,
+    public ApiEnvelope<StorefrontCartDto> addItem(@Valid @RequestBody AddCartItemRequest body,
                                                              Authentication authentication,
                                                              HttpServletRequest request) {
         Long customerId = resolveCustomerId(authentication);
-        var result = storefrontCartService.addItem(customerId, new StorefrontCartService.AddCartItemRequest(
+        var result = unifiedOrderService.addStorefrontCartItem(customerId, new StorefrontAddCartItemRequest(
                 body.productId(),
                 body.quantity()
         ));
@@ -62,12 +67,12 @@ public class StorefrontCartController {
     }
 
     @PatchMapping("/items/{itemId}")
-    public ApiEnvelope<StorefrontCartService.CartDto> updateItem(@PathVariable Long itemId,
+    public ApiEnvelope<StorefrontCartDto> updateItem(@PathVariable Long itemId,
                                                                 @Valid @RequestBody UpdateCartItemRequest body,
                                                                 Authentication authentication,
                                                                 HttpServletRequest request) {
         Long customerId = resolveCustomerId(authentication);
-        var result = storefrontCartService.updateItem(customerId, itemId, new StorefrontCartService.UpdateCartItemRequest(body.quantity()));
+        var result = unifiedOrderService.updateStorefrontCartItem(customerId, itemId, new StorefrontUpdateCartItemRequest(body.quantity()));
         return ApiEnvelope.success(
                 "STOREFRONT_CART_ITEM_UPDATE_OK",
                 "Cart item updated successfully.",
@@ -77,26 +82,26 @@ public class StorefrontCartController {
     }
 
     @DeleteMapping("/items/{itemId}")
-    public ApiEnvelope<StorefrontCartService.CartDto> deleteItem(@PathVariable Long itemId,
+    public ApiEnvelope<StorefrontCartDto> deleteItem(@PathVariable Long itemId,
                                                                 Authentication authentication,
                                                                 HttpServletRequest request) {
         Long customerId = resolveCustomerId(authentication);
-        storefrontCartService.removeItem(customerId, itemId);
+        unifiedOrderService.removeStorefrontCartItem(customerId, itemId);
         return ApiEnvelope.success(
                 "STOREFRONT_CART_ITEM_DELETE_OK",
                 "Cart item removed successfully.",
-                storefrontCartService.getOrCreateCart(customerId),
+                unifiedOrderService.getOrCreateStorefrontCart(customerId),
                 ApiTrace.resolve(request)
         );
     }
 
     @DeleteMapping
-    public ApiEnvelope<StorefrontCartService.CartDto> clear(Authentication authentication, HttpServletRequest request) {
+    public ApiEnvelope<StorefrontCartDto> clear(Authentication authentication, HttpServletRequest request) {
         Long customerId = resolveCustomerId(authentication);
         return ApiEnvelope.success(
                 "STOREFRONT_CART_CLEAR_OK",
                 "Cart cleared successfully.",
-                storefrontCartService.clearCart(customerId),
+                unifiedOrderService.clearStorefrontCart(customerId),
                 ApiTrace.resolve(request)
         );
     }

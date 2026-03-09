@@ -33,7 +33,7 @@ public class Promotion extends AuditableEntity {
     private String couponCode;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "conditions_json", columnDefinition = "jsonb", nullable = false)
+    @Column(name = "conditions_json", columnDefinition = "json", nullable = false)
     private Map<String, Object> conditions = new LinkedHashMap<>();
 
     @Column(name = "start_date")

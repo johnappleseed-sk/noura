@@ -4,7 +4,9 @@ import com.noura.platform.commerce.api.v1.dto.common.ApiEnvelope;
 import com.noura.platform.commerce.api.v1.support.ApiTrace;
 import com.noura.platform.commerce.customers.domain.StorefrontCustomerPrincipal;
 import com.noura.platform.commerce.fulfillment.application.StorefrontFulfillmentService;
+import com.noura.platform.dto.fulfillment.ShipmentDto;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,6 +16,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
+@Profile("legacy-storefront")
 @RestController
 @RequestMapping("/api/storefront/v1/orders/{orderId}/fulfillment")
 public class StorefrontFulfillmentController {
@@ -24,7 +27,7 @@ public class StorefrontFulfillmentController {
     }
 
     @GetMapping
-    public ApiEnvelope<StorefrontFulfillmentService.ShipmentDto> getLatest(@PathVariable Long orderId,
+    public ApiEnvelope<ShipmentDto> getLatest(@PathVariable Long orderId,
                                                                           Authentication authentication,
                                                                           HttpServletRequest requestContext) {
         Long customerId = resolveCustomerId(authentication);

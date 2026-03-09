@@ -3,6 +3,8 @@ package com.noura.platform.controller;
 import com.noura.platform.common.api.ApiResponse;
 import com.noura.platform.dto.order.OrderDto;
 import com.noura.platform.dto.user.*;
+import com.noura.platform.service.UnifiedOrderService;
+import com.noura.platform.service.UnifiedPaymentService;
 import com.noura.platform.service.UserAccountService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -18,6 +20,8 @@ import java.util.UUID;
 public class UserController {
 
     private final UserAccountService userAccountService;
+    private final UnifiedOrderService unifiedOrderService;
+    private final UnifiedPaymentService unifiedPaymentService;
 
     /**
      * Executes profile.
@@ -103,7 +107,7 @@ public class UserController {
      */
     @GetMapping("/payment-methods")
     public ApiResponse<List<PaymentMethodDto>> paymentMethods(HttpServletRequest http) {
-        return ApiResponse.ok("Payment methods", userAccountService.listPaymentMethods(), http.getRequestURI());
+        return ApiResponse.ok("Payment methods", unifiedPaymentService.listPaymentMethods(), http.getRequestURI());
     }
 
     /**
@@ -115,7 +119,7 @@ public class UserController {
      */
     @PostMapping("/payment-methods")
     public ApiResponse<PaymentMethodDto> addPaymentMethod(@Valid @RequestBody PaymentMethodRequest request, HttpServletRequest http) {
-        return ApiResponse.ok("Payment method added", userAccountService.addPaymentMethod(request), http.getRequestURI());
+        return ApiResponse.ok("Payment method added", unifiedPaymentService.addPaymentMethod(request), http.getRequestURI());
     }
 
     /**
@@ -134,7 +138,7 @@ public class UserController {
     ) {
         return ApiResponse.ok(
                 "Payment method updated",
-                userAccountService.updatePaymentMethod(paymentMethodId, request),
+                unifiedPaymentService.updatePaymentMethod(paymentMethodId, request),
                 http.getRequestURI()
         );
     }
@@ -148,7 +152,7 @@ public class UserController {
      */
     @DeleteMapping("/payment-methods/{paymentMethodId}")
     public ApiResponse<Void> deletePaymentMethod(@PathVariable UUID paymentMethodId, HttpServletRequest http) {
-        userAccountService.deletePaymentMethod(paymentMethodId);
+        unifiedPaymentService.deletePaymentMethod(paymentMethodId);
         return ApiResponse.ok("Payment method deleted", null, http.getRequestURI());
     }
 
@@ -160,7 +164,7 @@ public class UserController {
      */
     @GetMapping("/orders")
     public ApiResponse<List<OrderDto>> orderHistory(HttpServletRequest http) {
-        return ApiResponse.ok("Order history", userAccountService.myOrderHistory(), http.getRequestURI());
+        return ApiResponse.ok("Order history", unifiedOrderService.myOrderHistory(), http.getRequestURI());
     }
 
     /**
@@ -172,7 +176,7 @@ public class UserController {
      */
     @PostMapping("/orders/{orderId}/quick-reorder")
     public ApiResponse<List<OrderDto>> quickReorder(@PathVariable UUID orderId, HttpServletRequest http) {
-        return ApiResponse.ok("Quick reorder prepared", userAccountService.quickReorder(orderId), http.getRequestURI());
+        return ApiResponse.ok("Quick reorder prepared", unifiedOrderService.quickReorder(orderId), http.getRequestURI());
     }
 
     /**

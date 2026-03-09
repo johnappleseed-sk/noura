@@ -1,0 +1,7 @@
+ALTER TABLE carts
+    ADD COLUMN IF NOT EXISTS fulfillment_method VARCHAR(40),
+    ADD COLUMN IF NOT EXISTS shipping_address_snapshot TEXT,
+    ADD COLUMN IF NOT EXISTS payment_reference TEXT,
+    ADD COLUMN IF NOT EXISTS coupon_code VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS b2b_invoice BOOLEAN NOT NULL DEFAULT FALSE,
+    ADD COLUMN IF NOT EXISTS idempotency_key VARCHAR(128);

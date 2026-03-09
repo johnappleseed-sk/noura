@@ -18,6 +18,13 @@ import com.noura.platform.commerce.orders.infrastructure.OrderRepo;
 import com.noura.platform.commerce.payments.application.StorefrontPaymentService;
 import com.noura.platform.commerce.repository.ProductRepo;
 import com.noura.platform.commerce.service.StockMovementService;
+import com.noura.platform.dto.payment.CreatePaymentRequest;
+import com.noura.platform.dto.payment.PaymentTransactionResult;
+import com.noura.platform.dto.storefront.StorefrontCheckoutRequest;
+import com.noura.platform.dto.storefront.StorefrontOrderItemDto;
+import com.noura.platform.dto.storefront.StorefrontOrderResult;
+import com.noura.platform.dto.storefront.StorefrontOrderShippingAddressDto;
+import com.noura.platform.dto.storefront.StorefrontOrderSummaryDto;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -68,7 +75,7 @@ public class StorefrontOrderService {
         this.stockMovementService = stockMovementService;
     }
 
-    public List<OrderSummaryDto> listOrders(Long customerId) {
+    public List<StorefrontOrderSummaryDto> listOrders(Long customerId) {
         CustomerAccount customer = customerAccountRepo.findById(customerId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Customer not found."));
         List<Order> orders = orderRepo.findByCustomerAccount_IdOrderByPlacedAtDesc(customer.getId());
@@ -77,7 +84,7 @@ public class StorefrontOrderService {
                 .toList();
     }
 
-    public StorefrontOrderResult checkout(Long customerId, CheckoutRequest request) {
+    public StorefrontOrderResult checkout(Long customerId, StorefrontCheckoutRequest request) {
         Cart cart = cartService.resolveActiveCartForCheckout(customerId);
         CustomerAccount customer = customerAccountRepo.findById(customerId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Customer not found."));
@@ -146,10 +153,10 @@ public class StorefrontOrderService {
         order.setPlacedAt(LocalDateTime.now());
         Order saved = orderRepo.save(order);
         ensureInitialShipment(saved);
-        StorefrontPaymentService.PaymentTransactionResult payment = paymentService.createInitialPayment(
+        PaymentTransactionResult payment = paymentService.createInitialPayment(
                 customerId,
                 saved.getId(),
-                new StorefrontPaymentService.CreatePaymentRequest(
+                new CreatePaymentRequest(
                         request == null ? null : request.paymentMethod(),
                         request == null ? null : request.paymentProvider(),
                         request == null ? null : request.paymentProviderReference()
@@ -227,7 +234,7 @@ public class StorefrontOrderService {
                 || status == OrderStatus.PROCESSING;
     }
 
-    private StorefrontOrderResult toResult(Order order, StorefrontPaymentService.PaymentTransactionResult payment) {
+    private StorefrontOrderResult toResult(Order order, PaymentTransactionResult payment) {
         List<OrderItem> items = order.getItems() == null ? List.of() : order.getItems();
         return new StorefrontOrderResult(
                 order.getId(),
@@ -348,10 +355,10 @@ public class StorefrontOrderService {
         return value.setScale(4, RoundingMode.HALF_UP);
     }
 
-    private OrderSummaryDto toSummaryDto(Order order) {
+    private StorefrontOrderSummaryDto toSummaryDto(Order order) {
         BigDecimal grandTotal = order.getGrandTotal() == null ? ZERO_MONEY : order.getGrandTotal();
         int itemCount = order.getItems() == null ? 0 : order.getItems().size();
-        return new OrderSummaryDto(
+        return new StorefrontOrderSummaryDto(
                 order.getId(),
                 order.getOrderNumber(),
                 order.getStatus() == null ? null : order.getStatus().name(),
@@ -362,54 +369,4 @@ public class StorefrontOrderService {
         );
     }
 
-    public record CheckoutRequest(Long shippingAddressId,
-                                 String currency,
-                                 String paymentMethod,
-                                 String paymentProvider,
-                                 String paymentProviderReference) {
-    }
-
-    public record StorefrontOrderItemDto(Long id,
-                                        Long productId,
-                                        String sku,
-                                        String productName,
-                                        BigDecimal quantity,
-                                        BigDecimal unitPrice,
-                                        BigDecimal lineTotal) {
-    }
-
-    public record StorefrontOrderShippingAddressDto(String recipientName,
-                                                    String phone,
-                                                    String line1,
-                                                    String line2,
-                                                    String district,
-                                                    String city,
-                                                    String stateProvince,
-                                                    String postalCode,
-                                                    String countryCode) {
-    }
-
-    public record StorefrontOrderResult(Long id,
-                                       String orderNumber,
-                                       String status,
-                                       String currencyCode,
-                                       BigDecimal subtotal,
-                                       BigDecimal discountTotal,
-                                       BigDecimal taxTotal,
-                                       BigDecimal shippingTotal,
-                                       BigDecimal grandTotal,
-                                       LocalDateTime placedAt,
-                                       StorefrontOrderShippingAddressDto shippingAddress,
-                                       StorefrontPaymentService.PaymentTransactionResult latestPayment,
-                                       List<StorefrontOrderItemDto> items) {
-    }
-
-    public record OrderSummaryDto(Long id,
-                                 String orderNumber,
-                                 String status,
-                                 LocalDateTime placedAt,
-                                 String currencyCode,
-                                 BigDecimal grandTotal,
-                                 int itemCount) {
-    }
 }

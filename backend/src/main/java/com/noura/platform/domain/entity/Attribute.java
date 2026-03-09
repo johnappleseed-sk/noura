@@ -35,6 +35,6 @@ public class Attribute extends AuditableEntity {
     private AttributeType type;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "possible_values", columnDefinition = "jsonb")
+    @Column(name = "possible_values", columnDefinition = "json")
     private List<String> possibleValues;
 }

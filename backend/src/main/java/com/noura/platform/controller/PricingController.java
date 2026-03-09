@@ -2,7 +2,7 @@ package com.noura.platform.controller;
 
 import com.noura.platform.common.api.ApiResponse;
 import com.noura.platform.dto.pricing.*;
-import com.noura.platform.service.PricingCatalogService;
+import com.noura.platform.service.UnifiedPricingService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +17,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PricingController {
 
-    private final PricingCatalogService pricingCatalogService;
+    private final UnifiedPricingService unifiedPricingService;
 
     /**
      * Creates price list.
@@ -32,7 +32,7 @@ public class PricingController {
             HttpServletRequest http
     ) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok("Price list created", pricingCatalogService.createPriceList(request), http.getRequestURI()));
+                .body(ApiResponse.ok("Price list created", unifiedPricingService.createPriceList(request), http.getRequestURI()));
     }
 
     /**
@@ -43,7 +43,7 @@ public class PricingController {
      */
     @GetMapping("${app.api.version-prefix:/api/v1}/price-lists")
     public ApiResponse<List<PriceListDto>> priceLists(HttpServletRequest http) {
-        return ApiResponse.ok("Price lists", pricingCatalogService.priceLists(), http.getRequestURI());
+        return ApiResponse.ok("Price lists", unifiedPricingService.priceLists(), http.getRequestURI());
     }
 
     /**
@@ -59,7 +59,7 @@ public class PricingController {
             HttpServletRequest http
     ) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok("Price upserted", pricingCatalogService.upsertPrice(request), http.getRequestURI()));
+                .body(ApiResponse.ok("Price upserted", unifiedPricingService.upsertPrice(request), http.getRequestURI()));
     }
 
     /**
@@ -80,7 +80,7 @@ public class PricingController {
     ) {
         return ApiResponse.ok(
                 "Price quote",
-                pricingCatalogService.quoteVariantPrice(variantId, customerGroupId, channelId),
+                unifiedPricingService.quoteVariantPrice(variantId, customerGroupId, channelId),
                 http.getRequestURI()
         );
     }
@@ -98,7 +98,7 @@ public class PricingController {
             HttpServletRequest http
     ) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok("Promotion created", pricingCatalogService.createPromotion(request), http.getRequestURI()));
+                .body(ApiResponse.ok("Promotion created", unifiedPricingService.createPromotion(request), http.getRequestURI()));
     }
 
     /**
@@ -109,6 +109,6 @@ public class PricingController {
      */
     @GetMapping("${app.api.version-prefix:/api/v1}/promotions/active")
     public ApiResponse<List<PromotionDto>> activePromotions(HttpServletRequest http) {
-        return ApiResponse.ok("Active promotions", pricingCatalogService.activePromotions(), http.getRequestURI());
+        return ApiResponse.ok("Active promotions", unifiedPricingService.activePromotions(), http.getRequestURI());
     }
 }

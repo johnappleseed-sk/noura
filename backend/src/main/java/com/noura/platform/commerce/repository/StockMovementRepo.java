@@ -1,7 +1,7 @@
 package com.noura.platform.commerce.repository;
 
 import com.noura.platform.commerce.entity.StockMovement;
-import com.noura.platform.commerce.entity.StockMovementType;
+import com.noura.platform.domain.enums.StockMovementType;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;

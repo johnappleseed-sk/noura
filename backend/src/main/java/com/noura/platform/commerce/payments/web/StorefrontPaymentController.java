@@ -3,10 +3,12 @@ package com.noura.platform.commerce.payments.web;
 import com.noura.platform.commerce.api.v1.dto.common.ApiEnvelope;
 import com.noura.platform.commerce.api.v1.support.ApiTrace;
 import com.noura.platform.commerce.customers.domain.StorefrontCustomerPrincipal;
-import com.noura.platform.commerce.payments.application.StorefrontPaymentService;
+import com.noura.platform.dto.payment.PaymentTransactionResult;
+import com.noura.platform.service.UnifiedPaymentService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,39 +23,40 @@ import java.util.List;
 
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
+@Profile("legacy-storefront")
 @RestController
 @RequestMapping("/api/storefront/v1/orders/{orderId}/payments")
 @Validated
 public class StorefrontPaymentController {
-    private final StorefrontPaymentService paymentService;
+    private final UnifiedPaymentService unifiedPaymentService;
 
-    public StorefrontPaymentController(StorefrontPaymentService paymentService) {
-        this.paymentService = paymentService;
+    public StorefrontPaymentController(UnifiedPaymentService unifiedPaymentService) {
+        this.unifiedPaymentService = unifiedPaymentService;
     }
 
     @GetMapping
-    public ApiEnvelope<List<StorefrontPaymentService.PaymentTransactionResult>> listPayments(@PathVariable Long orderId,
+    public ApiEnvelope<List<PaymentTransactionResult>> listPayments(@PathVariable Long orderId,
                                                                                            Authentication authentication,
                                                                                            HttpServletRequest requestContext) {
         Long customerId = resolveCustomerId(authentication);
         return ApiEnvelope.success(
                 "STORE_PAYMENT_LIST_OK",
                 "Payments fetched successfully.",
-                paymentService.listForOrder(customerId, orderId),
+                unifiedPaymentService.listStorefrontPayments(customerId, orderId),
                 ApiTrace.resolve(requestContext)
         );
     }
 
     @PostMapping
-    public ApiEnvelope<StorefrontPaymentService.PaymentTransactionResult> createPayment(@PathVariable Long orderId,
+    public ApiEnvelope<PaymentTransactionResult> createPayment(@PathVariable Long orderId,
                                                                                       @Valid @RequestBody CreatePaymentRequest body,
                                                                                       Authentication authentication,
                                                                                       HttpServletRequest requestContext) {
         Long customerId = resolveCustomerId(authentication);
-        var result = paymentService.createInitialPayment(
+        var result = unifiedPaymentService.createStorefrontPayment(
                 customerId,
                 orderId,
-                new StorefrontPaymentService.CreatePaymentRequest(
+                new com.noura.platform.dto.payment.CreatePaymentRequest(
                         body == null ? null : body.paymentMethod(),
                         body == null ? null : body.provider(),
                         body == null ? null : body.providerReference()
@@ -68,7 +71,7 @@ public class StorefrontPaymentController {
     }
 
     @PostMapping("/{paymentId}/capture")
-    public ApiEnvelope<StorefrontPaymentService.PaymentTransactionResult> capture(@PathVariable Long orderId,
+    public ApiEnvelope<PaymentTransactionResult> capture(@PathVariable Long orderId,
                                                                                 @PathVariable Long paymentId,
                                                                                 Authentication authentication,
                                                                                 HttpServletRequest requestContext) {
@@ -76,7 +79,7 @@ public class StorefrontPaymentController {
         return ApiEnvelope.success(
                 "STORE_PAYMENT_CAPTURE_OK",
                 "Payment captured successfully.",
-                paymentService.capture(customerId, orderId, paymentId),
+                unifiedPaymentService.captureStorefrontPayment(customerId, orderId, paymentId),
                 ApiTrace.resolve(requestContext)
         );
     }

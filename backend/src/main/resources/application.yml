@@ -1,13 +1,13 @@
 spring:
   application:
-    name: enterprise-commerce-api
+    name: noura-spring-boot-api
   profiles:
-    default: local
+    default: local-mysql
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/noura}
-    username: ${DB_USERNAME:noura}
-    password: ${DB_PASSWORD:noura}
-    driver-class-name: org.postgresql.Driver
+    url: ${DB_URL:jdbc:mysql://localhost:3306/noura?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
       ddl-auto: validate
@@ -41,8 +41,6 @@ spring:
         spring.json.trusted.packages: com.noura.platform.event
   elasticsearch:
     uris: ${ELASTICSEARCH_URIS:http://localhost:9200}
-  thymeleaf:
-    cache: ${APP_THYMELEAF_CACHE:true}
   servlet:
     multipart:
       max-file-size: 10MB
@@ -73,6 +71,7 @@ management:
       enabled: true
 
 springdoc:
+  use-fqn: true
   swagger-ui:
     path: /swagger-ui
   api-docs:

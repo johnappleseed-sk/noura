@@ -8,6 +8,7 @@ import com.noura.platform.commerce.api.v1.support.ApiTrace;
 import com.noura.platform.commerce.entity.SupplierStatus;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+@Profile("legacy-commerce")
 @RestController
 @RequestMapping("/api/v1/suppliers")
 public class SupplierApiV1Controller {

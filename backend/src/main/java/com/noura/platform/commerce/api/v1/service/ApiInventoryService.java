@@ -4,7 +4,7 @@ import com.noura.platform.commerce.api.v1.dto.inventory.StockAdjustmentRequest;
 import com.noura.platform.commerce.api.v1.dto.inventory.StockAvailabilityDto;
 import com.noura.platform.commerce.api.v1.dto.inventory.StockMovementDto;
 import com.noura.platform.commerce.api.v1.dto.inventory.StockReceiveRequest;
-import com.noura.platform.commerce.entity.StockMovementType;
+import com.noura.platform.domain.enums.StockMovementType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

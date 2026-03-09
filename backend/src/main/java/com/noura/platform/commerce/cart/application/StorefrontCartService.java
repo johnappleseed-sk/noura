@@ -13,6 +13,10 @@ import com.noura.platform.commerce.orders.domain.OrderItem;
 import com.noura.platform.commerce.orders.domain.OrderStatus;
 import com.noura.platform.commerce.orders.infrastructure.OrderRepo;
 import com.noura.platform.commerce.repository.ProductRepo;
+import com.noura.platform.dto.storefront.StorefrontAddCartItemRequest;
+import com.noura.platform.dto.storefront.StorefrontCartDto;
+import com.noura.platform.dto.storefront.StorefrontCartItemDto;
+import com.noura.platform.dto.storefront.StorefrontUpdateCartItemRequest;
 import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -45,13 +49,13 @@ public class StorefrontCartService {
     }
 
     @Transactional
-    public CartDto getOrCreateCart(Long customerId) {
+    public StorefrontCartDto getOrCreateCart(Long customerId) {
         Cart cart = resolveActiveCartByCustomer(customerId);
         return toDto(cart);
     }
 
     @Transactional
-    public CartDto addItem(Long customerId, AddCartItemRequest request) {
+    public StorefrontCartDto addItem(Long customerId, StorefrontAddCartItemRequest request) {
         long productId = request.productId();
         int quantity = request.quantity();
         if (productId <= 0) {
@@ -93,7 +97,7 @@ public class StorefrontCartService {
     }
 
     @Transactional
-    public CartDto updateItem(Long customerId, Long itemId, UpdateCartItemRequest request) {
+    public StorefrontCartDto updateItem(Long customerId, Long itemId, StorefrontUpdateCartItemRequest request) {
         if (itemId == null || itemId <= 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid item id.");
         }
@@ -123,7 +127,7 @@ public class StorefrontCartService {
     }
 
     @Transactional
-    public CartDto clearCart(Long customerId) {
+    public StorefrontCartDto clearCart(Long customerId) {
         Cart cart = resolveActiveCartByCustomer(customerId);
         cartItemRepo.deleteAllByCart_IdAndCart_Status(cart.getId(), CartStatus.ACTIVE);
         cart.getItems().clear();
@@ -138,7 +142,7 @@ public class StorefrontCartService {
         return orderRepo.findByCustomerAccount_IdOrderByPlacedAtDesc(customerId);
     }
 
-    public CartDto mapToDto(Cart cart) {
+    public StorefrontCartDto mapToDto(Cart cart) {
         return toDto(cart);
     }
 
@@ -172,9 +176,9 @@ public class StorefrontCartService {
         return computeLineTotal(unitPrice, quantity == null ? 0 : quantity);
     }
 
-    private CartDto toDto(Cart cart) {
-        List<CartItemDto> items = cart.getItems() == null ? List.of() : cart.getItems().stream()
-                .map(item -> new CartItemDto(
+    private StorefrontCartDto toDto(Cart cart) {
+        List<StorefrontCartItemDto> items = cart.getItems() == null ? List.of() : cart.getItems().stream()
+                .map(item -> new StorefrontCartItemDto(
                         item.getId(),
                         item.getProductId(),
                         item.getSku(),
@@ -187,11 +191,11 @@ public class StorefrontCartService {
                 .toList();
 
         BigDecimal subtotal = items.stream()
-                .map(CartItemDto::lineTotal)
+                .map(StorefrontCartItemDto::lineTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add)
                 .setScale(4, RoundingMode.HALF_UP);
 
-        return new CartDto(
+        return new StorefrontCartDto(
                 cart.getId(),
                 cart.getStatus().name(),
                 cart.getCurrencyCode(),
@@ -202,28 +206,4 @@ public class StorefrontCartService {
         );
     }
 
-    public record CartItemDto(Long id,
-                              Long productId,
-                              String sku,
-                              String productName,
-                              String unitLabel,
-                              Integer quantity,
-                              BigDecimal unitPrice,
-                              BigDecimal lineTotal) {
-    }
-
-    public record CartDto(Long id,
-                          String status,
-                          String currencyCode,
-                          List<CartItemDto> items,
-                          BigDecimal subtotal,
-                          int itemCount,
-                          LocalDateTime updatedAt) {
-    }
-
-    public record AddCartItemRequest(long productId, int quantity) {
-    }
-
-    public record UpdateCartItemRequest(int quantity) {
-    }
 }

@@ -2,6 +2,7 @@ package com.noura.platform.commerce.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import com.noura.platform.commerce.service.AppUserDetailsService;
 import com.noura.platform.commerce.service.SsoAuthenticationService;
 import org.springframework.beans.factory.ObjectProvider;
@@ -25,7 +26,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-@Configuration
+@Configuration("commerceSecurityConfig")
+@Profile("commerce-security")
 @EnableWebSecurity
 public class SecurityConfig {
     @Value("${app.auth.sso.enabled:false}")
@@ -91,7 +93,6 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.ignoringRequestMatchers(
                         "/api/v1/**",
-                        "/api/storefront/v1/**",
                         "/api/v1/auth/register",
                         "/api/v1/auth/login",
                         "/api/v1/auth/verify-otp",
@@ -101,11 +102,6 @@ public class SecurityConfig {
                                 "/login/forgot-password", "/login/sso", "/error", "/access-denied").permitAll()
                         .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                         .requestMatchers("/dev-sso/**").permitAll()
-                        .requestMatchers("/api/storefront/v1/catalog/**").permitAll()
-                        .requestMatchers("/api/storefront/v1/customers/register", "/api/storefront/v1/customers/login").permitAll()
-                        .requestMatchers("/api/storefront/v1/customers/me/**",
-                                "/api/storefront/v1/cart/**",
-                                "/api/storefront/v1/orders/**").authenticated()
                         .requestMatchers("/api/v1/auth/register", "/api/v1/auth/login", "/api/v1/auth/verify-otp").permitAll()
                         .requestMatchers("/api/v1/auth/me").authenticated()
                         .requestMatchers("/api/v1/users/**").access(new org.springframework.security.web.access.expression.WebExpressionAuthorizationManager(
@@ -278,7 +274,8 @@ public class SecurityConfig {
     @Bean
     public DaoAuthenticationProvider daoAuthenticationProvider(AppUserDetailsService userDetailsService,
                                                                PasswordEncoder passwordEncoder) {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
+                DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+                provider.setUserDetailsService(userDetailsService);
         provider.setPasswordEncoder(passwordEncoder);
         provider.setUserDetailsPasswordService(userDetailsService);
         return provider;

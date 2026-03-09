@@ -3,6 +3,7 @@ package com.noura.platform.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.noura.platform.service.impl.RedisNotificationSubscriber;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -15,6 +16,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
 @RequiredArgsConstructor
+@ConditionalOnProperty(prefix = "app.redis", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class RedisConfig {
 
     private final AppProperties appProperties;

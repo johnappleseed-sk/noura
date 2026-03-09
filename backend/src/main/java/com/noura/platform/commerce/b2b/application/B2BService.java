@@ -22,13 +22,13 @@ public class B2BService {
     private final CompanyRepo companyRepo;
     private final PriceListRepo priceListRepo;
     private final PriceListItemRepo priceListItemRepo;
-    private final PurchaseOrderRepo purchaseOrderRepo;
+    private final B2BPurchaseOrderRepo purchaseOrderRepo;
 
     public B2BService(
             CompanyRepo companyRepo,
             PriceListRepo priceListRepo,
             PriceListItemRepo priceListItemRepo,
-            PurchaseOrderRepo purchaseOrderRepo) {
+            B2BPurchaseOrderRepo purchaseOrderRepo) {
         this.companyRepo = companyRepo;
         this.priceListRepo = priceListRepo;
         this.priceListItemRepo = priceListItemRepo;
@@ -362,7 +362,9 @@ public class B2BService {
         PurchaseOrder po = purchaseOrderRepo.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("Order not found"));
 
-        if (po.getStatus() == POStatus.FULFILLED || po.getStatus() == POStatus.CANCELLED) {
+        if (po.getStatus() == POStatus.SHIPPED
+            || po.getStatus() == POStatus.CLOSED
+            || po.getStatus() == POStatus.CANCELLED) {
             throw new IllegalStateException("Order cannot be cancelled: " + po.getStatus());
         }
 

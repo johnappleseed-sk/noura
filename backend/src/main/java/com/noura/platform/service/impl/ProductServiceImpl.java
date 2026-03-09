@@ -143,6 +143,7 @@ public class ProductServiceImpl implements ProductService {
      */
     @Override
     @Cacheable(cacheNames = "products", key = "'product:' + #productId")
+    @Transactional(readOnly = true)
     public ProductDto getProduct(UUID productId) {
         return mapRichProduct(getActiveProductOrThrow(productId));
     }
@@ -156,6 +157,7 @@ public class ProductServiceImpl implements ProductService {
      */
     @Override
     @Cacheable(cacheNames = "products", key = "'list:' + #filter.toString() + ':' + #pageable.pageNumber + ':' + #pageable.pageSize")
+    @Transactional(readOnly = true)
     public Page<ProductDto> listProducts(ProductFilterRequest filter, Pageable pageable) {
         if (filter == null) {
             filter = ProductFilterRequest.builder().build();
@@ -566,8 +568,11 @@ public class ProductServiceImpl implements ProductService {
      * @param request The request payload for this operation.
      */
     private void syncCatalogArtifacts(Product product, ProductRequest request) {
-        productVariantRepository.deleteByProductId(product.getId());
+        // Only replace related records when the client supplies that collection.
+        // - null: leave existing rows unchanged
+        // - empty list: delete all rows
         if (request.variants() != null) {
+            productVariantRepository.deleteByProductId(product.getId());
             for (ProductVariantRequest variantRequest : request.variants()) {
                 ProductVariant variant = new ProductVariant();
                 Map<String, Object> normalizedAttributes = normalizeVariantAttributes(variantRequest);
@@ -583,8 +588,8 @@ public class ProductServiceImpl implements ProductService {
             }
         }
 
-        productMediaRepository.deleteByProductId(product.getId());
         if (request.media() != null) {
+            productMediaRepository.deleteByProductId(product.getId());
             for (ProductMediaRequest mediaRequest : request.media()) {
                 ProductMedia media = new ProductMedia();
                 media.setProduct(product);
@@ -596,8 +601,8 @@ public class ProductServiceImpl implements ProductService {
             }
         }
 
-        productInventoryRepository.deleteByProductId(product.getId());
         if (request.inventory() != null) {
+            productInventoryRepository.deleteByProductId(product.getId());
             for (ProductInventoryRequest inventoryRequest : request.inventory()) {
                 Store store = storeRepository.findById(inventoryRequest.storeId())
                         .orElseThrow(() -> new NotFoundException("STORE_NOT_FOUND", "Store not found"));

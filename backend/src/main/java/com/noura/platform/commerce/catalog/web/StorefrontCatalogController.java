@@ -4,8 +4,9 @@ import com.noura.platform.commerce.api.v1.dto.common.ApiEnvelope;
 import com.noura.platform.commerce.api.v1.dto.common.ApiPageData;
 import com.noura.platform.commerce.api.v1.dto.inventory.StockAvailabilityDto;
 import com.noura.platform.commerce.api.v1.support.ApiTrace;
-import com.noura.platform.commerce.catalog.application.StorefrontCatalogService;
+import com.noura.platform.service.UnifiedCatalogService;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -17,16 +18,17 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+@Profile("legacy-storefront")
 @RestController
 @RequestMapping("/api/storefront/v1/catalog")
 public class StorefrontCatalogController {
     private static final int DEFAULT_PAGE_SIZE = 12;
     private static final int MAX_PAGE_SIZE = 48;
 
-    private final StorefrontCatalogService storefrontCatalogService;
+    private final UnifiedCatalogService unifiedCatalogService;
 
-    public StorefrontCatalogController(StorefrontCatalogService storefrontCatalogService) {
-        this.storefrontCatalogService = storefrontCatalogService;
+    public StorefrontCatalogController(UnifiedCatalogService unifiedCatalogService) {
+        this.unifiedCatalogService = unifiedCatalogService;
     }
 
     @GetMapping("/categories")
@@ -34,7 +36,7 @@ public class StorefrontCatalogController {
         return ApiEnvelope.success(
                 "STOREFRONT_CATEGORY_LIST_OK",
                 "Storefront categories fetched successfully.",
-                storefrontCatalogService.listCategories(),
+                unifiedCatalogService.listStorefrontCategories(),
                 ApiTrace.resolve(request)
         );
     }
@@ -46,7 +48,7 @@ public class StorefrontCatalogController {
                                                                        @RequestParam(defaultValue = "12") int size,
                                                                        @RequestParam(defaultValue = "featured") String sort,
                                                                        HttpServletRequest request) {
-        Page<StorefrontProductCardDto> productPage = storefrontCatalogService.listProducts(
+        Page<StorefrontProductCardDto> productPage = unifiedCatalogService.listStorefrontProducts(
                 q,
                 categoryId,
                 PageRequest.of(Math.max(0, page), normalizePageSize(size), sortBy(sort))
@@ -64,7 +66,7 @@ public class StorefrontCatalogController {
         return ApiEnvelope.success(
                 "STOREFRONT_PRODUCT_FETCH_OK",
                 "Storefront product fetched successfully.",
-                storefrontCatalogService.getProduct(id),
+                unifiedCatalogService.getStorefrontProduct(id),
                 ApiTrace.resolve(request)
         );
     }
@@ -74,7 +76,7 @@ public class StorefrontCatalogController {
         return ApiEnvelope.success(
                 "STOREFRONT_PRODUCT_AVAILABILITY_OK",
                 "Storefront product availability fetched successfully.",
-                storefrontCatalogService.getAvailability(id),
+                unifiedCatalogService.getStorefrontProductAvailability(id),
                 ApiTrace.resolve(request)
         );
     }

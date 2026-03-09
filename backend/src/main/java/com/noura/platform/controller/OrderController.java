@@ -6,7 +6,7 @@ import com.noura.platform.common.api.PaginationUtils;
 import com.noura.platform.dto.order.OrderDto;
 import com.noura.platform.dto.order.OrderTimelineEventDto;
 import com.noura.platform.dto.order.UpdateOrderStatusRequest;
-import com.noura.platform.service.OrderService;
+import com.noura.platform.service.UnifiedOrderService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -26,7 +26,7 @@ import java.util.UUID;
 @RequestMapping("${app.api.version-prefix:/api/v1}/orders")
 public class OrderController {
 
-    private final OrderService orderService;
+    private final UnifiedOrderService unifiedOrderService;
 
     /**
      * Executes admin orders.
@@ -47,7 +47,7 @@ public class OrderController {
             HttpServletRequest http
     ) {
         Pageable pageable = PaginationUtils.pageOf(page, size, sortBy, direction);
-        Page<OrderDto> orders = orderService.adminOrders(pageable);
+        Page<OrderDto> orders = unifiedOrderService.adminOrders(pageable);
         return ApiResponse.ok("Orders", PageResponse.from(orders), http.getRequestURI());
     }
 
@@ -60,7 +60,7 @@ public class OrderController {
      */
     @GetMapping("/{orderId}")
     public ApiResponse<OrderDto> getById(@PathVariable UUID orderId, HttpServletRequest http) {
-        return ApiResponse.ok("Order", orderService.getById(orderId), http.getRequestURI());
+        return ApiResponse.ok("Order", unifiedOrderService.getPlatformOrderById(orderId), http.getRequestURI());
     }
 
     /**
@@ -72,7 +72,7 @@ public class OrderController {
      */
     @GetMapping("/{orderId}/timeline")
     public ApiResponse<List<OrderTimelineEventDto>> orderTimeline(@PathVariable UUID orderId, HttpServletRequest http) {
-        return ApiResponse.ok("Order timeline", orderService.orderTimeline(orderId), http.getRequestURI());
+        return ApiResponse.ok("Order timeline", unifiedOrderService.orderTimeline(orderId), http.getRequestURI());
     }
 
     /**
@@ -89,6 +89,6 @@ public class OrderController {
             @Valid @RequestBody UpdateOrderStatusRequest request,
             HttpServletRequest http
     ) {
-        return ApiResponse.ok("Order status updated", orderService.updateStatus(orderId, request), http.getRequestURI());
+        return ApiResponse.ok("Order status updated", unifiedOrderService.updateOrderStatus(orderId, request), http.getRequestURI());
     }
 }

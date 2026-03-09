@@ -7,7 +7,7 @@ import com.noura.platform.commerce.entity.PaymentMethod;
 import com.noura.platform.commerce.entity.Permission;
 import com.noura.platform.commerce.entity.PurchaseOrderStatus;
 import com.noura.platform.commerce.entity.SaleStatus;
-import com.noura.platform.commerce.entity.StockMovementType;
+import com.noura.platform.domain.enums.StockMovementType;
 import com.noura.platform.commerce.entity.SupplierStatus;
 import com.noura.platform.commerce.entity.UserRole;
 import com.noura.platform.commerce.currency.application.CurrencyService;
