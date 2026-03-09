@@ -23,23 +23,7 @@ public interface CategoryRepo extends JpaRepository<Category, Long> {
     @Query("""
             select c from Category c
             where (:q is null or :q = ''
-              /**
-               * Executes the lower operation.
-               *
-               * @param name Parameter of type {@code c.} used by this operation.
-               * @return {@code or} Result produced by this operation.
-               * <p>Possible exceptions: Runtime exceptions from downstream dependencies may propagate unchanged.</p>
-               * <p>Edge cases: Null, empty, and boundary inputs are handled by the existing control flow and validations.</p>
-               */
               or lower(c.name) like lower(concat('%', :q, '%'))
-              /**
-               * Executes the lower operation.
-               *
-               * @param description Parameter of type {@code c.} used by this operation.
-               * @return {@code or} Result produced by this operation.
-               * <p>Possible exceptions: Runtime exceptions from downstream dependencies may propagate unchanged.</p>
-               * <p>Edge cases: Null, empty, and boundary inputs are handled by the existing control flow and validations.</p>
-               */
               or lower(c.description) like lower(concat('%', :q, '%')))
               and (:active is null or coalesce(c.active, false) = :active)
             """)

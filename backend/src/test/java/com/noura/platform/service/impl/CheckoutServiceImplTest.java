@@ -25,6 +25,7 @@ import com.noura.platform.repository.OrderItemRepository;
 import com.noura.platform.repository.OrderRepository;
 import com.noura.platform.repository.OrderTimelineEventRepository;
 import com.noura.platform.repository.ProductInventoryRepository;
+import com.noura.platform.repository.StoreRepository;
 import com.noura.platform.repository.UserAccountRepository;
 import com.noura.platform.service.PricingService;
 import org.junit.jupiter.api.AfterEach;
@@ -63,6 +64,7 @@ class CheckoutServiceImplTest {
     @Mock private OrderTimelineEventRepository orderTimelineEventRepository;
     @Mock private B2BCompanyProfileRepository companyProfileRepository;
     @Mock private ApprovalRequestRepository approvalRequestRepository;
+    @Mock private StoreRepository storeRepository;
     @Mock private OrderMapper orderMapper;
     @Mock private ApplicationEventPublisher applicationEventPublisher;
     @Mock private PricingService pricingService;
@@ -92,6 +94,7 @@ class CheckoutServiceImplTest {
                 orderTimelineEventRepository,
                 companyProfileRepository,
                 approvalRequestRepository,
+                storeRepository,
                 orderMapper,
                 applicationEventPublisher,
                 kafkaTemplate,

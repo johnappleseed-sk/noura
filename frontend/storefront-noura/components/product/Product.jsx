@@ -4,7 +4,7 @@ import { useState, useRef } from 'react'
 import Link from 'next/link'
 
 /**
- * ProductCard — Standard product card with image, badges, quick-view, wishlist.
+ * ProductCard — Modern product card with image, badges, quick-view, wishlist.
  */
 export function ProductCard({
   product,
@@ -14,58 +14,73 @@ export function ProductCard({
   showQuickView = true,
   className = ''
 }) {
-  const { id, name, slug, price, compareAtPrice, imageUrl, category, badges = [], rating, reviewCount } = product || {}
+  const { id, name, slug, price, compareAtPrice, imageUrl, category, badges = [], rating, reviewCount, isNew, isTrending, isBestseller, lowStock, stockQty } = product || {}
   const href = `/products/${slug || id}`
+  const hasDiscount = compareAtPrice && compareAtPrice > price
+  const discountPercent = hasDiscount ? Math.round((1 - price / compareAtPrice) * 100) : 0
+  const stockStatus = lowStock ? 'low-stock' : (stockQty == null || stockQty > 0) ? '' : 'out-of-stock'
+  const stockLabel = lowStock ? 'Low stock' : (stockQty == null || stockQty > 0) ? 'In stock' : 'Out of stock'
 
   return (
     <div className={`product-card catalog-card ${className}`}>
       <Link href={href} className="product-visual" style={imageUrl ? { backgroundImage: `url(${imageUrl})` } : {}}>
-        {badges.length > 0 && (
-          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-            {badges.map((b, i) => (
-              <span key={i} className={`product-badge ${b.type || ''}`}>{b.label}</span>
-            ))}
-          </div>
-        )}
-        {showQuickView && onQuickView && (
-          <button
-            type="button"
-            className="quick-view-trigger"
-            onClick={(e) => { e.preventDefault(); onQuickView(product) }}
-            aria-label="Quick view"
-          >👁</button>
-        )}
+        {/* Badges */}
+        <div className="product-badges-overlay">
+          {badges.map((b, i) => (
+            <span key={i} className={`product-badge ${b.type || ''}`}>{b.label}</span>
+          ))}
+          {hasDiscount && !badges.some(b => b.type === 'sale') && <span className="product-badge sale">Sale</span>}
+          {isNew && <span className="product-badge new">New</span>}
+          {isTrending && <span className="product-badge trending">Trending</span>}
+          {isBestseller && <span className="product-badge bestseller">Bestseller</span>}
+        </div>
+        
+        {/* Quick Actions */}
+        <div className="product-card-actions">
+          {showQuickView && onQuickView && (
+            <button
+              type="button"
+              className="product-action-btn"
+              onClick={(e) => { e.preventDefault(); onQuickView(product) }}
+              aria-label="Quick view"
+            >👁</button>
+          )}
+          {onWishlist && (
+            <button
+              type="button"
+              className={`product-action-btn ${wishListed ? 'active' : ''}`}
+              onClick={(e) => { e.preventDefault(); onWishlist(product) }}
+              aria-label={wishListed ? 'Remove from wishlist' : 'Add to wishlist'}
+            >
+              {wishListed ? '♥' : '♡'}
+            </button>
+          )}
+        </div>
       </Link>
+      
       <div className="product-meta">
         {category && <span className="product-category">{category}</span>}
         <strong><Link href={href}>{name}</Link></strong>
-        <p>
-          {compareAtPrice && compareAtPrice > price && (
-            <span style={{ textDecoration: 'line-through', color: 'var(--muted)', marginRight: 8, fontSize: '0.9rem' }}>
-              ${compareAtPrice.toFixed(2)}
-            </span>
+        
+        <div className="product-price-row">
+          <p>${price?.toFixed(2)}</p>
+          {hasDiscount && (
+            <>
+              <span className="original-price">${compareAtPrice.toFixed(2)}</span>
+              <span className="discount-tag">-{discountPercent}%</span>
+            </>
           )}
-          ${price?.toFixed(2)}
-        </p>
+        </div>
+        
         {rating != null && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span className="review-stars">{'★'.repeat(Math.round(rating))}{'☆'.repeat(5 - Math.round(rating))}</span>
-            {reviewCount != null && <span style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>({reviewCount})</span>}
+            {reviewCount != null && <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>({reviewCount})</span>}
           </div>
         )}
+        
+        <span className={`product-stock-status ${stockStatus}`}>{stockLabel}</span>
       </div>
-      {onWishlist && (
-        <div style={{ position: 'absolute', top: 12, right: 12 }}>
-          <button
-            type="button"
-            className={`action-icon-btn ${wishListed ? 'active' : ''}`}
-            onClick={() => onWishlist(product)}
-            aria-label={wishListed ? 'Remove from wishlist' : 'Add to wishlist'}
-          >
-            {wishListed ? '♥' : '♡'}
-          </button>
-        </div>
-      )}
     </div>
   )
 }

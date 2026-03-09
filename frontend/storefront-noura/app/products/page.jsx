@@ -197,19 +197,55 @@ export default async function ProductsPage({ searchParams }) {
               ) : (
                 <>
                   <div className="product-grid catalog-product-grid">
-                    {products.items.map((product) => (
-                      <Link key={product.id} href={`/products/${product.id}`} className="product-card catalog-card">
-                        <div className="product-visual" style={product.imageUrl ? { backgroundImage: `url(${product.imageUrl})` } : undefined}>
-                          {!product.imageUrl && <span>{product.categoryName || 'Product'}</span>}
-                        </div>
-                        <div className="product-meta">
-                          <span className="product-category">{product.categoryName || 'Uncategorized'}</span>
-                          <strong>{product.name}</strong>
-                          <p>{formatCurrency(product.price)}</p>
-                          <small>{product.lowStock ? 'Low stock' : product.stockQty > 0 ? 'In stock' : 'Check availability'}</small>
-                        </div>
-                      </Link>
-                    ))}
+                    {products.items.map((product) => {
+                      const hasDiscount = product.compareAtPrice && product.compareAtPrice > product.price
+                      const discountPercent = hasDiscount ? Math.round((1 - product.price / product.compareAtPrice) * 100) : 0
+                      const stockStatus = product.lowStock ? 'low-stock' : product.stockQty > 0 ? '' : 'out-of-stock'
+                      const stockLabel = product.lowStock ? 'Low stock' : product.stockQty > 0 ? 'In stock' : 'Out of stock'
+                      
+                      return (
+                        <Link key={product.id} href={`/products/${product.id}`} className="product-card catalog-card">
+                          <div className="product-visual" style={product.imageUrl ? { backgroundImage: `url(${product.imageUrl})` } : undefined}>
+                            {!product.imageUrl && <span>{product.categoryName || 'Product'}</span>}
+                            
+                            {/* Badges */}
+                            <div className="product-badges-overlay">
+                              {hasDiscount && <span className="product-badge sale">Sale</span>}
+                              {product.isNew && <span className="product-badge new">New</span>}
+                              {product.isTrending && <span className="product-badge trending">Trending</span>}
+                              {product.isBestseller && <span className="product-badge bestseller">Bestseller</span>}
+                            </div>
+                            
+                            {/* Quick Actions */}
+                            <div className="product-card-actions">
+                              <button type="button" className="product-action-btn" aria-label="Quick view" onClick={(e) => e.preventDefault()}>
+                                👁
+                              </button>
+                              <button type="button" className="product-action-btn" aria-label="Add to wishlist" onClick={(e) => e.preventDefault()}>
+                                ♡
+                              </button>
+                            </div>
+                          </div>
+                          
+                          <div className="product-meta">
+                            <span className="product-category">{product.categoryName || 'Uncategorized'}</span>
+                            <strong>{product.name}</strong>
+                            
+                            <div className="product-price-row">
+                              <p>{formatCurrency(product.price)}</p>
+                              {hasDiscount && (
+                                <>
+                                  <span className="original-price">{formatCurrency(product.compareAtPrice)}</span>
+                                  <span className="discount-tag">-{discountPercent}%</span>
+                                </>
+                              )}
+                            </div>
+                            
+                            <span className={`product-stock-status ${stockStatus}`}>{stockLabel}</span>
+                          </div>
+                        </Link>
+                      )
+                    })}
                   </div>
                   <div className="pager pager-panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     {products.hasPrevious ? (

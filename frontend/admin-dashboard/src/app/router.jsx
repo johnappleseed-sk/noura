@@ -3,6 +3,7 @@ import { ProtectedRoute } from './routes/ProtectedRoute'
 import { AdminLayout } from './layouts/AdminLayout'
 import { LoginPage } from '../features/auth/pages/LoginPage'
 import { DashboardPage } from '../pages/DashboardPage'
+import { AnalyticsPage } from '../pages/AnalyticsPage'
 import { ControlCenterPage } from '../pages/ControlCenterPage'
 import { OrdersPage } from '../pages/OrdersPage'
 import { ReturnsPage } from '../pages/ReturnsPage'
@@ -45,6 +46,7 @@ export const router = createBrowserRouter([
         element: <AdminLayout />,
         children: [
           { index: true, element: <DashboardPage /> },
+          { path: 'analytics', element: <AnalyticsPage /> },
           { path: 'commerce/catalog', element: <CommerceCatalogPage /> },
           { path: 'orders', element: <OrdersPage /> },
           { path: 'returns', element: <ReturnsPage /> },

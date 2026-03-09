@@ -3,10 +3,48 @@ import { getCategories, getProducts, getBestSellers, getTrendingProducts, getDea
 import { formatCurrency } from '@/lib/format'
 import { PromoBanner } from '@/components/promotion'
 import Badge from '@/components/ui/Badge'
+import { HeroCarousel, ProductCarousel } from '@/components/carousel'
 
 export const revalidate = 60
 
 const apiBaseUrl = process.env.API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080'
+
+// Hero slides configuration
+const heroSlides = [
+  {
+    id: 'slide-1',
+    title: 'Discover products built for the way you work.',
+    description: 'Premium quality, transparent pricing, and fast fulfillment — all powered by the Noura enterprise commerce engine.',
+    eyebrow: 'New Season Collection',
+    primaryCta: { text: 'Shop All Products', href: '/products' },
+    secondaryCta: { text: 'View Deals', href: '/deals' },
+    backgroundImage: '/images/hero-1.jpg',
+    overlayType: 'gradient',
+    contentPosition: 'left',
+    showSearch: true
+  },
+  {
+    id: 'slide-2',
+    title: 'Summer Sale: Up to 50% Off',
+    description: 'Limited time offers on premium products. Free shipping on orders over $99.',
+    eyebrow: 'Limited Time Offer',
+    primaryCta: { text: 'Shop the Sale', href: '/deals' },
+    secondaryCta: { text: 'Learn More', href: '/products' },
+    backgroundImage: '/images/hero-2.jpg',
+    overlayType: 'gradient',
+    contentPosition: 'center'
+  },
+  {
+    id: 'slide-3',
+    title: 'Enterprise Solutions Made Simple',
+    description: 'Streamline your workflow with our integrated commerce platform. Built for scale.',
+    eyebrow: 'For Business',
+    primaryCta: { text: 'Get Started', href: '/auth/register' },
+    backgroundImage: '/images/hero-3.jpg',
+    overlayType: 'dark',
+    contentPosition: 'right'
+  }
+]
 
 export default async function HomePage() {
   let categories = []
@@ -46,44 +84,14 @@ export default async function HomePage() {
 
   return (
     <>
-      {/* ── Hero ── */}
-      <section className="hero-full">
-        <div className="container" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 48, alignItems: 'center' }}>
-          <div>
-            <span className="eyebrow">New Season Collection</span>
-            <h1>Discover products built for the way you work.</h1>
-            <p className="lede">
-              Premium quality, transparent pricing, and fast fulfillment — all powered by the Noura enterprise commerce engine.
-            </p>
-            <div className="hero-actions" style={{ marginTop: 24 }}>
-              <Link href="/products" className="button white lg">
-                Shop All Products
-              </Link>
-              <Link href="/deals" className="button ghost lg" style={{ borderColor: 'rgba(255,255,255,0.2)', color: 'white' }}>
-                View Deals
-              </Link>
-            </div>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-            <div className="metric" style={{ background: 'rgba(255,255,255,0.08)', borderColor: 'rgba(255,255,255,0.1)', color: 'white' }}>
-              <strong style={{ color: 'white' }}>{categories.length}</strong>
-              <span style={{ color: 'rgba(255,255,255,0.6)' }}>Categories</span>
-            </div>
-            <div className="metric" style={{ background: 'rgba(255,255,255,0.08)', borderColor: 'rgba(255,255,255,0.1)', color: 'white' }}>
-              <strong style={{ color: 'white' }}>{products.items.length}+</strong>
-              <span style={{ color: 'rgba(255,255,255,0.6)' }}>Products</span>
-            </div>
-            <div className="metric" style={{ background: 'rgba(255,255,255,0.08)', borderColor: 'rgba(255,255,255,0.1)', color: 'white' }}>
-              <strong style={{ color: 'white' }}>{promotions.length}</strong>
-              <span style={{ color: 'rgba(255,255,255,0.6)' }}>Active Promos</span>
-            </div>
-            <div className="metric" style={{ background: 'rgba(255,255,255,0.08)', borderColor: 'rgba(255,255,255,0.1)', color: 'white' }}>
-              <strong style={{ color: 'white' }}>{trendTags.length}</strong>
-              <span style={{ color: 'rgba(255,255,255,0.6)' }}>Trending Tags</span>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* ── Hero Carousel ── */}
+      <HeroCarousel
+        slides={heroSlides}
+        variant="default"
+        autoPlay
+        autoPlayInterval={6000}
+        showProgress
+      />
 
       {/* ── Trust Bar ── */}
       <div className="trust-bar">
@@ -162,34 +170,13 @@ export default async function HomePage() {
 
           {/* ── Best Sellers ── */}
           {bestSellers.length > 0 && (
-            <section className="featured-section">
-              <div className="container">
-                <div className="section-head">
-                  <div>
-                    <span className="eyebrow">Most Popular</span>
-                    <h2>Best Sellers</h2>
-                  </div>
-                </div>
-                <p className="section-subtitle">Our customers&apos; top picks this season</p>
-                <div className="product-scroll-row">
-                  {bestSellers.map((product) => (
-                    <Link key={product.id} href={`/products/${product.id}`} className="product-card">
-                      <div
-                        className="product-visual"
-                        style={product.imageUrl ? { backgroundImage: `url(${product.imageUrl})` } : undefined}
-                      >
-                        {!product.imageUrl && <span>{product.categoryName || 'Best Seller'}</span>}
-                      </div>
-                      <div className="product-meta">
-                        <span className="product-category">{product.categoryName || 'Uncategorized'}</span>
-                        <strong>{product.name}</strong>
-                        <p>{formatCurrency(product.price)}</p>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            </section>
+            <ProductCarousel
+              title="Best Sellers"
+              subtitle="Most Popular"
+              description="Our customers' top picks this season"
+              products={bestSellers.map(p => ({ ...p, isBestseller: true }))}
+              viewAllLink="/products?sort=bestselling"
+            />
           )}
 
           {/* ── Promo Banner ── */}
@@ -214,93 +201,67 @@ export default async function HomePage() {
                   Shop all &rarr;
                 </Link>
               </div>
-              <div className="product-grid" style={{ marginTop: 24 }}>
-                {products.items.map((product) => (
-                  <Link key={product.id} href={`/products/${product.id}`} className="product-card">
-                    <div
-                      className="product-visual"
-                      style={product.imageUrl ? { backgroundImage: `url(${product.imageUrl})` } : undefined}
-                    >
-                      {!product.imageUrl && <span>{product.categoryName || 'New'}</span>}
-                    </div>
-                    <div className="product-meta">
-                      <span className="product-category">{product.categoryName || 'Uncategorized'}</span>
-                      <strong>{product.name}</strong>
-                      <p>{formatCurrency(product.price)}</p>
-                      <small>
-                        {product.lowStock ? 'Low stock — order soon' : product.stockQty > 0 ? 'In stock' : 'Check availability'}
-                      </small>
-                    </div>
-                  </Link>
-                ))}
+              <div className="product-grid catalog-product-grid" style={{ marginTop: 24 }}>
+                {products.items.map((product) => {
+                  const hasDiscount = product.compareAtPrice && product.compareAtPrice > product.price
+                  const discountPercent = hasDiscount ? Math.round((1 - product.price / product.compareAtPrice) * 100) : 0
+                  const stockStatus = product.lowStock ? 'low-stock' : product.stockQty > 0 ? '' : 'out-of-stock'
+                  const stockLabel = product.lowStock ? 'Low stock' : product.stockQty > 0 ? 'In stock' : 'Out of stock'
+                  return (
+                    <Link key={product.id} href={`/products/${product.id}`} className="product-card catalog-card">
+                      <div className="product-visual" style={product.imageUrl ? { backgroundImage: `url(${product.imageUrl})` } : undefined}>
+                        {!product.imageUrl && <span>{product.categoryName || 'New'}</span>}
+                        <div className="product-badges-overlay">
+                          {hasDiscount && <span className="product-badge sale">Sale</span>}
+                          {product.isNew && <span className="product-badge new">New</span>}
+                        </div>
+                        <div className="product-card-actions">
+                          <button type="button" className="product-action-btn" aria-label="Quick view" onClick={(e) => e.preventDefault()}>👁</button>
+                          <button type="button" className="product-action-btn" aria-label="Add to wishlist" onClick={(e) => e.preventDefault()}>♡</button>
+                        </div>
+                      </div>
+                      <div className="product-meta">
+                        <span className="product-category">{product.categoryName || 'Uncategorized'}</span>
+                        <strong>{product.name}</strong>
+                        <div className="product-price-row">
+                          <p>{formatCurrency(product.price)}</p>
+                          {hasDiscount && (
+                            <>
+                              <span className="original-price">{formatCurrency(product.compareAtPrice)}</span>
+                              <span className="discount-tag">-{discountPercent}%</span>
+                            </>
+                          )}
+                        </div>
+                        <span className={`product-stock-status ${stockStatus}`}>{stockLabel}</span>
+                      </div>
+                    </Link>
+                  )
+                })}
               </div>
             </div>
           </section>
 
           {/* ── Trending ── */}
           {trending.length > 0 && (
-            <section className="featured-section">
-              <div className="container">
-                <div className="section-head">
-                  <div>
-                    <span className="eyebrow">Trending Now</span>
-                    <h2>What&apos;s Hot</h2>
-                  </div>
-                </div>
-                <p className="section-subtitle">Products gaining momentum right now</p>
-                <div className="product-scroll-row">
-                  {trending.map((product) => (
-                    <Link key={product.id} href={`/products/${product.id}`} className="product-card">
-                      <div
-                        className="product-visual"
-                        style={product.imageUrl ? { backgroundImage: `url(${product.imageUrl})` } : undefined}
-                      >
-                        {!product.imageUrl && <span>{product.categoryName || 'Trending'}</span>}
-                      </div>
-                      <div className="product-meta">
-                        <span className="product-category">{product.categoryName || 'Uncategorized'}</span>
-                        <strong>{product.name}</strong>
-                        <p>{formatCurrency(product.price)}</p>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            </section>
+            <ProductCarousel
+              title="What's Hot"
+              subtitle="Trending Now"
+              description="Products gaining momentum right now"
+              products={trending.map(p => ({ ...p, isTrending: true }))}
+              viewAllLink="/products?sort=trending"
+            />
           )}
 
           {/* ── Deals ── */}
           {deals.length > 0 && (
-            <section className="featured-section">
-              <div className="container">
-                <div className="section-head">
-                  <div>
-                    <span className="eyebrow">Limited Time</span>
-                    <h2>Today&apos;s Deals</h2>
-                  </div>
-                  <Link href="/deals" className="inline-link">
-                    See all deals &rarr;
-                  </Link>
-                </div>
-                <div className="product-grid" style={{ marginTop: 24 }}>
-                  {deals.slice(0, 4).map((product) => (
-                    <Link key={product.id} href={`/products/${product.id}`} className="product-card">
-                      <div
-                        className="product-visual"
-                        style={product.imageUrl ? { backgroundImage: `url(${product.imageUrl})` } : undefined}
-                      >
-                        {!product.imageUrl && <span>Deal</span>}
-                      </div>
-                      <div className="product-meta">
-                        <span className="product-category">{product.categoryName || 'Deal'}</span>
-                        <strong>{product.name}</strong>
-                        <p>{formatCurrency(product.price)}</p>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            </section>
+            <ProductCarousel
+              title="Today's Deals"
+              subtitle="Limited Time"
+              description="Exclusive offers ending soon"
+              products={deals}
+              viewAllLink="/deals"
+              variant="featured"
+            />
           )}
         </>
       )}

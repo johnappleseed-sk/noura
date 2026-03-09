@@ -333,30 +333,8 @@ public interface ProductRepo extends JpaRepository<Product, Long>, JpaSpecificat
             where p.active = true
               and (:categoryId is null or c.id = :categoryId)
               and (:q is null
-                    /**
-                     * Executes the lower operation.
-                     *
-                     * @param name Parameter of type {@code p.} used by this operation.
-                     * @return {@code or} Result produced by this operation.
-                     * <p>Possible exceptions: Runtime exceptions from downstream dependencies may propagate unchanged.</p>
-                     * <p>Edge cases: Null, empty, and boundary inputs are handled by the existing control flow and validations.</p>
-                     */
                     or lower(p.name) like lower(concat(:q, '%'))
-                    /**
-                     * Executes the lower operation.
-                     *
-                     * @return {@code or} Result produced by this operation.
-                     * <p>Possible exceptions: Runtime exceptions from downstream dependencies may propagate unchanged.</p>
-                     * <p>Edge cases: Null, empty, and boundary inputs are handled by the existing control flow and validations.</p>
-                     */
                     or lower(coalesce(p.sku, '')) like lower(concat(:q, '%'))
-                    /**
-                     * Executes the lower operation.
-                     *
-                     * @return {@code or} Result produced by this operation.
-                     * <p>Possible exceptions: Runtime exceptions from downstream dependencies may propagate unchanged.</p>
-                     * <p>Edge cases: Null, empty, and boundary inputs are handled by the existing control flow and validations.</p>
-                     */
                     or lower(coalesce(p.barcode, '')) like lower(concat(:q, '%')))
               and (:cursorId is null or p.id < :cursorId)
             order by p.id desc

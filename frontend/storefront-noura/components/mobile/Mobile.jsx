@@ -92,8 +92,8 @@ export function CookieConsent({ onAccept, onDecline, className = '' }) {
         We use cookies to enhance your experience. By continuing to visit this site you agree to our use of cookies.
       </p>
       <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-        <button type="button" className="button primary sm" onClick={accept}>Accept</button>
-        <button type="button" className="button ghost sm" onClick={decline}>Decline</button>
+        <button type="button" className="button white sm" onClick={accept}>Accept</button>
+        <button type="button" className="button sm" onClick={decline} style={{ background: 'transparent', borderColor: 'rgba(255,255,255,0.4)', color: 'white' }}>Decline</button>
       </div>
     </div>
   )
