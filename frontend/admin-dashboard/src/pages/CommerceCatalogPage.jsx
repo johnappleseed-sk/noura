@@ -18,6 +18,7 @@ import {
 } from '../shared/api/endpoints/commerceProductsApi'
 import { listStores } from '../shared/api/endpoints/storesApi'
 import { Spinner } from '../shared/ui/Spinner'
+import { SortableHeader } from '../shared/ui/SortableHeader'
 import { formatCurrency } from '../shared/ui/formatters'
 
 const DEFAULT_CATEGORY_FORM = {
@@ -110,7 +111,9 @@ export function CommerceCatalogPage() {
   const [categoryForm, setCategoryForm] = useState(DEFAULT_CATEGORY_FORM)
 
   const [productsPage, setProductsPage] = useState({ content: [], totalElements: 0 })
-  const [productFilters, setProductFilters] = useState({ query: '', categoryId: '' })
+  const [productFilters, setProductFilters] = useState({ query: '', categoryId: '', brand: '', minPrice: '', maxPrice: '', minRating: '', storeId: '', flashSale: '', trending: '' })
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
+  const [productSort, setProductSort] = useState({ sortBy: 'createdAt', direction: 'desc' })
   const [selectedProductId, setSelectedProductId] = useState('')
   const [productForm, setProductForm] = useState(DEFAULT_PRODUCT_FORM)
 
@@ -155,17 +158,33 @@ export function CommerceCatalogPage() {
     return listCommerceProducts({
       page: 0,
       size: 80,
-      sortBy: 'createdAt',
-      direction: 'desc',
+      sortBy: productSort.sortBy,
+      direction: productSort.direction,
       query: nextFilters.query || undefined,
-      categoryId: nextFilters.categoryId || undefined
+      categoryId: nextFilters.categoryId || undefined,
+      brand: nextFilters.brand || undefined,
+      minPrice: nextFilters.minPrice !== '' ? Number(nextFilters.minPrice) : undefined,
+      maxPrice: nextFilters.maxPrice !== '' ? Number(nextFilters.maxPrice) : undefined,
+      minRating: nextFilters.minRating !== '' ? Number(nextFilters.minRating) : undefined,
+      storeId: nextFilters.storeId || undefined,
+      flashSale: nextFilters.flashSale === 'true' ? true : nextFilters.flashSale === 'false' ? false : undefined,
+      trending: nextFilters.trending === 'true' ? true : nextFilters.trending === 'false' ? false : undefined
     })
+  }
+
+  function handleProductSort(field, dir) {
+    setProductSort({ sortBy: field, direction: dir })
   }
 
   useEffect(() => {
     load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useEffect(() => {
+    loadProducts(productFilters)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productSort.sortBy, productSort.direction])
 
   useEffect(() => {
     if (!selectedProduct?.variants?.length) {
@@ -504,8 +523,9 @@ export function CommerceCatalogPage() {
       {flash ? <div className="alert alert-success">{flash}</div> : null}
       {error ? <div className="alert alert-error">{error}</div> : null}
 
-      <div className="panel-grid">
-        <section className="panel">
+      {/* ─── Row 1: Categories sidebar + Product listing table ─── */}
+      <div className="catalog-layout">
+        <section className="panel catalog-sidebar">
           <div className="section-head">
             <div>
               <h3>Categories</h3>
@@ -592,12 +612,15 @@ export function CommerceCatalogPage() {
           </div>
         </section>
 
-        <section className="panel">
+        <section className="panel catalog-main">
           <div className="section-head">
             <div>
               <h3>Products</h3>
-              <p>Create products, adjust storefront metadata, and attach variants/media/inventory.</p>
+              <p>{productsPage.totalElements || productsPage.content.length} products in catalog.</p>
             </div>
+            <button className="btn btn-primary btn-sm" onClick={resetProductForm}>
+              New product
+            </button>
           </div>
 
           <div className="filters">
@@ -626,21 +649,111 @@ export function CommerceCatalogPage() {
             <button className="btn btn-outline" onClick={() => loadProducts(productFilters)}>
               Apply
             </button>
-            <button className="btn btn-outline" onClick={resetProductForm}>
-              New
+            <button className="filter-toggle" type="button" onClick={() => setShowAdvancedFilters((v) => !v)}>
+              {showAdvancedFilters ? 'Hide filters' : 'More filters'}
             </button>
           </div>
+
+          {showAdvancedFilters && (
+            <div className="advanced-filters">
+              <label>
+                Brand
+                <input
+                  value={productFilters.brand}
+                  onChange={(event) => setProductFilters((current) => ({ ...current, brand: event.target.value }))}
+                  placeholder="e.g. Nike"
+                />
+              </label>
+              <label>
+                Min price
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={productFilters.minPrice}
+                  onChange={(event) => setProductFilters((current) => ({ ...current, minPrice: event.target.value }))}
+                  placeholder="0.00"
+                />
+              </label>
+              <label>
+                Max price
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={productFilters.maxPrice}
+                  onChange={(event) => setProductFilters((current) => ({ ...current, maxPrice: event.target.value }))}
+                  placeholder="9999.99"
+                />
+              </label>
+              <label>
+                Min rating
+                <input
+                  type="number"
+                  min="0"
+                  max="5"
+                  step="0.1"
+                  value={productFilters.minRating}
+                  onChange={(event) => setProductFilters((current) => ({ ...current, minRating: event.target.value }))}
+                  placeholder="0-5"
+                />
+              </label>
+              <label>
+                Store
+                <select
+                  value={productFilters.storeId}
+                  onChange={(event) => setProductFilters((current) => ({ ...current, storeId: event.target.value }))}
+                >
+                  <option value="">All stores</option>
+                  {stores.map((store) => (
+                    <option key={store.id} value={store.id}>
+                      {store.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Flash sale
+                <select
+                  value={productFilters.flashSale}
+                  onChange={(event) => setProductFilters((current) => ({ ...current, flashSale: event.target.value }))}
+                >
+                  <option value="">Any</option>
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
+                </select>
+              </label>
+              <label>
+                Trending
+                <select
+                  value={productFilters.trending}
+                  onChange={(event) => setProductFilters((current) => ({ ...current, trending: event.target.value }))}
+                >
+                  <option value="">Any</option>
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
+                </select>
+              </label>
+            </div>
+          )}
 
           <div className="table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th>Product</th>
-                  <th>Category</th>
-                  <th>Brand</th>
-                  <th>Price</th>
+                  <SortableHeader label="Product" field="name" sortBy={productSort.sortBy} direction={productSort.direction} onSort={handleProductSort} />
+                  <SortableHeader label="Category" field="category" sortBy={productSort.sortBy} direction={productSort.direction} onSort={handleProductSort} />
+                  <SortableHeader label="Brand" field="brand" sortBy={productSort.sortBy} direction={productSort.direction} onSort={handleProductSort} />
+                  <SortableHeader label="Price" field="price" sortBy={productSort.sortBy} direction={productSort.direction} onSort={handleProductSort} />
+                  <SortableHeader label="Rating" field="averageRating" sortBy={productSort.sortBy} direction={productSort.direction} onSort={handleProductSort} />
+                  <SortableHeader label="Reviews" field="reviewCount" sortBy={productSort.sortBy} direction={productSort.direction} onSort={handleProductSort} />
+                  <SortableHeader label="Popularity" field="popularityScore" sortBy={productSort.sortBy} direction={productSort.direction} onSort={handleProductSort} />
+                  <th>Tags</th>
                   <th>Status</th>
                   <th>Active</th>
+                  <th>Variants</th>
+                  <th>Media</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -648,189 +761,323 @@ export function CommerceCatalogPage() {
                   productsPage.content.map((product) => (
                     <tr
                       key={product.id}
-                      className={String(product.id) === String(selectedProductId) ? 'row-selected' : ''}
-                      onClick={() => selectProduct(product.id)}
-                      role="button"
-                      tabIndex={0}
+                      className={String(product.id) === String(selectedProductId) ? 'row-active' : ''}
                     >
                       <td>
                         <strong>{product.name}</strong>
-                        <div className="subtle-meta mono">{product.id}</div>
+                        {product.shortDescription && (
+                          <div className="subtle-meta">{product.shortDescription.substring(0, 60)}{product.shortDescription.length > 60 ? '...' : ''}</div>
+                        )}
                       </td>
-                      <td>{product.category || '-'}</td>
-                      <td>{product.brand || '-'}</td>
-                      <td>{formatCurrency(product.price)}</td>
-                      <td>{product.status}</td>
+                      <td>{product.category || <span className="subtle-meta">—</span>}</td>
+                      <td>{product.brand || <span className="subtle-meta">—</span>}</td>
+                      <td><strong>{formatCurrency(product.price)}</strong></td>
+                      <td>{product.averageRating != null ? `${Number(product.averageRating).toFixed(1)} ★` : <span className="subtle-meta">—</span>}</td>
+                      <td>{product.reviewCount ?? 0}</td>
+                      <td>{product.popularityScore ?? 0}</td>
+                      <td>
+                        <div className="tag-group">
+                          {product.flashSale && <span className="badge badge-warning">Flash</span>}
+                          {product.trending && <span className="badge badge-info">Trending</span>}
+                          {product.bestSeller && <span className="badge badge-success">Best</span>}
+                          {product.allowBackorder && <span className="badge badge-outline">Backorder</span>}
+                          {!product.flashSale && !product.trending && !product.bestSeller && !product.allowBackorder && (
+                            <span className="subtle-meta">—</span>
+                          )}
+                        </div>
+                      </td>
+                      <td><span className="badge badge-muted">{product.status}</span></td>
                       <td>
                         <span className={`badge ${product.active ? 'badge-success' : 'badge-muted'}`}>
                           {product.active ? 'Yes' : 'No'}
                         </span>
                       </td>
+                      <td>{product.variants?.length || 0}</td>
+                      <td>{product.media?.length || 0}</td>
+                      <td>
+                        <div className="action-group">
+                          <button
+                            className="btn btn-sm btn-outline"
+                            type="button"
+                            onClick={() => selectProduct(product.id)}
+                            title="Edit product"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className="btn btn-sm btn-outline btn-danger"
+                            type="button"
+                            disabled={saving}
+                            onClick={() => {
+                              if (window.confirm(`Delete product "${product.name}"?`)) {
+                                setSelectedProductId(product.id)
+                                deleteCommerceProduct(product.id).then(() => {
+                                  setFlash('Product deleted.')
+                                  resetProductForm()
+                                  loadProducts(productFilters)
+                                }).catch((err) => {
+                                  setError(err.message || 'Failed to delete product.')
+                                })
+                              }
+                            }}
+                            title="Delete product"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="6" className="empty-row">No products found.</td>
+                    <td colSpan="13" className="empty-row">No products found.</td>
                   </tr>
                 )}
               </tbody>
             </table>
           </div>
+        </section>
+      </div>
 
-          <div className="form-grid">
-            <label className="span-2">
-              Name
-              <input
-                value={productForm.name}
-                onChange={(event) => setProductForm((current) => ({ ...current, name: event.target.value }))}
-                placeholder="Product name"
-                required
-              />
-            </label>
-            <label>
-              Category (by id)
-              <select
-                value={productForm.categoryId}
-                onChange={(event) => setProductForm((current) => ({ ...current, categoryId: event.target.value }))}
-              >
-                <option value="">(Use category name)</option>
-                {flatCategories.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {`${'  '.repeat(category.depth)}${category.name}`}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Category name
-              <input
-                value={productForm.category}
-                onChange={(event) => setProductForm((current) => ({ ...current, category: event.target.value }))}
-                placeholder="Fallback category name"
-              />
-            </label>
-            <label>
-              Brand
-              <input
-                value={productForm.brand}
-                onChange={(event) => setProductForm((current) => ({ ...current, brand: event.target.value }))}
-                placeholder="Optional"
-              />
-            </label>
-            <label>
-              Base price
-              <input
-                value={productForm.price}
-                onChange={(event) => setProductForm((current) => ({ ...current, price: event.target.value }))}
-                placeholder="19.99"
-                required
-              />
-            </label>
-            <label className="span-2">
-              Short description
-              <input
-                value={productForm.shortDescription}
-                onChange={(event) => setProductForm((current) => ({ ...current, shortDescription: event.target.value }))}
-                placeholder="Shown in listing cards"
-              />
-            </label>
-            <label className="span-2">
-              Long description
+      {/* ─── Row 2: Product Form (full width) ─── */}
+      <section className="panel">
+        <div className="section-head">
+          <div>
+            <h3>{selectedProductId ? `Edit product — ${selectedProduct?.name || ''}` : 'Create product'}</h3>
+            <p>{selectedProductId ? 'Update product details, then manage variants, media, and store inventory below.' : 'Fill in the fields then press create.'}</p>
+          </div>
+          {selectedProductId && (
+            <button className="btn btn-outline btn-sm" onClick={resetProductForm}>
+              Cancel edit
+            </button>
+          )}
+        </div>
+
+        {/* ── Product details grid: 2 columns ── */}
+        <div className="product-form-grid">
+
+          {/* LEFT COLUMN: Core info + Descriptions */}
+          <div className="product-form-col">
+            <fieldset className="form-fieldset">
+              <legend>Basic information</legend>
+              <div className="form-grid">
+                <label className="span-2">
+                  Name <span className="required">*</span>
+                  <input
+                    value={productForm.name}
+                    onChange={(event) => setProductForm((current) => ({ ...current, name: event.target.value }))}
+                    placeholder="Product name"
+                    required
+                  />
+                </label>
+                <label>
+                  Category
+                  <select
+                    value={productForm.categoryId}
+                    onChange={(event) => setProductForm((current) => ({ ...current, categoryId: event.target.value }))}
+                  >
+                    <option value="">(Use category name)</option>
+                    {flatCategories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {`${'  '.repeat(category.depth)}${category.name}`}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Category name
+                  <input
+                    value={productForm.category}
+                    onChange={(event) => setProductForm((current) => ({ ...current, category: event.target.value }))}
+                    placeholder="Fallback category name"
+                  />
+                </label>
+                <label>
+                  Brand
+                  <input
+                    value={productForm.brand}
+                    onChange={(event) => setProductForm((current) => ({ ...current, brand: event.target.value }))}
+                    placeholder="e.g. Nike, Apple"
+                  />
+                </label>
+                <label>
+                  Base price <span className="required">*</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={productForm.price}
+                    onChange={(event) => setProductForm((current) => ({ ...current, price: event.target.value }))}
+                    placeholder="19.99"
+                    required
+                  />
+                </label>
+              </div>
+            </fieldset>
+
+            <fieldset className="form-fieldset">
+              <legend>Descriptions</legend>
+              <div className="form-grid">
+                <label className="span-2">
+                  Short description
+                  <input
+                    value={productForm.shortDescription}
+                    onChange={(event) => setProductForm((current) => ({ ...current, shortDescription: event.target.value }))}
+                    placeholder="Shown in listing cards"
+                  />
+                </label>
+                <label className="span-2">
+                  Long description
+                  <textarea
+                    rows="5"
+                    value={productForm.longDescription}
+                    onChange={(event) => setProductForm((current) => ({ ...current, longDescription: event.target.value }))}
+                    placeholder="Full product description shown on the product page"
+                  />
+                </label>
+              </div>
+            </fieldset>
+
+            <fieldset className="form-fieldset">
+              <legend>Attributes (JSON)</legend>
               <textarea
-                rows="4"
-                value={productForm.longDescription}
-                onChange={(event) => setProductForm((current) => ({ ...current, longDescription: event.target.value }))}
-                placeholder="Full product description"
-              />
-            </label>
-            <label>
-              SEO slug
-              <input
-                value={productForm.seoSlug}
-                onChange={(event) => setProductForm((current) => ({ ...current, seoSlug: event.target.value }))}
-                placeholder="my-product-slug"
-              />
-            </label>
-            <label>
-              SEO title
-              <input
-                value={productForm.seoTitle}
-                onChange={(event) => setProductForm((current) => ({ ...current, seoTitle: event.target.value }))}
-                placeholder="Optional"
-              />
-            </label>
-            <label className="span-2">
-              SEO description
-              <input
-                value={productForm.seoDescription}
-                onChange={(event) => setProductForm((current) => ({ ...current, seoDescription: event.target.value }))}
-                placeholder="Optional"
-              />
-            </label>
-            <label className="span-2">
-              Attributes (JSON)
-              <textarea
-                rows="6"
+                rows="5"
                 value={productForm.attributesJson}
                 onChange={(event) => setProductForm((current) => ({ ...current, attributesJson: event.target.value }))}
+                placeholder='{"material": "leather", "warranty": "2 years"}'
+                className="mono"
               />
-            </label>
+            </fieldset>
           </div>
 
-          <div className="toggle-row">
-            <label className="toggle">
-              <input
-                type="checkbox"
-                checked={productForm.allowBackorder}
-                onChange={(event) => setProductForm((current) => ({ ...current, allowBackorder: event.target.checked }))}
-              />
-              Allow backorder
-            </label>
-            <label className="toggle">
-              <input
-                type="checkbox"
-                checked={productForm.flashSale}
-                onChange={(event) => setProductForm((current) => ({ ...current, flashSale: event.target.checked }))}
-              />
-              Flash sale
-            </label>
-            <label className="toggle">
-              <input
-                type="checkbox"
-                checked={productForm.trending}
-                onChange={(event) => setProductForm((current) => ({ ...current, trending: event.target.checked }))}
-              />
-              Trending
-            </label>
-            <label className="toggle">
-              <input
-                type="checkbox"
-                checked={productForm.bestSeller}
-                onChange={(event) => setProductForm((current) => ({ ...current, bestSeller: event.target.checked }))}
-              />
-              Best seller
-            </label>
-          </div>
+          {/* RIGHT COLUMN: SEO + Flags + Status */}
+          <div className="product-form-col">
+            <fieldset className="form-fieldset">
+              <legend>SEO</legend>
+              <div className="form-grid">
+                <label className="span-2">
+                  Slug
+                  <input
+                    value={productForm.seoSlug}
+                    onChange={(event) => setProductForm((current) => ({ ...current, seoSlug: event.target.value }))}
+                    placeholder="my-product-slug"
+                  />
+                </label>
+                <label className="span-2">
+                  Meta title
+                  <input
+                    value={productForm.seoTitle}
+                    onChange={(event) => setProductForm((current) => ({ ...current, seoTitle: event.target.value }))}
+                    placeholder="Page title for search engines"
+                  />
+                </label>
+                <label className="span-2">
+                  Meta description
+                  <textarea
+                    rows="3"
+                    value={productForm.seoDescription}
+                    onChange={(event) => setProductForm((current) => ({ ...current, seoDescription: event.target.value }))}
+                    placeholder="Short description for search engine results"
+                  />
+                </label>
+              </div>
+            </fieldset>
 
-          <div className="inline-actions wrap">
-            <button
-              className="btn btn-primary"
-              disabled={saving || !productForm.name.trim()}
-              onClick={saveProduct}
-            >
-              {saving ? 'Saving...' : selectedProductId ? 'Update product' : 'Create product'}
-            </button>
-            {selectedProductId ? (
-              <>
-                <button className="btn btn-outline" disabled={saving} onClick={() => toggleProductActive(!selectedProduct?.active)}>
-                  {selectedProduct?.active ? 'Deactivate' : 'Activate'}
-                </button>
-                <button className="btn btn-outline" disabled={saving} onClick={removeProduct}>
-                  Delete
-                </button>
-              </>
-            ) : null}
+            <fieldset className="form-fieldset">
+              <legend>Flags &amp; visibility</legend>
+              <div className="toggle-grid">
+                <label className="toggle-card">
+                  <input
+                    type="checkbox"
+                    checked={productForm.allowBackorder}
+                    onChange={(event) => setProductForm((current) => ({ ...current, allowBackorder: event.target.checked }))}
+                  />
+                  <div>
+                    <strong>Allow backorder</strong>
+                    <small>Accept orders when out of stock</small>
+                  </div>
+                </label>
+                <label className="toggle-card">
+                  <input
+                    type="checkbox"
+                    checked={productForm.flashSale}
+                    onChange={(event) => setProductForm((current) => ({ ...current, flashSale: event.target.checked }))}
+                  />
+                  <div>
+                    <strong>Flash sale</strong>
+                    <small>Show flash-sale badge on storefront</small>
+                  </div>
+                </label>
+                <label className="toggle-card">
+                  <input
+                    type="checkbox"
+                    checked={productForm.trending}
+                    onChange={(event) => setProductForm((current) => ({ ...current, trending: event.target.checked }))}
+                  />
+                  <div>
+                    <strong>Trending</strong>
+                    <small>Feature in trending sections</small>
+                  </div>
+                </label>
+                <label className="toggle-card">
+                  <input
+                    type="checkbox"
+                    checked={productForm.bestSeller}
+                    onChange={(event) => setProductForm((current) => ({ ...current, bestSeller: event.target.checked }))}
+                  />
+                  <div>
+                    <strong>Best seller</strong>
+                    <small>Show best-seller badge</small>
+                  </div>
+                </label>
+              </div>
+            </fieldset>
+
+            {selectedProduct && (
+              <fieldset className="form-fieldset">
+                <legend>Read-only stats</legend>
+                <div className="stat-row">
+                  <div className="stat-item">
+                    <small>Avg. rating</small>
+                    <strong>{selectedProduct.averageRating != null ? `${Number(selectedProduct.averageRating).toFixed(1)} ★` : '—'}</strong>
+                  </div>
+                  <div className="stat-item">
+                    <small>Reviews</small>
+                    <strong>{selectedProduct.reviewCount ?? 0}</strong>
+                  </div>
+                  <div className="stat-item">
+                    <small>Popularity</small>
+                    <strong>{selectedProduct.popularityScore ?? 0}</strong>
+                  </div>
+                  <div className="stat-item">
+                    <small>Status</small>
+                    <strong><span className={`badge ${selectedProduct.active ? 'badge-success' : 'badge-muted'}`}>{selectedProduct.status}</span></strong>
+                  </div>
+                </div>
+              </fieldset>
+            )}
           </div>
+        </div>
+
+        <div className="inline-actions wrap">
+          <button
+            className="btn btn-primary"
+            disabled={saving || !productForm.name.trim()}
+            onClick={saveProduct}
+          >
+            {saving ? 'Saving...' : selectedProductId ? 'Update product' : 'Create product'}
+          </button>
+          {selectedProductId ? (
+            <>
+              <button className="btn btn-outline" disabled={saving} onClick={() => toggleProductActive(!selectedProduct?.active)}>
+                {selectedProduct?.active ? 'Deactivate' : 'Activate'}
+              </button>
+              <button className="btn btn-outline btn-danger" disabled={saving} onClick={removeProduct}>
+                Delete
+              </button>
+            </>
+          ) : null}
+        </div>
 
           {selectedProduct ? (
             <>
@@ -1085,8 +1332,7 @@ export function CommerceCatalogPage() {
               </button>
             </>
           ) : null}
-        </section>
-      </div>
+      </section>
     </div>
   )
 }

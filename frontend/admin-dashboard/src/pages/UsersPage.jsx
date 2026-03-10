@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { listAdminUsers, updateAdminUser } from '../shared/api/endpoints/adminApi'
 import { Spinner } from '../shared/ui/Spinner'
+import { SortableHeader } from '../shared/ui/SortableHeader'
 
 const ROLE_TYPES = ['ADMIN', 'CUSTOMER', 'B2B']
 
@@ -21,6 +22,7 @@ export function UsersPage() {
 
   const [usersPage, setUsersPage] = useState({ content: [], totalElements: 0 })
   const [filters, setFilters] = useState({ search: '' })
+  const [userSort, setUserSort] = useState({ sortBy: 'createdAt', direction: 'desc' })
 
   const [selectedUserId, setSelectedUserId] = useState('')
   const [draft, setDraft] = useState({ enabled: true, roles: rolesToFlags([]) })
@@ -44,7 +46,7 @@ export function UsersPage() {
     setLoading(true)
     setError('')
     try {
-      const page = await listAdminUsers({ page: 0, size: 100, sortBy: 'createdAt', direction: 'desc' })
+      const page = await listAdminUsers({ page: 0, size: 100, sortBy: userSort.sortBy, direction: userSort.direction })
       setUsersPage(page || { content: [], totalElements: 0 })
       if (selectedUserId && !(page?.content || []).some((item) => String(item.id) === String(selectedUserId))) {
         setSelectedUserId('')
@@ -61,6 +63,11 @@ export function UsersPage() {
     load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useEffect(() => {
+    load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userSort.sortBy, userSort.direction])
 
   function selectUser(user) {
     setFlash('')
@@ -148,9 +155,9 @@ export function UsersPage() {
             <table>
               <thead>
                 <tr>
-                  <th>User</th>
+                  <SortableHeader label="User" field="email" sortBy={userSort.sortBy} direction={userSort.direction} onSort={(f, d) => setUserSort({ sortBy: f, direction: d })} />
                   <th>Roles</th>
-                  <th>Enabled</th>
+                  <SortableHeader label="Enabled" field="enabled" sortBy={userSort.sortBy} direction={userSort.direction} onSort={(f, d) => setUserSort({ sortBy: f, direction: d })} />
                 </tr>
               </thead>
               <tbody>

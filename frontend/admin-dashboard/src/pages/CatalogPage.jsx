@@ -291,23 +291,23 @@ export function CatalogPage() {
   return (
     <div className="page">
       <div className="page-head">
-        <h2>Catalog workspace</h2>
-        <p>Manage hierarchical categories and inventory products with batch and serial tracking options.</p>
+        <h2>Commerce catalog</h2>
+        <p>Manage platform products, categories, variants, media, and per-store inventory pricing.</p>
       </div>
 
       {flash ? <div className="alert alert-success">{flash}</div> : null}
       {error ? <div className="alert alert-error">{error}</div> : null}
       {!canManage ? <div className="alert alert-error">Your role is read-only in this workspace. Switch to an admin account to create, update, or delete catalog records.</div> : null}
 
-      <div className="workspace-grid">
+      <div className="workspace-grid three-panels">
         <section className="panel">
           <div className="section-head">
             <div>
-              <h3>Category tree</h3>
-              <p>Unlimited hierarchy rendered from the live category tree endpoint.</p>
+              <h3>Categories</h3>
+              <p>Create and update platform category taxonomy (max depth enforced server-side).</p>
             </div>
-            <button className="btn btn-outline btn-sm" type="button" onClick={() => resetCategoryForm(selectedCategoryId)}>
-              New category
+            <button className="btn btn-outline btn-sm" type="button" onClick={() => load()}>
+              Refresh
             </button>
           </div>
 
@@ -429,10 +429,10 @@ export function CatalogPage() {
           <div className="section-head">
             <div>
               <h3>Products</h3>
-              <p>{productsPage.totalElements || productsPage.content.length} inventory products currently match the active filter set.</p>
+              <p>Create products, adjust storefront metadata, and attach variants/media/inventory.</p>
             </div>
-            <button className="btn btn-outline btn-sm" type="button" onClick={resetProductForm}>
-              New product
+            <button className="btn btn-primary btn-sm" type="button" onClick={resetProductForm}>
+              New
             </button>
           </div>
 
@@ -495,11 +495,16 @@ export function CatalogPage() {
             <table>
               <thead>
                 <tr>
+                  <th>SKU</th>
                   <th>Product</th>
+                  <th>Category</th>
                   <th>Price</th>
+                  <th>Dimensions</th>
                   <th>Tracking</th>
                   <th>Status</th>
+                  <th>Created</th>
                   <th>Updated</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -508,37 +513,108 @@ export function CatalogPage() {
                     <tr
                       key={product.id}
                       className={selectedProductId === product.id ? 'row-active' : ''}
-                      onClick={() => handleProductSelect(product)}
                     >
                       <td>
-                        <strong>{product.name}</strong>
-                        <div className="subtle-meta mono">{product.sku}</div>
+                        <code className="mono">{product.sku}</code>
                       </td>
-                      <td>{formatCurrency(product.basePrice, product.currencyCode)}</td>
-                      <td>{product.batchTracked ? 'Batch ' : ''}{product.serialTracked ? 'Serial' : product.batchTracked ? '' : 'Standard'}</td>
+                      <td>
+                        <strong>{product.name}</strong>
+                        {product.description && (
+                          <div className="subtle-meta">{product.description.substring(0, 50)}{product.description.length > 50 ? '...' : ''}</div>
+                        )}
+                      </td>
+                      <td>
+                        {product.primaryCategory ? (
+                          <span className="badge badge-outline">{product.primaryCategory.name}</span>
+                        ) : (
+                          <span className="subtle-meta">—</span>
+                        )}
+                      </td>
+                      <td>
+                        <strong>{formatCurrency(product.basePrice, product.currencyCode)}</strong>
+                      </td>
+                      <td>
+                        {(product.widthCm || product.heightCm || product.lengthCm || product.weightKg) ? (
+                          <div className="subtle-meta">
+                            {product.widthCm && <span>{product.widthCm}×</span>}
+                            {product.heightCm && <span>{product.heightCm}×</span>}
+                            {product.lengthCm && <span>{product.lengthCm} cm</span>}
+                            {product.weightKg && <div>{product.weightKg} kg</div>}
+                          </div>
+                        ) : (
+                          <span className="subtle-meta">—</span>
+                        )}
+                      </td>
+                      <td>
+                        <div className="tag-group">
+                          {product.batchTracked && <span className="badge badge-info">Batch</span>}
+                          {product.serialTracked && <span className="badge badge-info">Serial</span>}
+                          {!product.batchTracked && !product.serialTracked && <span className="subtle-meta">Standard</span>}
+                        </div>
+                      </td>
                       <td>
                         <span className={`badge ${product.active ? 'badge-success' : 'badge-muted'}`}>
                           {product.status}
                         </span>
                       </td>
+                      <td>{formatDateTime(product.createdAt)}</td>
                       <td>{formatDateTime(product.updatedAt)}</td>
+                      <td>
+                        <div className="action-group">
+                          <button
+                            className="btn btn-sm btn-outline"
+                            type="button"
+                            onClick={() => handleProductSelect(product)}
+                            title="Edit product"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className="btn btn-sm btn-outline btn-danger"
+                            type="button"
+                            disabled={!canManage}
+                            onClick={() => {
+                              if (window.confirm(`Delete product "${product.name}"?`)) {
+                                setSelectedProductId(product.id)
+                                deleteProduct(product.id).then(() => {
+                                  setFlash('Product deleted.')
+                                  resetProductForm()
+                                  load(productFilters)
+                                }).catch((err) => {
+                                  setError(err.message || 'Failed to delete product.')
+                                })
+                              }
+                            }}
+                            title="Delete product"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="5" className="empty-row">No products match the current filters.</td>
+                    <td colSpan="10" className="empty-row">No products match the current filters.</td>
                   </tr>
                 )}
               </tbody>
             </table>
           </div>
+        </section>
 
+        <section className="panel">
           <form className="stack-form" onSubmit={saveProduct}>
-            <div className="section-head compact">
+            <div className="section-head">
               <div>
                 <h3>{selectedProduct ? 'Edit product' : 'Create product'}</h3>
                 <p>{selectedProduct ? `Editing ${selectedProduct.name}` : 'Create an inventory product and assign it to one or more categories.'}</p>
               </div>
+              {selectedProduct && (
+                <button className="btn btn-outline btn-sm" type="button" onClick={resetProductForm}>
+                  Cancel edit
+                </button>
+              )}
             </div>
 
             <div className="filters two-up">

@@ -24,3 +24,13 @@ export function clearAuthSnapshot() {
 export function getAccessToken() {
   return loadAuthSnapshot()?.accessToken || null
 }
+
+export function getRefreshToken() {
+  return loadAuthSnapshot()?.refreshToken || null
+}
+
+export function updateTokens(accessToken, refreshToken) {
+  const current = loadAuthSnapshot()
+  if (!current) return
+  saveAuthSnapshot({ ...current, accessToken, refreshToken: refreshToken || current.refreshToken })
+}

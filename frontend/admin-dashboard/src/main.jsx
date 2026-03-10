@@ -6,6 +6,7 @@ import { ThemeProvider } from './shared/ui/ThemeProvider'
 import { router } from './app/router'
 import './styles/theme.css'
 import './styles/base.css'
+import "./styles/global.css"
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

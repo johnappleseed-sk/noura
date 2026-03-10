@@ -35,7 +35,10 @@ export const NAV_SECTIONS = [
   },
   {
     label: 'Tools',
-    items: [{ label: 'Control center', to: '/admin/tools/control-center', icon: 'chart' }]
+    items: [
+      { label: 'Control center', to: '/admin/tools/control-center', icon: 'chart' },
+      { label: 'Product generator', to: '/admin/tools/product-generator', icon: 'box' }
+    ]
   }
 ]
 

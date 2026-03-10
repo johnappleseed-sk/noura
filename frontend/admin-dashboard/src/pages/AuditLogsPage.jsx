@@ -47,6 +47,7 @@ export function AuditLogsPage() {
   const [error, setError] = useState('')
   const [flash, setFlash] = useState('')
   const [filters, setFilters] = useState(DEFAULT_FILTERS)
+
   const [auditPage, setAuditPage] = useState({
     content: [],
     page: 0,
@@ -56,6 +57,7 @@ export function AuditLogsPage() {
     first: true,
     last: true
   })
+
   const [selectedId, setSelectedId] = useState('')
 
   const selected = useMemo(
@@ -66,6 +68,7 @@ export function AuditLogsPage() {
   async function load({ nextPage = auditPage.page, nextFilters = filters, preserveSelection = true } = {}) {
     setLoading(true)
     setError('')
+
     try {
       const data = await listAuditLogs({
         entityType: nextFilters.entityType || undefined,
@@ -79,6 +82,7 @@ export function AuditLogsPage() {
         sortBy: nextFilters.sortBy || 'occurredAt',
         direction: nextFilters.direction || 'desc'
       })
+
       setAuditPage(
         data || {
           content: [],
@@ -90,12 +94,21 @@ export function AuditLogsPage() {
           last: true
         }
       )
+
       if (!preserveSelection) {
         setSelectedId('')
         return
       }
-      const resolved = preserveSelection && selectedId && (data?.content || []).some((item) => item.id === selectedId) ? selectedId : ''
+
+      const resolved =
+        preserveSelection &&
+        selectedId &&
+        (data?.content || []).some((item) => item.id === selectedId)
+          ? selectedId
+          : ''
+
       setSelectedId(resolved)
+
     } catch (err) {
       setError(err.message || 'Failed to load audit logs.')
     } finally {
@@ -134,50 +147,72 @@ export function AuditLogsPage() {
   }
 
   return (
-    <div className="page">
+    <div className="audit-page">
+
       <div className="page-head">
-        <h2>Audit logs</h2>
-        <p>Immutable history for critical changes: who did what, when, and what changed. Only admins can access this view.</p>
+        <h2>Audit Logs</h2>
+        <p className="subtle-meta">
+          Immutable history of system actions. Only administrators can access this view.
+        </p>
       </div>
 
-      {flash ? <div className="alert alert-success">{flash}</div> : null}
-      {error ? <div className="alert alert-error">{error}</div> : null}
+      {flash && <div className="alert alert-success">{flash}</div>}
+      {error && <div className="alert alert-error">{error}</div>}
+
+      {/* FILTER PANEL */}
 
       <section className="panel">
         <div className="section-head">
           <div>
             <h3>Filters</h3>
-            <p>
-              {auditPage.totalElements ? `${auditPage.totalElements} event(s)` : 'No events matched yet.'} · Page {auditPage.page + 1} of{' '}
-              {Math.max(1, auditPage.totalPages || 1)}
+            <p className="subtle-meta">
+              {auditPage.totalElements} events • Page {auditPage.page + 1} of {Math.max(1, auditPage.totalPages || 1)}
             </p>
           </div>
-          <div className="inline-actions wrap">
-            <button className="btn btn-outline btn-sm" type="button" onClick={goPrev} disabled={auditPage.first}>
-              Prev
+
+          <div className="pagination-controls">
+            <button className="btn btn-outline btn-sm" onClick={goPrev} disabled={auditPage.first}>
+              ← Prev
             </button>
-            <button className="btn btn-outline btn-sm" type="button" onClick={goNext} disabled={auditPage.last}>
-              Next
+
+            <button className="btn btn-outline btn-sm" onClick={goNext} disabled={auditPage.last}>
+              Next →
             </button>
           </div>
         </div>
 
-        <form className="filters four-up" onSubmit={applyFilters}>
+        <form className="filters-grid" onSubmit={applyFilters}>
+
           <label>
             Entity type
-            <input value={filters.entityType} onChange={(event) => setFilters((c) => ({ ...c, entityType: event.target.value }))} />
+            <input
+              value={filters.entityType}
+              onChange={(e) => setFilters((c) => ({ ...c, entityType: e.target.value }))}
+            />
           </label>
+
           <label>
             Entity id
-            <input value={filters.entityId} onChange={(event) => setFilters((c) => ({ ...c, entityId: event.target.value }))} />
+            <input
+              value={filters.entityId}
+              onChange={(e) => setFilters((c) => ({ ...c, entityId: e.target.value }))}
+            />
           </label>
+
           <label>
             Action code
-            <input value={filters.actionCode} onChange={(event) => setFilters((c) => ({ ...c, actionCode: event.target.value }))} />
+            <input
+              value={filters.actionCode}
+              onChange={(e) => setFilters((c) => ({ ...c, actionCode: e.target.value }))}
+            />
           </label>
+
           <label>
             Actor email
-            <input value={filters.actorEmail} onChange={(event) => setFilters((c) => ({ ...c, actorEmail: event.target.value }))} />
+            <input
+              value={filters.actorEmail}
+              onChange={(e) => setFilters((c) => ({ ...c, actorEmail: e.target.value }))}
+            />
           </label>
 
           <label>
@@ -185,20 +220,25 @@ export function AuditLogsPage() {
             <input
               type="datetime-local"
               value={filters.occurredFrom}
-              onChange={(event) => setFilters((c) => ({ ...c, occurredFrom: event.target.value }))}
+              onChange={(e) => setFilters((c) => ({ ...c, occurredFrom: e.target.value }))}
             />
           </label>
+
           <label>
             Occurred to
             <input
               type="datetime-local"
               value={filters.occurredTo}
-              onChange={(event) => setFilters((c) => ({ ...c, occurredTo: event.target.value }))}
+              onChange={(e) => setFilters((c) => ({ ...c, occurredTo: e.target.value }))}
             />
           </label>
+
           <label>
             Sort by
-            <select value={filters.sortBy} onChange={(event) => setFilters((c) => ({ ...c, sortBy: event.target.value }))}>
+            <select
+              value={filters.sortBy}
+              onChange={(e) => setFilters((c) => ({ ...c, sortBy: e.target.value }))}
+            >
               {SORT_FIELDS.map((field) => (
                 <option key={field.value} value={field.value}>
                   {field.label}
@@ -206,16 +246,24 @@ export function AuditLogsPage() {
               ))}
             </select>
           </label>
+
           <label>
             Direction
-            <select value={filters.direction} onChange={(event) => setFilters((c) => ({ ...c, direction: event.target.value }))}>
+            <select
+              value={filters.direction}
+              onChange={(e) => setFilters((c) => ({ ...c, direction: e.target.value }))}
+            >
               <option value="desc">Newest first</option>
               <option value="asc">Oldest first</option>
             </select>
           </label>
+
           <label>
             Page size
-            <select value={filters.size} onChange={(event) => setFilters((c) => ({ ...c, size: event.target.value }))}>
+            <select
+              value={filters.size}
+              onChange={(e) => setFilters((c) => ({ ...c, size: e.target.value }))}
+            >
               <option value="10">10</option>
               <option value="20">20</option>
               <option value="50">50</option>
@@ -223,10 +271,11 @@ export function AuditLogsPage() {
             </select>
           </label>
 
-          <div className="inline-actions wrap">
+          <div className="filter-actions">
             <button className="btn btn-primary" type="submit">
               Apply
             </button>
+
             <button className="btn btn-outline" type="button" onClick={resetFilters}>
               Reset
             </button>
@@ -234,78 +283,70 @@ export function AuditLogsPage() {
         </form>
       </section>
 
-      <div className="workbench-grid">
+      {/* MAIN WORKBENCH */}
+
+      <div className="audit-grid">
+
+        {/* EVENT DETAILS */}
+
         <section className="panel">
+
           <div className="section-head compact">
-            <div>
-              <h3>Event detail</h3>
-              <p>{selected ? 'Review metadata and state diffs.' : 'Select an audit event to inspect JSON snapshots.'}</p>
-            </div>
-            {selected ? (
+            <h3>Event Details</h3>
+
+            {selected && (
               <span className="badge badge-muted mono" title={selected.id}>
                 {shortId(selected.id, 12)}
               </span>
-            ) : null}
+            )}
           </div>
 
           {selected ? (
-            <div className="stack-list">
-              <div className="stack-card">
-                <div className="stack-card-top">
-                  <strong className="mono">{selected.actionCode}</strong>
-                  <span className="badge badge-info">{selected.entityType}</span>
-                </div>
-                <p className="subtle-meta">Occurred {formatDateTime(selected.occurredAt)}</p>
-                <p className="subtle-meta">Actor {selected.actorEmail || selected.actorUserId || '-'}</p>
-                <p className="subtle-meta mono" title={selected.entityId || ''}>
-                  Entity id {selected.entityId || '-'}
-                </p>
-                <p className="subtle-meta mono" title={selected.correlationId || ''}>
-                  Correlation {selected.correlationId || '-'}
-                </p>
-                <p className="subtle-meta mono" title={selected.ipAddress || ''}>
-                  IP {selected.ipAddress || '-'}
-                </p>
-                <p className="subtle-meta mono" title={selected.eventHash || ''}>
-                  Hash {shortId(selected.eventHash, 18)}
-                </p>
+            <div className="audit-details-stack">
+
+              <div className="event-meta">
+
+                <p><strong>Action</strong> {selected.actionCode}</p>
+                <p><strong>Entity</strong> {selected.entityType}</p>
+                <p><strong>Actor</strong> {selected.actorEmail || '-'}</p>
+                <p><strong>Occurred</strong> {formatDateTime(selected.occurredAt)}</p>
+                <p><strong>Entity ID</strong> {selected.entityId || '-'}</p>
+                <p><strong>IP</strong> {selected.ipAddress || '-'}</p>
+
               </div>
 
-              <details className="audit-details" open>
-                <summary>After state</summary>
-                <pre className="result-code">{formatJson(selected.afterStateJson) || '—'}</pre>
+              <details open>
+                <summary>After State</summary>
+                <pre className="json-viewer">{formatJson(selected.afterStateJson) || '—'}</pre>
               </details>
 
-              <details className="audit-details">
-                <summary>Before state</summary>
-                <pre className="result-code">{formatJson(selected.beforeStateJson) || '—'}</pre>
+              <details>
+                <summary>Before State</summary>
+                <pre className="json-viewer">{formatJson(selected.beforeStateJson) || '—'}</pre>
               </details>
 
-              <details className="audit-details">
+              <details>
                 <summary>Metadata</summary>
-                <pre className="result-code">{formatJson(selected.metadataJson) || '—'}</pre>
+                <pre className="json-viewer">{formatJson(selected.metadataJson) || '—'}</pre>
               </details>
 
-              <details className="audit-details">
-                <summary>User agent</summary>
-                <pre className="result-code">{selected.userAgent || '—'}</pre>
-              </details>
             </div>
           ) : (
-            <p className="empty-copy">No event selected.</p>
+            <p className="empty-copy">Select an audit event to inspect details.</p>
           )}
         </section>
 
+        {/* EVENTS TABLE */}
+
         <section className="panel">
+
           <div className="section-head compact">
-            <div>
-              <h3>Events</h3>
-              <p>Click a row to inspect details and JSON diffs.</p>
-            </div>
+            <h3>Events</h3>
           </div>
 
           <div className="table-wrap">
-            <table>
+            <table className="audit-table">
+
               <thead>
                 <tr>
                   <th>Occurred</th>
@@ -316,38 +357,40 @@ export function AuditLogsPage() {
                   <th>Correlation</th>
                 </tr>
               </thead>
+
               <tbody>
+
                 {auditPage.content.length ? (
                   auditPage.content.map((item) => (
+
                     <tr
                       key={item.id}
                       className={item.id === selectedId ? 'row-active' : ''}
                       onClick={() => setSelectedId(item.id)}
-                      style={{ cursor: 'pointer' }}
                     >
                       <td>{formatDateTime(item.occurredAt)}</td>
                       <td>{item.actorEmail || '-'}</td>
-                      <td className="mono">{item.actionCode || '-'}</td>
-                      <td className="mono">{item.entityType || '-'}</td>
-                      <td className="mono" title={item.entityId || ''}>
-                        {shortId(item.entityId, 12)}
-                      </td>
-                      <td className="mono" title={item.correlationId || ''}>
-                        {shortId(item.correlationId, 12)}
-                      </td>
+                      <td className="mono">{item.actionCode}</td>
+                      <td className="mono">{item.entityType}</td>
+                      <td className="mono">{shortId(item.entityId, 12)}</td>
+                      <td className="mono">{shortId(item.correlationId, 12)}</td>
                     </tr>
+
                   ))
                 ) : (
                   <tr>
-                    <td className="empty-row" colSpan={6}>
-                      No audit events found.
+                    <td colSpan={6} className="empty-row">
+                      No audit events found
                     </td>
                   </tr>
                 )}
+
               </tbody>
             </table>
           </div>
+
         </section>
+
       </div>
     </div>
   )

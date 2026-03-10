@@ -30,7 +30,7 @@ app:
     secret: noura_local_mysql_secret_key_2026_at_least_32_chars_long
     issuer: noura-local-mysql
   cors:
-    allowed-origins: http://localhost:5173,http://localhost:3001,http://127.0.0.1:5173,http://127.0.0.1:3001
+    allowed-origins: http://localhost:5173,http://localhost:5174,http://localhost:3001,http://127.0.0.1:5173,http://127.0.0.1:5174,http://127.0.0.1:3001
 
 management:
   health:

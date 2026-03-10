@@ -3,7 +3,7 @@ import { ProtectedRoute } from './routes/ProtectedRoute'
 import { AdminLayout } from './layouts/AdminLayout'
 import { LoginPage } from '../features/auth/pages/LoginPage'
 import { DashboardPage } from '../pages/DashboardPage'
-import { AnalyticsPage } from '../pages/AnalyticsPage'
+import AdminAnalyticsDashboard from '../pages/AdminAnalyticsDashboard'
 import { ControlCenterPage } from '../pages/ControlCenterPage'
 import { OrdersPage } from '../pages/OrdersPage'
 import { ReturnsPage } from '../pages/ReturnsPage'
@@ -24,6 +24,7 @@ import { SerialsPage } from '../pages/SerialsPage'
 import { ReportsPage } from '../pages/ReportsPage'
 import { WebhooksPage } from '../pages/WebhooksPage'
 import { AuditLogsPage } from '../pages/AuditLogsPage'
+import { ProductGeneratorPage } from '../pages/ProductGeneratorPage'
 import { UnauthorizedPage } from '../pages/UnauthorizedPage'
 import { NotFoundPage } from '../pages/NotFoundPage'
 import { ADMIN_ROLES } from '../shared/auth/roles'
@@ -49,7 +50,9 @@ export const router = createBrowserRouter([
         element: <AdminLayout />,
         children: [
           { index: true, element: <DashboardPage /> },
-          { path: 'analytics', element: <AnalyticsPage /> },
+          { path: 'analytics', element: <AdminAnalyticsDashboard /> },
+          // Backwards-compatible alias
+          { path: 'analytics/dashboard', element: <Navigate to="/admin/analytics" replace /> },
           { path: 'commerce/catalog', element: <CommerceCatalogPage /> },
           { path: 'commerce/carousels', element: <CarouselsPage /> },
           { path: 'commerce/recommendations', element: <RecommendationsPage /> },
@@ -61,6 +64,7 @@ export const router = createBrowserRouter([
           { path: 'users', element: <UsersPage /> },
           { path: 'notifications', element: <NotificationsPage /> },
           { path: 'tools/control-center', element: <ControlCenterPage /> },
+          { path: 'tools/product-generator', element: <ProductGeneratorPage /> },
           { path: 'warehouse/catalog', element: <CatalogPage /> },
           { path: 'warehouse/locations', element: <LocationsPage /> },
           { path: 'warehouse/stock', element: <InventoryPage /> },
@@ -74,7 +78,7 @@ export const router = createBrowserRouter([
               { path: 'warehouse/webhooks', element: <WebhooksPage /> },
               { path: 'warehouse/audit-logs', element: <AuditLogsPage /> }
             ]
-          }
+          },
         ]
       }
     ]

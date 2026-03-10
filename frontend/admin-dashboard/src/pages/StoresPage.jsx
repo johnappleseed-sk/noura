@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createStore, deleteStore, listStores, updateStore } from '../shared/api/endpoints/storesApi'
 import { Spinner } from '../shared/ui/Spinner'
+import { SortableHeader } from '../shared/ui/SortableHeader'
 
 const SERVICE_TYPES = ['PICKUP', 'DELIVERY', 'CURBSIDE', 'B2B_DESK']
 
@@ -68,6 +69,7 @@ export function StoresPage() {
 
   const [storesPage, setStoresPage] = useState({ content: [], totalElements: 0 })
   const [filters, setFilters] = useState({ search: '', service: '', openNow: false })
+  const [storeSort, setStoreSort] = useState({ sortBy: 'name', direction: 'asc' })
 
   const [selectedStoreId, setSelectedStoreId] = useState('')
   const [storeForm, setStoreForm] = useState(DEFAULT_STORE_FORM)
@@ -87,8 +89,8 @@ export function StoresPage() {
       const page = await listStores({
         page: 0,
         size: 100,
-        sortBy: 'name',
-        direction: 'asc',
+        sortBy: storeSort.sortBy,
+        direction: storeSort.direction,
         service: filters.service || undefined,
         openNow: filters.openNow ? true : undefined
       })
@@ -112,6 +114,11 @@ export function StoresPage() {
     load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useEffect(() => {
+    load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storeSort.sortBy, storeSort.direction])
 
   function selectStore(store) {
     setFlash('')
@@ -270,8 +277,8 @@ export function StoresPage() {
             <table>
               <thead>
                 <tr>
-                  <th>Store</th>
-                  <th>Region</th>
+                  <SortableHeader label="Store" field="name" sortBy={storeSort.sortBy} direction={storeSort.direction} onSort={(f, d) => setStoreSort({ sortBy: f, direction: d })} />
+                  <SortableHeader label="Region" field="region" sortBy={storeSort.sortBy} direction={storeSort.direction} onSort={(f, d) => setStoreSort({ sortBy: f, direction: d })} />
                   <th>Services</th>
                   <th>Hours</th>
                   <th>Shipping</th>

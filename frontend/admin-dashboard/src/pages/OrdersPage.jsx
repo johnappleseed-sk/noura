@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useState } from 'react'
-import { getOrderTimeline, listOrders, updateOrderStatus } from '../shared/api/endpoints/ordersApi'
+import { getOrder, getOrderTimeline, listOrders, updateOrderStatus } from '../shared/api/endpoints/ordersApi'
 import { Spinner } from '../shared/ui/Spinner'
+import { SortableHeader } from '../shared/ui/SortableHeader'
 
 const ORDER_STATUSES = [
   'CREATED',
@@ -41,15 +42,18 @@ export function OrdersPage() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [refundFilter, setRefundFilter] = useState('')
+  const [orderSort, setOrderSort] = useState({ sortBy: 'createdAt', direction: 'desc' })
   const [drafts, setDrafts] = useState({})
   const [timelines, setTimelines] = useState({})
   const [timelineLoadingId, setTimelineLoadingId] = useState(null)
+  const [detailOrder, setDetailOrder] = useState(null)
+  const [detailLoading, setDetailLoading] = useState(false)
 
   async function load() {
     setLoading(true)
     setError('')
     try {
-      const page = await listOrders({ page: 0, size: 100, sortBy: 'createdAt', direction: 'desc' })
+      const page = await listOrders({ page: 0, size: 100, sortBy: orderSort.sortBy, direction: orderSort.direction })
       const content = page?.content || []
       setOrders(content)
       setDrafts(
@@ -70,6 +74,15 @@ export function OrdersPage() {
   useEffect(() => {
     load()
   }, [])
+
+  useEffect(() => {
+    load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderSort.sortBy, orderSort.direction])
+
+  function handleOrderSort(field, dir) {
+    setOrderSort({ sortBy: field, direction: dir })
+  }
 
   const normalizedSearch = search.trim().toLowerCase()
   const filteredOrders = orders.filter((order) => {
@@ -119,6 +132,19 @@ export function OrdersPage() {
       setError(err.message || 'Failed to load timeline.')
     } finally {
       setTimelineLoadingId(null)
+    }
+  }
+
+  async function openDetail(orderId) {
+    setDetailLoading(true)
+    setError('')
+    try {
+      const data = await getOrder(orderId)
+      setDetailOrder(data)
+    } catch (err) {
+      setError(err.message || 'Failed to load order details.')
+    } finally {
+      setDetailLoading(false)
     }
   }
 
@@ -179,13 +205,13 @@ export function OrdersPage() {
           <table>
             <thead>
               <tr>
-                <th>Order</th>
+                <SortableHeader label="Order" field="id" sortBy={orderSort.sortBy} direction={orderSort.direction} onSort={handleOrderSort} />
                 <th>User</th>
                 <th>Items</th>
-                <th>Total</th>
-                <th>Status</th>
+                <SortableHeader label="Total" field="totalAmount" sortBy={orderSort.sortBy} direction={orderSort.direction} onSort={handleOrderSort} />
+                <SortableHeader label="Status" field="status" sortBy={orderSort.sortBy} direction={orderSort.direction} onSort={handleOrderSort} />
                 <th>Refund</th>
-                <th>Created</th>
+                <SortableHeader label="Created" field="createdAt" sortBy={orderSort.sortBy} direction={orderSort.direction} onSort={handleOrderSort} />
                 <th>Actions</th>
               </tr>
             </thead>
@@ -247,6 +273,13 @@ export function OrdersPage() {
                             </button>
                             <button
                               className="btn btn-outline btn-sm"
+                              onClick={() => openDetail(order.id)}
+                              disabled={detailLoading}
+                            >
+                              Details
+                            </button>
+                            <button
+                              className="btn btn-outline btn-sm"
                               onClick={() => toggleTimeline(order.id)}
                               disabled={timelineLoadingId === order.id}
                             >
@@ -286,6 +319,92 @@ export function OrdersPage() {
           </table>
         </div>
       </section>
+
+      {detailOrder ? (
+        <div className="modal-backdrop" onClick={() => setDetailOrder(null)}>
+          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Order details</h3>
+              <button className="modal-close" onClick={() => setDetailOrder(null)}>&times;</button>
+            </div>
+
+            <dl className="detail-grid">
+              <div>
+                <dt>Order ID</dt>
+                <dd className="mono">{detailOrder.id}</dd>
+              </div>
+              <div>
+                <dt>User ID</dt>
+                <dd className="mono">{detailOrder.userId || '-'}</dd>
+              </div>
+              <div>
+                <dt>Status</dt>
+                <dd><span className="badge badge-muted">{detailOrder.status}</span></dd>
+              </div>
+              <div>
+                <dt>Refund status</dt>
+                <dd><span className="badge badge-muted">{detailOrder.refundStatus || 'NONE'}</span></dd>
+              </div>
+              <div>
+                <dt>Total</dt>
+                <dd><strong>{formatCurrency(detailOrder.totalAmount)}</strong></dd>
+              </div>
+              <div>
+                <dt>Created</dt>
+                <dd>{formatDate(detailOrder.createdAt)}</dd>
+              </div>
+              {detailOrder.shippingAddress ? (
+                <div className="span-2">
+                  <dt>Shipping address</dt>
+                  <dd>{typeof detailOrder.shippingAddress === 'string' ? detailOrder.shippingAddress : JSON.stringify(detailOrder.shippingAddress)}</dd>
+                </div>
+              ) : null}
+              {detailOrder.paymentMethod ? (
+                <div>
+                  <dt>Payment method</dt>
+                  <dd>{detailOrder.paymentMethod}</dd>
+                </div>
+              ) : null}
+              {detailOrder.notes ? (
+                <div className="span-2">
+                  <dt>Notes</dt>
+                  <dd>{detailOrder.notes}</dd>
+                </div>
+              ) : null}
+            </dl>
+
+            {detailOrder.items?.length ? (
+              <>
+                <h4>Line items</h4>
+                <div className="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Product</th>
+                        <th>SKU</th>
+                        <th>Qty</th>
+                        <th>Unit price</th>
+                        <th>Subtotal</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {detailOrder.items.map((item, idx) => (
+                        <tr key={item.id || idx}>
+                          <td>{item.productName || item.name || '-'}</td>
+                          <td className="mono">{item.sku || item.variantSku || '-'}</td>
+                          <td>{item.quantity}</td>
+                          <td>{formatCurrency(item.unitPrice || item.price)}</td>
+                          <td>{formatCurrency((item.unitPrice || item.price || 0) * (item.quantity || 1))}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }

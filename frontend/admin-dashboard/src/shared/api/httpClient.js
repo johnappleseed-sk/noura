@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { clearAuthSnapshot, getAccessToken } from '../auth/tokenStorage'
+import { clearAuthSnapshot, getAccessToken, getRefreshToken, updateTokens } from '../auth/tokenStorage'
 
 const rawBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
 
@@ -62,6 +62,22 @@ function normalizeParams(params) {
   return next
 }
 
+let refreshPromise = null
+
+async function performTokenRefresh() {
+  const refreshToken = getRefreshToken()
+  if (!refreshToken) {
+    throw new Error('No refresh token available.')
+  }
+  const response = await axios.post(`${commerceBase}/auth/refresh`, { refreshToken })
+  const data = response.data?.data || response.data
+  if (!data?.accessToken) {
+    throw new Error('Refresh response missing accessToken.')
+  }
+  updateTokens(data.accessToken, data.refreshToken)
+  return data.accessToken
+}
+
 function attachInterceptors(client) {
   client.interceptors.request.use((config) => {
     const token = getAccessToken()
@@ -77,7 +93,22 @@ function attachInterceptors(client) {
 
   client.interceptors.response.use(
     (response) => response,
-    (error) => {
+    async (error) => {
+      const originalRequest = error.config
+      if (error?.response?.status === 401 && !originalRequest._retried) {
+        originalRequest._retried = true
+        try {
+          if (!refreshPromise) {
+            refreshPromise = performTokenRefresh().finally(() => { refreshPromise = null })
+          }
+          const newToken = await refreshPromise
+          originalRequest.headers.Authorization = `Bearer ${newToken}`
+          return client(originalRequest)
+        } catch (_refreshError) {
+          clearAuthSnapshot()
+          throw error
+        }
+      }
       if (error?.response?.status === 401) {
         clearAuthSnapshot()
       }

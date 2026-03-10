@@ -11,6 +11,7 @@ frontend/admin-dashboard/node_modules/
 frontend/admin-dashboard/dist/
 frontend/storefront-noura/node_modules/
 frontend/storefront-noura/.next/
+frontend/storefront-noura/.next-dev/
 frontend/storefront-noura/out/
 
 node_modules/

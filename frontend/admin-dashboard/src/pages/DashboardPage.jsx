@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { listCategories } from '../shared/api/endpoints/inventoryCategoriesApi'
+import { getDashboardSummary } from '../shared/api/endpoints/dashboardApi'
 import { listWarehouses } from '../shared/api/endpoints/inventoryLocationsApi'
 import { listMovements } from '../shared/api/endpoints/movementsApi'
-import { listProducts } from '../shared/api/endpoints/inventoryProductsApi'
 import { getLowStockReport, getStockValuationReport, getTurnoverReport } from '../shared/api/endpoints/reportsApi'
 import { listStockLevels } from '../shared/api/endpoints/inventoryApi'
 import { getInventorySystemStatus } from '../shared/api/endpoints/systemApi'
@@ -29,14 +28,14 @@ export function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [snapshot, setSnapshot] = useState(null)
+  const [tab, setTab] = useState('commerce')
 
   async function load() {
     setLoading(true)
     setError('')
     try {
       const [
-        productsPage,
-        categoriesPage,
+        commerceSummary,
         warehousesPage,
         stockLevelsPage,
         lowStock,
@@ -45,8 +44,7 @@ export function DashboardPage() {
         systemStatus,
         movementPage
       ] = await Promise.all([
-        listProducts({ page: 0, size: 1 }),
-        listCategories({ page: 0, size: 1 }),
+        getDashboardSummary().catch(() => null),
         listWarehouses({ page: 0, size: 8, sortBy: 'name', direction: 'asc' }),
         listStockLevels({ page: 0, size: 8, sortBy: 'updatedAt', direction: 'desc' }),
         getLowStockReport(),
@@ -57,8 +55,12 @@ export function DashboardPage() {
       ])
 
       setSnapshot({
-        productTotal: productsPage?.totalElements || 0,
-        categoryTotal: categoriesPage?.totalElements || 0,
+        revenue: commerceSummary?.revenue || 0,
+        ordersCount: commerceSummary?.ordersCount || 0,
+        usersCount: commerceSummary?.usersCount || 0,
+        storesCount: commerceSummary?.storesCount || 0,
+        topProducts: commerceSummary?.topProducts || [],
+        storePerformance: commerceSummary?.storePerformance || [],
         warehouseTotal: warehousesPage?.totalElements || 0,
         warehouses: warehousesPage?.content || [],
         recentStockLevels: stockLevelsPage?.content || [],
@@ -71,7 +73,7 @@ export function DashboardPage() {
         movementTotal: movementPage?.totalElements || 0
       })
     } catch (err) {
-      setError(err.message || 'Unable to load inventory dashboard.')
+      setError(err.message || 'Unable to load dashboard.')
     } finally {
       setLoading(false)
     }
@@ -82,50 +84,136 @@ export function DashboardPage() {
   }, [])
 
   if (loading) {
-    return <Spinner label="Loading inventory dashboard..." />
+    return <Spinner label="Loading dashboard..." />
   }
 
   return (
     <div className="page">
       <div className="page-head">
-        <h2>Inventory command view</h2>
-        <p>Operational summary across catalog, warehouse footprint, stock exposure, and recent movement activity from the inventory service.</p>
+        <h2>Dashboard</h2>
+        <p>Unified command view across commerce KPIs, warehouse footprint, stock exposure, and recent movement activity.</p>
       </div>
 
       {error ? <div className="alert alert-error">{error}</div> : null}
 
-      <div className="card-grid">
-        <article className="metric-card">
-          <h3>Products</h3>
-          <strong>{snapshot?.productTotal || 0}</strong>
-          <p>Inventory SKUs currently loaded into the catalog.</p>
-        </article>
-        <article className="metric-card">
-          <h3>Categories</h3>
-          <strong>{snapshot?.categoryTotal || 0}</strong>
-          <p>Hierarchical category nodes available for assignment.</p>
-        </article>
-        <article className="metric-card">
-          <h3>Warehouses</h3>
-          <strong>{snapshot?.warehouseTotal || 0}</strong>
-          <p>Active and archived warehouse records across the module.</p>
-        </article>
-        <article className="metric-card">
-          <h3>Stock value</h3>
-          <strong>{formatCurrency(snapshot?.stockValue)}</strong>
-          <p>Available stock valuation calculated from current quantity and base price.</p>
-        </article>
-        <article className="metric-card">
-          <h3>Low stock alerts</h3>
-          <strong>{snapshot?.lowStock?.length || 0}</strong>
-          <p>SKUs at or below configured thresholds right now.</p>
-        </article>
-        <article className="metric-card">
-          <h3>30 day turnover</h3>
-          <strong>{formatDecimal(averageTurnover(snapshot?.turnover || []), 2)}</strong>
-          <p>Average outbound-to-available ratio over the rolling turnover window.</p>
-        </article>
+      <div className="tab-bar">
+        <button className={`tab-btn ${tab === 'commerce' ? 'active' : ''}`} onClick={() => setTab('commerce')}>
+          Commerce
+        </button>
+        <button className={`tab-btn ${tab === 'inventory' ? 'active' : ''}`} onClick={() => setTab('inventory')}>
+          Inventory
+        </button>
       </div>
+
+      {tab === 'commerce' ? (
+        <div className="card-grid">
+          <article className="metric-card">
+            <h3>Revenue</h3>
+            <strong>{formatCurrency(snapshot?.revenue)}</strong>
+            <p>Total revenue tracked across all completed orders.</p>
+          </article>
+          <article className="metric-card">
+            <h3>Orders</h3>
+            <strong>{snapshot?.ordersCount || 0}</strong>
+            <p>Total orders placed on the platform.</p>
+          </article>
+          <article className="metric-card">
+            <h3>Users</h3>
+            <strong>{snapshot?.usersCount || 0}</strong>
+            <p>Registered user accounts across all roles.</p>
+          </article>
+          <article className="metric-card">
+            <h3>Stores</h3>
+            <strong>{snapshot?.storesCount || 0}</strong>
+            <p>Active storefronts and vendor locations.</p>
+          </article>
+        </div>
+      ) : (
+        <div className="card-grid">
+          <article className="metric-card">
+            <h3>Warehouses</h3>
+            <strong>{snapshot?.warehouseTotal || 0}</strong>
+            <p>Active and archived warehouse records across the module.</p>
+          </article>
+          <article className="metric-card">
+            <h3>Stock value</h3>
+            <strong>{formatCurrency(snapshot?.stockValue)}</strong>
+            <p>Available stock valuation calculated from current quantity and base price.</p>
+          </article>
+          <article className="metric-card">
+            <h3>Low stock alerts</h3>
+            <strong>{snapshot?.lowStock?.length || 0}</strong>
+            <p>SKUs at or below configured thresholds right now.</p>
+          </article>
+          <article className="metric-card">
+            <h3>30 day turnover</h3>
+            <strong>{formatDecimal(averageTurnover(snapshot?.turnover || []), 2)}</strong>
+            <p>Average outbound-to-available ratio over the rolling turnover window.</p>
+          </article>
+        </div>
+      )}
+
+      {tab === 'commerce' && snapshot?.topProducts?.length ? (
+        <section className="panel">
+          <div className="section-head">
+            <div>
+              <h3>Top products</h3>
+              <p>Best performing products by sales volume.</p>
+            </div>
+          </div>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Sold</th>
+                  <th>Revenue</th>
+                </tr>
+              </thead>
+              <tbody>
+                {snapshot.topProducts.slice(0, 8).map((item, idx) => (
+                  <tr key={item.productId || idx}>
+                    <td><strong>{item.productName || item.name || `Product ${item.productId}`}</strong></td>
+                    <td>{item.totalSold ?? item.quantity ?? 0}</td>
+                    <td>{formatCurrency(item.totalRevenue ?? item.revenue ?? 0)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : null}
+
+      {tab === 'commerce' && snapshot?.storePerformance?.length ? (
+        <section className="panel">
+          <div className="section-head">
+            <div>
+              <h3>Store performance</h3>
+              <p>Revenue and order metrics by store location.</p>
+            </div>
+          </div>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Store</th>
+                  <th>Orders</th>
+                  <th>Revenue</th>
+                </tr>
+              </thead>
+              <tbody>
+                {snapshot.storePerformance.slice(0, 8).map((item, idx) => (
+                  <tr key={item.storeId || idx}>
+                    <td><strong>{item.storeName || item.name || `Store ${item.storeId}`}</strong></td>
+                    <td>{item.ordersCount ?? item.orders ?? 0}</td>
+                    <td>{formatCurrency(item.revenue ?? 0)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : null}
 
       <div className="panel-grid">
         <section className="panel">

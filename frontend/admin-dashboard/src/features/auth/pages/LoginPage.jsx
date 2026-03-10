@@ -1,79 +1,130 @@
-import { Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { useState } from 'react'
-import { useAuth } from '../useAuth'
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useAuth } from "../useAuth";
 
 export function LoginPage() {
-  const { isAuthenticated, loginPassword } = useAuth()
-  const navigate = useNavigate()
-  const location = useLocation()
-  const [email, setEmail] = useState('admin@noura.local')
-  const [password, setPassword] = useState('Admin123!')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const { isAuthenticated, loginPassword } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const [email, setEmail] = useState("admin@noura.local");
+  const [password, setPassword] = useState("Admin123!");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   if (isAuthenticated) {
-    return <Navigate to="/admin" replace />
+    return <Navigate to="/admin" replace />;
   }
 
-  const destination = location.state?.from?.pathname || '/admin'
+  const destination = location.state?.from?.pathname || "/admin";
 
   async function handleSubmit(event) {
-    event.preventDefault()
-    setLoading(true)
-    setError('')
+    event.preventDefault();
+    setLoading(true);
+    setError("");
+
     try {
-      await loginPassword({ email, password })
-      navigate(destination, { replace: true })
+      await loginPassword({ email, password });
+      navigate(destination, { replace: true });
     } catch (err) {
-      setError(err.message || 'Unable to sign in.')
+      setError(err.message || "Unable to sign in.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   return (
-    <div className="login-shell">
-      <div className="login-card">
-        <p className="brand-kicker">Noura</p>
-        <h1>Admin sign in</h1>
-        <p className="login-copy">Connect to the Noura monolith on <code>http://localhost:8080</code> using an <strong>ADMIN</strong> account.</p>
+    <div className="auth-wrapper">
+      
+      {/* Left Branding Panel */}
+      <div className="auth-brand-panel">
+        <div className="brand-content">
+          <h1 className="brand-logo">Noura</h1>
+          <p className="brand-tagline">Enterprise Control Center</p>
 
-        <form className="stack-form" onSubmit={handleSubmit}>
-          <label>
-            Email
-            <input
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="admin@noura.local"
-              required
-            />
-          </label>
+          <div className="brand-meta">
+            <p>Secure administrative platform</p>
+            <p>Connected to backend:</p>
+            <code>http://localhost:8080</code>
+          </div>
+        </div>
+      </div>
 
-          <label>
-            Password
-            <input
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="Password"
-              required
-            />
-          </label>
+      {/* Right Login Panel */}
+      <div className="auth-form-panel">
+        <div className="login-card">
 
-          <button className="btn btn-primary" type="submit" disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign in'}
-          </button>
-        </form>
+          <header className="login-header">
+            <h2>Admin Sign In</h2>
+            <p className="login-subtitle">
+              Access the Noura administration dashboard
+            </p>
+          </header>
 
-        {error ? <p className="status-error">{error}</p> : null}
+          <form className="login-form" onSubmit={handleSubmit} noValidate>
 
-        <div className="auth-aside">
-          <p className="subtle-meta">Seeded local admin</p>
-          <p className="subtle-meta mono">admin@noura.local / Admin123!</p>
-          <p className="subtle-meta">Need a non-admin user? Create one via the Control Center after signing in.</p>
+            <div className="form-group">
+              <label htmlFor="email">Email</label>
+
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="username"
+                value={email}
+                placeholder="admin@noura.local"
+                disabled={loading}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="password">Password</label>
+
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                placeholder="Enter password"
+                disabled={loading}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+
+            <button
+              className="btn-primary"
+              type="submit"
+              disabled={loading}
+            >
+              {loading ? (
+                <span className="loading">
+                  <span className="spinner"></span>
+                  Signing in...
+                </span>
+              ) : (
+                "Sign In"
+              )}
+            </button>
+
+          </form>
+
+          {error && (
+            <div className="auth-error" role="alert">
+              {error}
+            </div>
+          )}
+
+          <footer className="login-footer">
+            <p className="seed-label">Seeded Admin</p>
+            <p className="mono">admin@noura.local / Admin123!</p>
+          </footer>
+
         </div>
       </div>
     </div>
-  )
+  );
 }

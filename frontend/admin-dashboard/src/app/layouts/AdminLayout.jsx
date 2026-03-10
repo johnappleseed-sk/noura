@@ -190,7 +190,14 @@ export function AdminLayout() {
 
       <aside className={`sidebar${sidebarCollapsed ? ' collapsed' : ''}${mobileSidebarOpen ? ' open' : ''}`}>
         <div className="sidebar-top">
-          <div className="brand">
+          <div 
+            className="brand" 
+            onClick={sidebarCollapsed ? toggleSidebarCollapsed : undefined}
+            role={sidebarCollapsed ? 'button' : undefined}
+            tabIndex={sidebarCollapsed ? 0 : undefined}
+            onKeyDown={sidebarCollapsed ? (e) => e.key === 'Enter' && toggleSidebarCollapsed() : undefined}
+            aria-label={sidebarCollapsed ? 'Expand sidebar' : undefined}
+          >
             <div className="logo-mark" aria-hidden>
               N
             </div>
@@ -202,14 +209,16 @@ export function AdminLayout() {
             )}
           </div>
 
-          <button
-            type="button"
-            className="icon-btn"
-            onClick={toggleSidebarCollapsed}
-            aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          >
-            <Icon name="chevronDown" />
-          </button>
+          {!sidebarCollapsed && (
+            <button
+              type="button"
+              className="icon-btn"
+              onClick={toggleSidebarCollapsed}
+              aria-label="Collapse sidebar"
+            >
+              <Icon name="chevronDown" />
+            </button>
+          )}
         </div>
 
         <nav className="side-nav" aria-label="Primary">
