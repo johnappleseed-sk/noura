@@ -6,3 +6,7 @@ export async function getCategoryAnalytics(params = {}) {
   return unwrapApiResponse(response.data)
 }
 
+export async function getCommerceAnalyticsOverview(params = {}) {
+  const response = await commerceApiClient.get('/admin/analytics/overview', { params })
+  return unwrapApiResponse(response.data)
+}

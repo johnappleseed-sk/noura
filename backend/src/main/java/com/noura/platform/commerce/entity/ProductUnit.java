@@ -96,4 +96,100 @@ public class ProductUnit {
         if (isDefaultSaleUnit == null) isDefaultSaleUnit = false;
         if (isDefaultPurchaseUnit == null) isDefaultPurchaseUnit = false;
     }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Product getProduct() {
+        return product;
+    }
+
+    public void setProduct(Product product) {
+        this.product = product;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getAbbreviation() {
+        return abbreviation;
+    }
+
+    public void setAbbreviation(String abbreviation) {
+        this.abbreviation = abbreviation;
+    }
+
+    public BigDecimal getConversionToBase() {
+        return conversionToBase;
+    }
+
+    public void setConversionToBase(BigDecimal conversionToBase) {
+        this.conversionToBase = conversionToBase;
+    }
+
+    public Boolean getAllowForSale() {
+        return allowForSale;
+    }
+
+    public void setAllowForSale(Boolean allowForSale) {
+        this.allowForSale = allowForSale;
+    }
+
+    public Boolean getAllowForPurchase() {
+        return allowForPurchase;
+    }
+
+    public void setAllowForPurchase(Boolean allowForPurchase) {
+        this.allowForPurchase = allowForPurchase;
+    }
+
+    public Boolean getIsDefaultSaleUnit() {
+        return isDefaultSaleUnit;
+    }
+
+    public void setIsDefaultSaleUnit(Boolean isDefaultSaleUnit) {
+        this.isDefaultSaleUnit = isDefaultSaleUnit;
+    }
+
+    public Boolean getIsDefaultPurchaseUnit() {
+        return isDefaultPurchaseUnit;
+    }
+
+    public void setIsDefaultPurchaseUnit(Boolean isDefaultPurchaseUnit) {
+        this.isDefaultPurchaseUnit = isDefaultPurchaseUnit;
+    }
+
+    public String getBarcode() {
+        return barcode;
+    }
+
+    public void setBarcode(String barcode) {
+        this.barcode = barcode;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 }

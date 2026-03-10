@@ -6,8 +6,11 @@ import com.noura.platform.domain.entity.CartItem;
 import com.noura.platform.domain.entity.Coupon;
 import com.noura.platform.domain.entity.Store;
 import com.noura.platform.dto.cart.CartTotalsDto;
+import com.noura.platform.dto.pricing.PromotionEvaluationItemRequest;
+import com.noura.platform.dto.pricing.PromotionEvaluationDto;
 import com.noura.platform.repository.CouponRepository;
 import com.noura.platform.service.PricingService;
+import com.noura.platform.service.PromotionRuleEngineService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -15,12 +18,14 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class PricingServiceImpl implements PricingService {
 
     private final CouponRepository couponRepository;
+    private final PromotionRuleEngineService promotionRuleEngineService;
 
     /**
      * Calculates totals.
@@ -38,14 +43,29 @@ public class PricingServiceImpl implements PricingService {
 
         Coupon coupon = resolveCoupon(couponCode, subtotal);
         int discountPercent = coupon == null ? 0 : coupon.getDiscountPercent();
-        BigDecimal discount = subtotal
+        BigDecimal couponDiscount = subtotal
                 .multiply(BigDecimal.valueOf(discountPercent))
                 .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+        PromotionEvaluationDto promotionEvaluation = promotionRuleEngineService.evaluate(
+                subtotal,
+                couponCode,
+                null,
+                cartItems.stream()
+                        .map(item -> new PromotionEvaluationItemRequest(
+                                item.getProduct().getId(),
+                                item.getProduct().getCategory() == null ? null : item.getProduct().getCategory().getId(),
+                                item.getQuantity(),
+                                item.getUnitPrice()
+                        ))
+                        .toList()
+        );
+        BigDecimal discount = couponDiscount.add(promotionEvaluation.discountAmount()).min(subtotal);
 
         BigDecimal shipping = BigDecimal.ZERO;
         if (store != null) {
             boolean freeShipping = subtotal.compareTo(store.getFreeShippingThreshold()) >= 0
-                    || (coupon != null && coupon.isFreeShipping());
+                    || (coupon != null && coupon.isFreeShipping())
+                    || promotionEvaluation.freeShipping();
             if (!freeShipping) {
                 shipping = store.getShippingFee();
             }
@@ -57,7 +77,9 @@ public class PricingServiceImpl implements PricingService {
                 discount,
                 shipping,
                 subtotal.subtract(discount).add(shipping),
-                normalizedCoupon
+                normalizedCoupon,
+                promotionEvaluation.appliedPromotionCodes(),
+                promotionEvaluation.freeShipping()
         );
     }
 

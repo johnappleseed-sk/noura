@@ -1,8 +1,8 @@
 import Link from 'next/link'
 import { getDeals, getActivePromotions } from '@/lib/api'
-import { formatCurrency } from '@/lib/format'
 import Badge from '@/components/ui/Badge'
 import { Breadcrumbs } from '@/components/navigation'
+import DealsProductGrid from '@/components/analytics/DealsProductGrid'
 
 export const revalidate = 60
 
@@ -69,34 +69,7 @@ export default async function DealsPage() {
               <Link href="/products" className="button primary" style={{ marginTop: 12 }}>Browse All Products</Link>
             </div>
           ) : (
-            <div className="deals-grid">
-              {deals.map((deal) => (
-                <Link key={deal.id} href={`/products/${deal.productId || deal.id}`} className="product-card">
-                  <div className="product-visual" style={deal.imageUrl ? { backgroundImage: `url(${deal.imageUrl})` } : undefined}>
-                    {!deal.imageUrl && <span>{deal.categoryName || 'Deal'}</span>}
-                    {deal.discountPercent && (
-                      <Badge variant="success" style={{ position: 'absolute', top: 12, right: 12 }}>
-                        {deal.discountPercent}% OFF
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="product-meta">
-                    <span className="product-category">{deal.categoryName || 'Special Offer'}</span>
-                    <strong>{deal.productName || deal.name}</strong>
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                      {deal.originalPrice && (
-                        <span style={{ textDecoration: 'line-through', color: 'var(--muted)', fontSize: '0.85rem' }}>
-                          {formatCurrency(deal.originalPrice)}
-                        </span>
-                      )}
-                      <span style={{ color: 'var(--danger)', fontWeight: 700 }}>
-                        {formatCurrency(deal.salePrice || deal.price || 0)}
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
+            <DealsProductGrid deals={deals} listName="deals-page-grid" pagePath="/deals" />
           )}
         </div>
       </section>

@@ -1,52 +1,21 @@
 import Link from 'next/link'
-import { getCategories, getProducts, getBestSellers, getTrendingProducts, getDeals, getActivePromotions, getTrendTags } from '@/lib/api'
-import { formatCurrency } from '@/lib/format'
+import { getCategories, getProducts, getBestSellers, getTrendingProducts, getDeals, getActivePromotions, getTrendTags, getHeroSlides } from '@/lib/api'
 import { PromoBanner } from '@/components/promotion'
 import Badge from '@/components/ui/Badge'
 import { HeroCarousel, ProductCarousel } from '@/components/carousel'
+import TrackedProductGrid from '@/components/analytics/TrackedProductGrid'
+import TrackedCategoryGrid from '@/components/analytics/TrackedCategoryGrid'
 
 export const revalidate = 60
 
 const apiBaseUrl = process.env.API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080'
 
-// Hero slides configuration
-const heroSlides = [
-  {
-    id: 'slide-1',
-    title: 'Discover products built for the way you work.',
-    description: 'Premium quality, transparent pricing, and fast fulfillment — all powered by the Noura enterprise commerce engine.',
-    eyebrow: 'New Season Collection',
-    primaryCta: { text: 'Shop All Products', href: '/products' },
-    secondaryCta: { text: 'View Deals', href: '/deals' },
-    backgroundImage: '/images/hero-1.jpg',
-    overlayType: 'gradient',
-    contentPosition: 'left',
-    showSearch: true
-  },
-  {
-    id: 'slide-2',
-    title: 'Summer Sale: Up to 50% Off',
-    description: 'Limited time offers on premium products. Free shipping on orders over $99.',
-    eyebrow: 'Limited Time Offer',
-    primaryCta: { text: 'Shop the Sale', href: '/deals' },
-    secondaryCta: { text: 'Learn More', href: '/products' },
-    backgroundImage: '/images/hero-2.jpg',
-    overlayType: 'gradient',
-    contentPosition: 'center'
-  },
-  {
-    id: 'slide-3',
-    title: 'Enterprise Solutions Made Simple',
-    description: 'Streamline your workflow with our integrated commerce platform. Built for scale.',
-    eyebrow: 'For Business',
-    primaryCta: { text: 'Get Started', href: '/auth/register' },
-    backgroundImage: '/images/hero-3.jpg',
-    overlayType: 'dark',
-    contentPosition: 'right'
-  }
-]
-
 export default async function HomePage() {
+  const heroLocale = process.env.NEXT_PUBLIC_STOREFRONT_LOCALE || process.env.STOREFRONT_LOCALE || 'en-US'
+  const heroChannelId = process.env.NEXT_PUBLIC_STOREFRONT_CHANNEL_ID || process.env.STOREFRONT_CHANNEL_ID || undefined
+  const heroStoreId = process.env.NEXT_PUBLIC_STOREFRONT_STORE_ID || process.env.STOREFRONT_STORE_ID || undefined
+
+  let heroSlides = []
   let categories = []
   let products = { items: [] }
   let bestSellers = []
@@ -58,6 +27,7 @@ export default async function HomePage() {
 
   try {
     const results = await Promise.allSettled([
+      getHeroSlides({ storeId: heroStoreId, channelId: heroChannelId, locale: heroLocale }),
       getCategories(),
       getProducts({ size: 8 }),
       getBestSellers(),
@@ -67,15 +37,16 @@ export default async function HomePage() {
       getTrendTags()
     ])
 
-    categories = results[0].status === 'fulfilled' ? results[0].value : []
-    products = results[1].status === 'fulfilled' ? results[1].value : { items: [] }
-    bestSellers = results[2].status === 'fulfilled' ? results[2].value : []
-    trending = results[3].status === 'fulfilled' ? results[3].value : []
-    deals = results[4].status === 'fulfilled' ? results[4].value : []
-    promotions = results[5].status === 'fulfilled' ? results[5].value : []
-    trendTags = results[6].status === 'fulfilled' ? results[6].value : []
+    heroSlides = results[0].status === 'fulfilled' ? results[0].value : []
+    categories = results[1].status === 'fulfilled' ? results[1].value : []
+    products = results[2].status === 'fulfilled' ? results[2].value : { items: [] }
+    bestSellers = results[3].status === 'fulfilled' ? results[3].value : []
+    trending = results[4].status === 'fulfilled' ? results[4].value : []
+    deals = results[5].status === 'fulfilled' ? results[5].value : []
+    promotions = results[6].status === 'fulfilled' ? results[6].value : []
+    trendTags = results[7].status === 'fulfilled' ? results[7].value : []
 
-    if (results[0].status === 'rejected' && results[1].status === 'rejected') {
+    if (results[1].status === 'rejected' && results[2].status === 'rejected') {
       apiUnavailable = true
     }
   } catch {
@@ -85,13 +56,39 @@ export default async function HomePage() {
   return (
     <>
       {/* ── Hero Carousel ── */}
-      <HeroCarousel
-        slides={heroSlides}
-        variant="default"
-        autoPlay
-        autoPlayInterval={6000}
-        showProgress
-      />
+      {heroSlides.length ? (
+        <HeroCarousel
+          slides={heroSlides}
+          variant="default"
+          autoPlay
+          autoPlayInterval={6000}
+          showProgress
+        />
+      ) : (
+        <section
+          style={{
+            background: 'linear-gradient(135deg, #091224, #12395a)',
+            color: '#ffffff',
+            padding: '72px 0'
+          }}
+        >
+          <div className="container">
+            <div style={{ maxWidth: 640 }}>
+              <span className="eyebrow" style={{ color: 'rgba(255,255,255,0.7)' }}>Storefront</span>
+              <h1 style={{ fontSize: 'clamp(2.6rem, 5vw, 4.5rem)', lineHeight: 1.05, margin: '12px 0 18px' }}>
+                Commerce content updates are loading.
+              </h1>
+              <p style={{ fontSize: '1.05rem', lineHeight: 1.7, color: 'rgba(255,255,255,0.82)' }}>
+                No active hero slides are currently available for this store or locale. The storefront continues to render safely without carousel data.
+              </p>
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 28 }}>
+                <Link href="/products" className="button primary lg">Browse products</Link>
+                <Link href="/deals" className="button ghost lg">View deals</Link>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ── Trust Bar ── */}
       <div className="trust-bar">
@@ -152,19 +149,13 @@ export default async function HomePage() {
                   View all &rarr;
                 </Link>
               </div>
-              <div className="category-grid" style={{ marginTop: 24 }}>
-                {categories.slice(0, 8).map((category) => (
-                  <Link
-                    key={category.id}
-                    href={`/products?categoryId=${category.id}`}
-                    className="category-card"
-                  >
-                    <span className="category-count">{category.productCount} products</span>
-                    <strong>{category.name}</strong>
-                    <p>{category.description || 'Explore this collection'}</p>
-                  </Link>
-                ))}
-              </div>
+              <TrackedCategoryGrid
+                categories={categories.slice(0, 8)}
+                listName="home-category-grid"
+                pagePath="/"
+                className="category-grid"
+                style={{ marginTop: 24 }}
+              />
             </div>
           </section>
 
@@ -176,6 +167,8 @@ export default async function HomePage() {
               description="Our customers' top picks this season"
               products={bestSellers.map(p => ({ ...p, isBestseller: true }))}
               viewAllLink="/products?sort=bestselling"
+              analyticsListName="home-best-sellers-carousel"
+              analyticsPagePath="/"
             />
           )}
 
@@ -201,43 +194,13 @@ export default async function HomePage() {
                   Shop all &rarr;
                 </Link>
               </div>
-              <div className="product-grid catalog-product-grid" style={{ marginTop: 24 }}>
-                {products.items.map((product) => {
-                  const hasDiscount = product.compareAtPrice && product.compareAtPrice > product.price
-                  const discountPercent = hasDiscount ? Math.round((1 - product.price / product.compareAtPrice) * 100) : 0
-                  const stockStatus = product.lowStock ? 'low-stock' : product.stockQty > 0 ? '' : 'out-of-stock'
-                  const stockLabel = product.lowStock ? 'Low stock' : product.stockQty > 0 ? 'In stock' : 'Out of stock'
-                  return (
-                    <Link key={product.id} href={`/products/${product.id}`} className="product-card catalog-card">
-                      <div className="product-visual" style={product.imageUrl ? { backgroundImage: `url(${product.imageUrl})` } : undefined}>
-                        {!product.imageUrl && <span>{product.categoryName || 'New'}</span>}
-                        <div className="product-badges-overlay">
-                          {hasDiscount && <span className="product-badge sale">Sale</span>}
-                          {product.isNew && <span className="product-badge new">New</span>}
-                        </div>
-                        <div className="product-card-actions">
-                          <button type="button" className="product-action-btn" aria-label="Quick view" onClick={(e) => e.preventDefault()}>👁</button>
-                          <button type="button" className="product-action-btn" aria-label="Add to wishlist" onClick={(e) => e.preventDefault()}>♡</button>
-                        </div>
-                      </div>
-                      <div className="product-meta">
-                        <span className="product-category">{product.categoryName || 'Uncategorized'}</span>
-                        <strong>{product.name}</strong>
-                        <div className="product-price-row">
-                          <p>{formatCurrency(product.price)}</p>
-                          {hasDiscount && (
-                            <>
-                              <span className="original-price">{formatCurrency(product.compareAtPrice)}</span>
-                              <span className="discount-tag">-{discountPercent}%</span>
-                            </>
-                          )}
-                        </div>
-                        <span className={`product-stock-status ${stockStatus}`}>{stockLabel}</span>
-                      </div>
-                    </Link>
-                  )
-                })}
-              </div>
+              <TrackedProductGrid
+                products={products.items}
+                listName="home-featured-products-grid"
+                pagePath="/"
+                layoutClassName="product-grid catalog-product-grid"
+                variant="catalog"
+              />
             </div>
           </section>
 
@@ -249,6 +212,8 @@ export default async function HomePage() {
               description="Products gaining momentum right now"
               products={trending.map(p => ({ ...p, isTrending: true }))}
               viewAllLink="/products?sort=trending"
+              analyticsListName="home-trending-carousel"
+              analyticsPagePath="/"
             />
           )}
 
@@ -261,6 +226,8 @@ export default async function HomePage() {
               products={deals}
               viewAllLink="/deals"
               variant="featured"
+              analyticsListName="home-deals-carousel"
+              analyticsPagePath="/"
             />
           )}
         </>

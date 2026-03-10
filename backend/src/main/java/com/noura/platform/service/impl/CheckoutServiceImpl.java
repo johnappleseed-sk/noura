@@ -3,6 +3,7 @@ package com.noura.platform.service.impl;
 import com.noura.platform.common.exception.NotFoundException;
 import com.noura.platform.common.exception.UnauthorizedException;
 import com.noura.platform.config.AppProperties;
+import com.noura.platform.domain.enums.AnalyticsEventType;
 import com.noura.platform.domain.entity.ApprovalRequest;
 import com.noura.platform.domain.entity.Cart;
 import com.noura.platform.domain.entity.CartItem;
@@ -15,6 +16,7 @@ import com.noura.platform.domain.entity.UserAccount;
 import com.noura.platform.domain.enums.ApprovalStatus;
 import com.noura.platform.domain.enums.OrderStatus;
 import com.noura.platform.dto.cart.CartTotalsDto;
+import com.noura.platform.dto.analytics.AnalyticsEventRequest;
 import com.noura.platform.domain.enums.FulfillmentMethod;
 import com.noura.platform.dto.order.CheckoutConfirmRequest;
 import com.noura.platform.dto.order.CheckoutRequest;
@@ -35,6 +37,7 @@ import com.noura.platform.repository.UserAccountRepository;
 import com.noura.platform.security.SecurityUtils;
 import com.noura.platform.service.CheckoutService;
 import com.noura.platform.service.PricingService;
+import com.noura.platform.service.AnalyticsEventService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -43,6 +46,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 
 @Service
@@ -66,6 +70,7 @@ public class CheckoutServiceImpl implements CheckoutService {
     private final KafkaTemplate<String, OrderCreatedEvent> kafkaTemplate;
     private final AppProperties appProperties;
     private final PricingService pricingService;
+    private final AnalyticsEventService analyticsEventService;
 
     /**
      * Validates checkout.
@@ -144,6 +149,7 @@ public class CheckoutServiceImpl implements CheckoutService {
         cartItemRepository.deleteByCartId(cart.getId());
         clearCheckoutDraft(cart);
         publishOrderEvent(order);
+        trackCheckoutCompleted(order, totals);
         return toOrderDto(order);
     }
 
@@ -196,6 +202,30 @@ public class CheckoutServiceImpl implements CheckoutService {
         if (appProperties.getKafka().isEnabled()) {
             kafkaTemplate.send(appProperties.getKafka().getTopicOrderCreated(), event);
         }
+    }
+
+    private void trackCheckoutCompleted(Order order, CartTotalsDto totals) {
+        java.util.Map<String, Object> metadata = new java.util.LinkedHashMap<>();
+        metadata.put("orderTotal", order.getTotalAmount());
+        metadata.put("subtotal", totals.subtotal());
+        metadata.put("discountAmount", totals.discountAmount());
+        metadata.put("shippingAmount", totals.shippingAmount());
+        metadata.put("promotionCodes", totals.appliedPromotionCodes());
+        analyticsEventService.track(new AnalyticsEventRequest(
+                AnalyticsEventType.CHECKOUT_COMPLETED,
+                null,
+                SecurityUtils.currentEmail(),
+                null,
+                order.getId().toString(),
+                totals.appliedPromotionCodes().isEmpty() ? order.getCouponCode() : totals.appliedPromotionCodes().get(0),
+                order.getStore() == null ? null : order.getStore().getId().toString(),
+                null,
+                null,
+                null,
+                "backend-checkout-service",
+                Instant.now(),
+                metadata
+        ));
     }
 
     /**

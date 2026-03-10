@@ -2,6 +2,7 @@ package com.noura.platform.service.impl;
 
 import com.noura.platform.common.exception.NotFoundException;
 import com.noura.platform.common.exception.UnauthorizedException;
+import com.noura.platform.domain.enums.AnalyticsEventType;
 import com.noura.platform.domain.entity.Cart;
 import com.noura.platform.domain.entity.CartItem;
 import com.noura.platform.domain.entity.Product;
@@ -14,6 +15,7 @@ import com.noura.platform.dto.cart.CartDto;
 import com.noura.platform.dto.cart.CartItemDto;
 import com.noura.platform.dto.cart.CartTotalsDto;
 import com.noura.platform.dto.cart.UpdateCartItemRequest;
+import com.noura.platform.dto.analytics.AnalyticsEventRequest;
 import com.noura.platform.dto.order.CheckoutPaymentRequest;
 import com.noura.platform.dto.order.CheckoutShippingRequest;
 import com.noura.platform.repository.CartItemRepository;
@@ -23,6 +25,7 @@ import com.noura.platform.repository.ProductRepository;
 import com.noura.platform.repository.StoreRepository;
 import com.noura.platform.repository.UserAccountRepository;
 import com.noura.platform.service.PricingService;
+import com.noura.platform.service.AnalyticsEventService;
 import com.noura.platform.security.SecurityUtils;
 import com.noura.platform.service.CartService;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +33,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -44,6 +49,7 @@ public class CartServiceImpl implements CartService {
     private final ProductInventoryRepository inventoryRepository;
     private final StoreRepository storeRepository;
     private final PricingService pricingService;
+    private final AnalyticsEventService analyticsEventService;
 
     /**
      * Retrieves my cart.
@@ -95,6 +101,14 @@ public class CartServiceImpl implements CartService {
         }
         item.setQuantity(nextQuantity);
         cartItemRepository.save(item);
+        trackAnalytics(
+                AnalyticsEventType.ADD_TO_CART,
+                product.getId(),
+                null,
+                normalizedCode(cart.getCouponCode()),
+                request.analyticsPagePath(),
+                buildListMetadata(request.analyticsListName(), request.analyticsSlot())
+        );
         return toCartDto(cart);
     }
 
@@ -136,7 +150,16 @@ public class CartServiceImpl implements CartService {
             throw new UnauthorizedException("CART_FORBIDDEN", "Cart item ownership mismatch");
         }
         Cart cart = item.getCart();
+        UUID productId = item.getProduct().getId();
         cartItemRepository.delete(item);
+        trackAnalytics(
+                AnalyticsEventType.REMOVE_FROM_CART,
+                productId,
+                null,
+                normalizedCode(cart.getCouponCode()),
+                null,
+                null
+        );
         return toCartDto(cart);
     }
 
@@ -168,13 +191,23 @@ public class CartServiceImpl implements CartService {
      * @return The mapped DTO representation.
      */
     @Override
+    @Transactional
     public CartDto applyCoupon(ApplyCouponRequest request) {
         String normalized = normalizeCouponCode(request.couponCode());
         Cart cart = currentCart();
         List<CartItem> items = cartItemRepository.findByCartId(cart.getId());
-        pricingService.calculateTotals(items, cart.getStore(), normalized);
+        CartTotalsDto totals = pricingService.calculateTotals(items, cart.getStore(), normalized);
         cart.setCouponCode(normalized);
         cartRepository.save(cart);
+        String promotionCode = !totals.appliedPromotionCodes().isEmpty() ? totals.appliedPromotionCodes().get(0) : normalized;
+        trackAnalytics(
+                AnalyticsEventType.PROMOTION_APPLIED,
+                null,
+                null,
+                promotionCode,
+                null,
+                null
+        );
         return toCartDto(cart);
     }
 
@@ -255,6 +288,46 @@ public class CartServiceImpl implements CartService {
                 .toList();
         CartTotalsDto totals = pricingService.calculateTotals(items, cart.getStore(), cart.getCouponCode());
         return new CartDto(cart.getId(), cart.getStore() == null ? null : cart.getStore().getId(), lines, totals);
+    }
+
+    private void trackAnalytics(
+            AnalyticsEventType type,
+            UUID productId,
+            UUID orderId,
+            String promotionCode,
+            String pagePath,
+            Map<String, Object> metadata
+    ) {
+        analyticsEventService.track(new AnalyticsEventRequest(
+                type,
+                null,
+                SecurityUtils.currentEmail(),
+                productId == null ? null : productId.toString(),
+                orderId == null ? null : orderId.toString(),
+                promotionCode,
+                null,
+                null,
+                null,
+                pagePath,
+                "backend-cart-service",
+                null,
+                metadata
+        ));
+    }
+
+    private Map<String, Object> buildListMetadata(String listName, Integer slot) {
+        Map<String, Object> metadata = new LinkedHashMap<>();
+        if (listName != null && !listName.isBlank()) {
+            metadata.put("listName", listName.trim());
+        }
+        if (slot != null) {
+            metadata.put("slot", slot);
+        }
+        return metadata.isEmpty() ? null : metadata;
+    }
+
+    private String normalizedCode(String value) {
+        return value == null || value.isBlank() ? null : value.trim().toUpperCase();
     }
 
     private String normalizeCouponCode(String couponCode) {

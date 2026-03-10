@@ -33,7 +33,9 @@ public class CacheConfig {
         Map<String, RedisCacheConfiguration> perCacheTtl = Map.of(
                 "products", defaults.entryTtl(Duration.ofMinutes(10)),
                 "stores", defaults.entryTtl(Duration.ofMinutes(5)),
-                "recommendations", defaults.entryTtl(Duration.ofMinutes(3))
+                "recommendations", defaults.entryTtl(Duration.ofMinutes(3)),
+                "geocodeReverse", defaults.entryTtl(Duration.ofHours(24)),
+                "geocodeForward", defaults.entryTtl(Duration.ofHours(1))
         );
 
         return RedisCacheManager.builder(redisConnectionFactory)

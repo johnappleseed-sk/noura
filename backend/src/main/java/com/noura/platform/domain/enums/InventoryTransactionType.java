@@ -8,5 +8,7 @@ public enum InventoryTransactionType {
     BACKORDER,
     RESERVE,
     RELEASE,
-    CONFIRM
+    CONFIRM,
+    TRANSFER_OUT,
+    TRANSFER_IN
 }

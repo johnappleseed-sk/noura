@@ -1,41 +1,59 @@
 import Link from 'next/link'
 import './globals.css'
+import 'leaflet/dist/leaflet.css'
 import { SkipToContent, CookieConsent } from '@/components/mobile'
+import { Header } from '@/components/navigation'
 
 const apiBaseUrl = process.env.API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080'
 
 export const metadata = {
   title: 'Noura',
-  description: 'Enterprise e-commerce storefront powered by the Noura commerce platform.'
+  description: 'Enterprise e-commerce storefront powered by the Noura commerce platform.',
+  icons: {
+    icon: '/logo/noura-enterprise-icon.svg',
+    shortcut: '/logo/noura-enterprise-icon.svg',
+    apple: '/logo/noura-enterprise-icon.svg'
+  }
 }
 
 export default function RootLayout({ children }) {
+  const navItems = [
+    {
+      label: 'Shop',
+      href: '/products',
+      matchPrefix: true,
+      children: [
+        { label: 'All Products', href: '/products', description: 'Browse the full enterprise catalog' },
+        { label: 'Featured Collection', href: '/products?sort=featured', description: 'Curated by merchandising ops' },
+        { label: 'Price: Low to High', href: '/products?sort=priceAsc', description: 'Optimize for budget-first buying' },
+        { label: 'Latest Drops', href: '/products?sort=name', description: 'Fast scan for newly listed SKUs' }
+      ]
+    },
+    { label: 'Deals', href: '/deals' },
+    { label: 'Stores', href: '/stores' }
+  ]
+
+  const actionItems = [
+    { label: 'Account', href: '/auth', icon: 'account' },
+    { label: 'Orders', href: '/orders', icon: 'orders' },
+    { label: 'Cart', href: '/cart', icon: 'cart', emphasis: true }
+  ]
+
   return (
     <html lang="en">
       <body>
         <SkipToContent targetId="main-content" />
         <div className="site-shell">
-          <div className="announcement-bar">
-            Free shipping on orders over $99 &mdash; <Link href="/products">Shop now</Link>
-          </div>
-          <header className="topbar">
-            <div className="brand-area">
-              <Link href="/" className="brand">
-                <span className="brand-mark">N</span>
-                <span>
-                  <strong>Noura</strong>
-                </span>
-              </Link>
-            </div>
-            <nav className="topnav">
-              <Link href="/products">Shop</Link>
-              <Link href="/deals">Deals</Link>
-              <Link href="/stores">Stores</Link>
-              <Link href="/auth">Account</Link>
-              <Link href="/cart">Cart</Link>
-              <Link href="/orders">Orders</Link>
-            </nav>
-          </header>
+          <Header
+            brandName="Noura"
+            announcement={{
+              message: 'Free shipping on orders over $99',
+              ctaLabel: 'Shop now',
+              ctaHref: '/products'
+            }}
+            navItems={navItems}
+            actionItems={actionItems}
+          />
           <main id="main-content" className="page-frame">{children}</main>
           <footer className="footer">
             <div className="footer-inner">

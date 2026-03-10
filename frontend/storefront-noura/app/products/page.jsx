@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { getCategories, getProducts, getTrendTags } from '@/lib/api'
-import { formatCurrency } from '@/lib/format'
 import { Breadcrumbs } from '@/components/navigation'
+import MerchandisingProductGrid from '@/components/analytics/MerchandisingProductGrid'
 
 export const revalidate = 60
 
@@ -37,6 +37,10 @@ function sortLabel(sort) {
     case 'name': return 'Name'
     case 'priceAsc': return 'Price: Low → High'
     case 'priceDesc': return 'Price: High → Low'
+    case 'popularity': return 'Popularity'
+    case 'trending': return 'Trending'
+    case 'bestselling': return 'Best Selling'
+    case 'new': return 'New Arrivals'
     default: return 'Featured'
   }
 }
@@ -47,6 +51,7 @@ export default async function ProductsPage({ searchParams }) {
   const categoryId = pickFirst(sp.categoryId)
   const sort = pickFirst(sp.sort, 'featured')
   const page = Number.parseInt(pickFirst(sp.page, '0'), 10) || 0
+  const analyticsListName = q ? 'search-results-grid' : categoryId ? 'category-results-grid' : 'catalog-grid'
 
   let categories = []
   let products = { items: [], page: 0, hasNext: false, hasPrevious: false }
@@ -132,6 +137,10 @@ export default async function ProductsPage({ searchParams }) {
                 <div style={{ display: 'grid', gap: 4 }}>
                   {[
                     { v: 'featured', l: 'Featured' },
+                    { v: 'popularity', l: 'Popularity' },
+                    { v: 'trending', l: 'Trending' },
+                    { v: 'bestselling', l: 'Best Selling' },
+                    { v: 'new', l: 'New Arrivals' },
                     { v: 'name', l: 'Name' },
                     { v: 'priceAsc', l: 'Price: Low → High' },
                     { v: 'priceDesc', l: 'Price: High → Low' }
@@ -196,57 +205,14 @@ export default async function ProductsPage({ searchParams }) {
                 </div>
               ) : (
                 <>
-                  <div className="product-grid catalog-product-grid">
-                    {products.items.map((product) => {
-                      const hasDiscount = product.compareAtPrice && product.compareAtPrice > product.price
-                      const discountPercent = hasDiscount ? Math.round((1 - product.price / product.compareAtPrice) * 100) : 0
-                      const stockStatus = product.lowStock ? 'low-stock' : product.stockQty > 0 ? '' : 'out-of-stock'
-                      const stockLabel = product.lowStock ? 'Low stock' : product.stockQty > 0 ? 'In stock' : 'Out of stock'
-                      
-                      return (
-                        <Link key={product.id} href={`/products/${product.id}`} className="product-card catalog-card">
-                          <div className="product-visual" style={product.imageUrl ? { backgroundImage: `url(${product.imageUrl})` } : undefined}>
-                            {!product.imageUrl && <span>{product.categoryName || 'Product'}</span>}
-                            
-                            {/* Badges */}
-                            <div className="product-badges-overlay">
-                              {hasDiscount && <span className="product-badge sale">Sale</span>}
-                              {product.isNew && <span className="product-badge new">New</span>}
-                              {product.isTrending && <span className="product-badge trending">Trending</span>}
-                              {product.isBestseller && <span className="product-badge bestseller">Bestseller</span>}
-                            </div>
-                            
-                            {/* Quick Actions */}
-                            <div className="product-card-actions">
-                              <button type="button" className="product-action-btn" aria-label="Quick view" onClick={(e) => e.preventDefault()}>
-                                👁
-                              </button>
-                              <button type="button" className="product-action-btn" aria-label="Add to wishlist" onClick={(e) => e.preventDefault()}>
-                                ♡
-                              </button>
-                            </div>
-                          </div>
-                          
-                          <div className="product-meta">
-                            <span className="product-category">{product.categoryName || 'Uncategorized'}</span>
-                            <strong>{product.name}</strong>
-                            
-                            <div className="product-price-row">
-                              <p>{formatCurrency(product.price)}</p>
-                              {hasDiscount && (
-                                <>
-                                  <span className="original-price">{formatCurrency(product.compareAtPrice)}</span>
-                                  <span className="discount-tag">-{discountPercent}%</span>
-                                </>
-                              )}
-                            </div>
-                            
-                            <span className={`product-stock-status ${stockStatus}`}>{stockLabel}</span>
-                          </div>
-                        </Link>
-                      )
-                    })}
-                  </div>
+                  <MerchandisingProductGrid
+                    products={products.items}
+                    query={q}
+                    categoryId={categoryId}
+                    sort={sort}
+                    page={products.page}
+                    listName={analyticsListName}
+                  />
                   <div className="pager pager-panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     {products.hasPrevious ? (
                       <Link href={buildPageHref(sp, products.page - 1)} className="button ghost sm">&larr; Previous</Link>

@@ -161,15 +161,30 @@ public class PricingCatalogServiceImpl implements PricingCatalogService {
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
     public PromotionDto createPromotion(PromotionCreateRequest request) {
+        validatePromotionWindow(request.startDate(), request.endDate());
+        String normalizedCode = trimToNull(request.code());
+        if (normalizedCode != null) {
+            promotionRepository.findByCodeIgnoreCase(normalizedCode).ifPresent(existing -> {
+                throw new BadRequestException("PROMOTION_CODE_EXISTS", "Promotion code already exists");
+            });
+        }
         Promotion promotion = new Promotion();
         promotion.setName(request.name());
+        promotion.setCode(normalizedCode);
+        promotion.setDescription(trimToNull(request.description()));
         promotion.setType(request.type());
         promotion.setCouponCode(request.couponCode());
         promotion.setConditions(request.conditions() == null ? new LinkedHashMap<>() : new LinkedHashMap<>(request.conditions()));
         promotion.setStartDate(request.startDate());
         promotion.setEndDate(request.endDate());
         promotion.setActive(request.active() == null || request.active());
+        promotion.setStackable(request.stackable() == null || request.stackable());
         promotion.setPriority(request.priority() == null ? 0 : request.priority());
+        promotion.setUsageLimitTotal(request.usageLimitTotal());
+        promotion.setUsageLimitPerCustomer(request.usageLimitPerCustomer());
+        promotion.setUsageCount(0);
+        promotion.setCustomerSegment(trimToNull(request.customerSegment()));
+        promotion.setArchived(false);
         Promotion saved = promotionRepository.save(promotion);
 
         if (request.applications() != null) {
@@ -192,7 +207,7 @@ public class PricingCatalogServiceImpl implements PricingCatalogService {
     @Override
     public List<PromotionDto> activePromotions() {
         Instant now = Instant.now();
-        return promotionRepository.findByActiveTrue().stream()
+        return promotionRepository.findByActiveTrueAndArchivedFalse().stream()
                 .filter(promotion -> isActive(now, promotion.getStartDate(), promotion.getEndDate()))
                 .sorted(Comparator.comparingInt(Promotion::getPriority).reversed())
                 .map(this::toPromotionDto)
@@ -247,13 +262,23 @@ public class PricingCatalogServiceImpl implements PricingCatalogService {
         return new PromotionDto(
                 promotion.getId(),
                 promotion.getName(),
+                promotion.getCode(),
+                promotion.getDescription(),
                 promotion.getType(),
                 promotion.getCouponCode(),
                 promotion.getConditions(),
                 promotion.getStartDate(),
                 promotion.getEndDate(),
                 promotion.isActive(),
+                promotion.isStackable(),
                 promotion.getPriority(),
+                promotion.getUsageLimitTotal(),
+                promotion.getUsageLimitPerCustomer(),
+                promotion.getUsageCount(),
+                promotion.getCustomerSegment(),
+                promotion.isArchived(),
+                readDecimal(promotion.getConditions(), "percent"),
+                resolveDiscountAmount(promotion),
                 mappings
         );
     }
@@ -353,7 +378,34 @@ public class PricingCatalogServiceImpl implements PricingCatalogService {
                 return next.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : next;
             }
         }
+        if (promotion.getType() == PromotionType.CART_THRESHOLD_DISCOUNT) {
+            BigDecimal threshold = readDecimal(conditions, "threshold");
+            if (threshold.signum() > 0 && amount.compareTo(threshold) < 0) {
+                return amount;
+            }
+            BigDecimal percent = readDecimal(conditions, "percent");
+            if (percent.signum() > 0) {
+                return applyPromotion(amount, fallbackPromotion(PromotionType.PERCENTAGE, percent));
+            }
+            BigDecimal fixed = readDecimal(conditions, "amount");
+            if (fixed.signum() > 0) {
+                return applyPromotion(amount, fallbackPromotion(PromotionType.FIXED, fixed));
+            }
+        }
         return amount;
+    }
+
+    private Promotion fallbackPromotion(PromotionType type, BigDecimal value) {
+        Promotion promotion = new Promotion();
+        promotion.setType(type);
+        Map<String, Object> conditions = new LinkedHashMap<>();
+        if (type == PromotionType.PERCENTAGE) {
+            conditions.put("percent", value);
+        } else {
+            conditions.put("amount", value);
+        }
+        promotion.setConditions(conditions);
+        return promotion;
     }
 
     /**
@@ -368,5 +420,42 @@ public class PricingCatalogServiceImpl implements PricingCatalogService {
         boolean afterStart = start == null || !now.isBefore(start);
         boolean beforeEnd = end == null || !now.isAfter(end);
         return afterStart && beforeEnd;
+    }
+
+    private void validatePromotionWindow(Instant start, Instant end) {
+        if (start != null && end != null && end.isBefore(start)) {
+            throw new BadRequestException("PROMOTION_WINDOW_INVALID", "endDate must be after startDate");
+        }
+    }
+
+    private BigDecimal readDecimal(Map<String, Object> conditions, String key) {
+        if (conditions == null) {
+            return BigDecimal.ZERO;
+        }
+        Object raw = conditions.get(key);
+        if (raw instanceof Number number) {
+            return BigDecimal.valueOf(number.doubleValue());
+        }
+        if (raw instanceof String string && !string.isBlank()) {
+            try {
+                return new BigDecimal(string.trim());
+            } catch (NumberFormatException ignored) {
+                return BigDecimal.ZERO;
+            }
+        }
+        return BigDecimal.ZERO;
+    }
+
+    private BigDecimal resolveDiscountAmount(Promotion promotion) {
+        BigDecimal directAmount = readDecimal(promotion.getConditions(), "amount");
+        if (directAmount.signum() > 0) {
+            return directAmount;
+        }
+        BigDecimal bundleAmount = readDecimal(promotion.getConditions(), "bundleAmount");
+        return bundleAmount.signum() > 0 ? bundleAmount : null;
+    }
+
+    private String trimToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 }

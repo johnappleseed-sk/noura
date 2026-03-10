@@ -1,0 +1,52 @@
+CREATE TABLE IF NOT EXISTS carousel_slides (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title VARCHAR(180) NOT NULL,
+    slug VARCHAR(190) NOT NULL,
+    description VARCHAR(2000),
+    image_desktop VARCHAR(2048) NOT NULL,
+    image_mobile VARCHAR(2048),
+    alt_text VARCHAR(255),
+    link_type VARCHAR(24) NOT NULL DEFAULT 'INTERNAL',
+    link_value VARCHAR(2048),
+    open_in_new_tab BOOLEAN NOT NULL DEFAULT FALSE,
+    button_text VARCHAR(120),
+    secondary_button_text VARCHAR(120),
+    secondary_link_type VARCHAR(24),
+    secondary_link_value VARCHAR(2048),
+    secondary_open_in_new_tab BOOLEAN NOT NULL DEFAULT FALSE,
+    position INTEGER NOT NULL DEFAULT 0,
+    status VARCHAR(20) NOT NULL DEFAULT 'DRAFT',
+    visibility VARCHAR(20) NOT NULL DEFAULT 'PUBLIC',
+    start_at TIMESTAMPTZ,
+    end_at TIMESTAMPTZ,
+    audience_segment VARCHAR(80),
+    targeting_rules_json TEXT,
+    store_id UUID,
+    channel_id VARCHAR(80),
+    locale VARCHAR(16),
+    priority INTEGER NOT NULL DEFAULT 0,
+    background_style VARCHAR(40) NOT NULL DEFAULT 'gradient',
+    theme_metadata_json TEXT,
+    published BOOLEAN NOT NULL DEFAULT FALSE,
+    published_at TIMESTAMPTZ,
+    updated_by VARCHAR(255),
+    deleted_at TIMESTAMPTZ,
+    deleted_by VARCHAR(255),
+    featured_pinned BOOLEAN NOT NULL DEFAULT FALSE,
+    preview_token VARCHAR(64) NOT NULL,
+    version_number INTEGER NOT NULL DEFAULT 1,
+    analytics_key VARCHAR(120),
+    experiment_key VARCHAR(120),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ,
+    created_by VARCHAR(255),
+    CONSTRAINT uk_carousel_slides_slug UNIQUE (slug),
+    CONSTRAINT uk_carousel_slides_preview_token UNIQUE (preview_token),
+    CONSTRAINT fk_carousel_slides_store FOREIGN KEY (store_id) REFERENCES stores (id) ON DELETE SET NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_carousel_slides_status_published ON carousel_slides (status, published);
+CREATE INDEX IF NOT EXISTS idx_carousel_slides_scope ON carousel_slides (store_id, channel_id, locale);
+CREATE INDEX IF NOT EXISTS idx_carousel_slides_position_priority ON carousel_slides (position, priority DESC);
+CREATE INDEX IF NOT EXISTS idx_carousel_slides_schedule ON carousel_slides (start_at, end_at);
+CREATE INDEX IF NOT EXISTS idx_carousel_slides_deleted ON carousel_slides (deleted_at);

@@ -11,6 +11,9 @@ import { CommerceCatalogPage } from '../pages/CommerceCatalogPage'
 import { StoresPage } from '../pages/StoresPage'
 import { PricingPage } from '../pages/PricingPage'
 import { UsersPage } from '../pages/UsersPage'
+import { CarouselsPage } from '../pages/CarouselsPage'
+import { RecommendationsPage } from '../pages/RecommendationsPage'
+import { MerchandisingPage } from '../pages/MerchandisingPage'
 import { NotificationsPage } from '../pages/NotificationsPage'
 import { CatalogPage } from '../pages/CatalogPage'
 import { LocationsPage } from '../pages/LocationsPage'
@@ -48,6 +51,9 @@ export const router = createBrowserRouter([
           { index: true, element: <DashboardPage /> },
           { path: 'analytics', element: <AnalyticsPage /> },
           { path: 'commerce/catalog', element: <CommerceCatalogPage /> },
+          { path: 'commerce/carousels', element: <CarouselsPage /> },
+          { path: 'commerce/recommendations', element: <RecommendationsPage /> },
+          { path: 'commerce/merchandising', element: <MerchandisingPage /> },
           { path: 'orders', element: <OrdersPage /> },
           { path: 'returns', element: <ReturnsPage /> },
           { path: 'stores', element: <StoresPage /> },

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { addCartItem, resolveCustomerToken } from '@/lib/api'
+import { getLastProductClickAttribution } from '@/lib/attribution'
 
 export default function AddToCartButton({ productId, disabled = false }) {
   const router = useRouter()
@@ -19,7 +20,14 @@ export default function AddToCartButton({ productId, disabled = false }) {
     setLoading(true)
     setMessage('')
     try {
-      await addCartItem(token, { productId, quantity: 1 })
+      const attribution = getLastProductClickAttribution(String(productId))
+      await addCartItem(token, {
+        productId,
+        quantity: 1,
+        analyticsListName: attribution?.listName || null,
+        analyticsSlot: attribution?.slot ?? null,
+        analyticsPagePath: attribution?.pagePath || null
+      })
       setMessage('Added to cart!')
       setTimeout(() => setMessage(''), 2500)
     } catch (err) {

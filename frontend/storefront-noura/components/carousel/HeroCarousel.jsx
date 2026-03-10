@@ -4,6 +4,29 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { Carousel } from './Carousel'
 
+function HeroAction({ action, className }) {
+  if (!action?.text || !action?.href) return null
+
+  if (action.external || action.openInNewTab) {
+    return (
+      <a
+        href={action.href}
+        className={className}
+        target={action.openInNewTab ? '_blank' : undefined}
+        rel={action.openInNewTab ? 'noreferrer noopener' : undefined}
+      >
+        {action.text}
+      </a>
+    )
+  }
+
+  return (
+    <Link href={action.href} className={className}>
+      {action.text}
+    </Link>
+  )
+}
+
 /**
  * HeroSlide - Individual hero slide with background image/video support
  */
@@ -24,15 +47,30 @@ function HeroSlide({
     subtitle,
     description,
     imageUrl,
+    imageMobileUrl,
     videoUrl,
+    altText,
+    cta,
     ctaText,
     ctaLink,
+    ctaExternal,
+    ctaOpenInNewTab,
+    secondaryCta,
     secondaryCtaText,
     secondaryCtaLink,
+    secondaryCtaExternal,
+    secondaryCtaOpenInNewTab,
     overlay = 'gradient', // 'none' | 'gradient' | 'dark' | 'light'
     textAlign = 'left', // 'left' | 'center' | 'right'
     textColor = 'light', // 'light' | 'dark'
   } = slide
+
+  const primaryAction = cta || (ctaText && ctaLink
+    ? { text: ctaText, href: ctaLink, external: Boolean(ctaExternal), openInNewTab: Boolean(ctaOpenInNewTab) }
+    : null)
+  const secondaryAction = secondaryCta || (secondaryCtaText && secondaryCtaLink
+    ? { text: secondaryCtaText, href: secondaryCtaLink, external: Boolean(secondaryCtaExternal), openInNewTab: Boolean(secondaryCtaOpenInNewTab) }
+    : null)
 
   // Handle video playback
   useEffect(() => {
@@ -76,12 +114,15 @@ function HeroSlide({
           <>
             {/* Fallback image while video loads */}
             {imageUrl && !videoLoaded && (
-              <img
-                src={imageUrl}
-                alt=""
-                className="hero-slide__image"
-                loading={priority ? 'eager' : 'lazy'}
-              />
+              <picture>
+                {imageMobileUrl ? <source media="(max-width: 767px)" srcSet={imageMobileUrl} /> : null}
+                <img
+                  src={imageUrl}
+                  alt={altText || title || ''}
+                  className="hero-slide__image"
+                  loading={priority ? 'eager' : 'lazy'}
+                />
+              </picture>
             )}
             <video
               ref={videoRef}
@@ -95,12 +136,15 @@ function HeroSlide({
             />
           </>
         ) : imageUrl ? (
-          <img
-            src={imageUrl}
-            alt=""
-            className="hero-slide__image"
-            loading={priority ? 'eager' : 'lazy'}
-          />
+          <picture>
+            {imageMobileUrl ? <source media="(max-width: 767px)" srcSet={imageMobileUrl} /> : null}
+            <img
+              src={imageUrl}
+              alt={altText || title || ''}
+              className="hero-slide__image"
+              loading={priority ? 'eager' : 'lazy'}
+            />
+          </picture>
         ) : (
           <div className="hero-slide__placeholder" />
         )}
@@ -144,18 +188,10 @@ function HeroSlide({
           )}
 
           {/* CTAs */}
-          {(ctaText || secondaryCtaText) && (
+          {(primaryAction || secondaryAction) && (
             <div className="hero-slide__actions">
-              {ctaText && ctaLink && (
-                <Link href={ctaLink} className="button primary lg hero-slide__cta">
-                  {ctaText}
-                </Link>
-              )}
-              {secondaryCtaText && secondaryCtaLink && (
-                <Link href={secondaryCtaLink} className="button ghost lg hero-slide__cta hero-slide__cta--secondary">
-                  {secondaryCtaText}
-                </Link>
-              )}
+              <HeroAction action={primaryAction} className="button primary lg hero-slide__cta" />
+              <HeroAction action={secondaryAction} className="button ghost lg hero-slide__cta hero-slide__cta--secondary" />
             </div>
           )}
         </div>

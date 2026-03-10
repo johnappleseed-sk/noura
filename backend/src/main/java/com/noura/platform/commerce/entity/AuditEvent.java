@@ -164,4 +164,52 @@ public class AuditEvent {
             timestamp = LocalDateTime.now();
         }
     }
+
+    public Long getId() {
+        return id;
+    }
+
+    public LocalDateTime getTimestamp() {
+        return timestamp;
+    }
+
+    public Long getActorUserId() {
+        return actorUserId;
+    }
+
+    public String getActorUsername() {
+        return actorUsername;
+    }
+
+    public String getActionType() {
+        return actionType;
+    }
+
+    public String getTargetType() {
+        return targetType;
+    }
+
+    public String getTargetId() {
+        return targetId;
+    }
+
+    public String getBeforeJson() {
+        return beforeJson;
+    }
+
+    public String getAfterJson() {
+        return afterJson;
+    }
+
+    public String getMetadataJson() {
+        return metadataJson;
+    }
+
+    public String getIpAddress() {
+        return ipAddress;
+    }
+
+    public String getTerminalId() {
+        return terminalId;
+    }
 }

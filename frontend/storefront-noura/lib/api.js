@@ -101,19 +101,41 @@ function sumInventoryStock(product) {
 function normalizeProductCard(product) {
   const primaryVariant = pickPrimaryVariant(product)
   const primaryMedia = pickPrimaryMedia(product)
-  const stockQty = sumInventoryStock(product)
+  const stockQty = typeof product?.stockQty === 'number' ? product.stockQty : sumInventoryStock(product)
 
   return {
     id: product.id,
     sku: primaryVariant?.sku || null,
     name: product.name,
     price: product.price || 0,
-    imageUrl: primaryMedia?.url || null,
+    compareAtPrice: product.compareAtPrice || null,
+    imageUrl: product.imageUrl || primaryMedia?.url || null,
     categoryId: product.categoryId || null,
-    categoryName: product.category || null,
+    categoryName: product.categoryName || product.category || null,
     stockQty,
-    lowStock: stockQty > 0 && stockQty <= 5,
-    allowNegativeStock: Boolean(product.allowBackorder)
+    lowStock: Boolean(product.lowStock ?? (stockQty > 0 && stockQty <= 5)),
+    allowNegativeStock: Boolean(product.allowNegativeStock ?? product.allowBackorder),
+    isNew: Boolean(product.isNew),
+    isTrending: Boolean(product.isTrending),
+    isBestseller: Boolean(product.isBestseller),
+    merchandisingScore: product.merchandisingScore || 0
+  }
+}
+
+function normalizeRecommendationCard(product) {
+  return {
+    id: product?.id,
+    sku: product?.sku || null,
+    name: product?.name || '',
+    price: product?.price || 0,
+    imageUrl: product?.imageUrl || null,
+    categoryId: product?.categoryId || null,
+    categoryName: product?.categoryName || null,
+    stockQty: product?.stockQty || 0,
+    lowStock: Boolean(product?.lowStock),
+    allowNegativeStock: Boolean(product?.allowNegativeStock),
+    reason: product?.reason || null,
+    score: product?.score || 0
   }
 }
 
@@ -253,16 +275,18 @@ function normalizeOrder(order) {
   }
 }
 
-function resolveCatalogSort(sort) {
+function normalizeCatalogSort(sort) {
   switch (sort) {
     case 'name':
-      return { sortBy: 'name', direction: 'asc' }
     case 'priceAsc':
-      return { sortBy: 'price', direction: 'asc' }
     case 'priceDesc':
-      return { sortBy: 'price', direction: 'desc' }
+    case 'popularity':
+    case 'new':
+    case 'trending':
+    case 'bestselling':
+      return sort
     default:
-      return { sortBy: 'createdAt', direction: 'desc' }
+      return 'featured'
   }
 }
 
@@ -288,6 +312,91 @@ function unsupportedFeatureError(feature) {
   return new Error(`${feature} are not available on the active backend profile. ${UNSUPPORTED_PROFILE_MESSAGE}`)
 }
 
+function safeParseJson(value) {
+  if (!value) return {}
+  try {
+    return JSON.parse(value)
+  } catch {
+    return {}
+  }
+}
+
+function buildCarouselHref(linkType, linkValue) {
+  if (!linkValue) return null
+
+  switch ((linkType || 'INTERNAL').toUpperCase()) {
+    case 'EXTERNAL':
+      return linkValue
+    case 'CATEGORY':
+      return `/products?categoryId=${encodeURIComponent(linkValue)}`
+    case 'PRODUCT':
+      return `/products/${encodeURIComponent(linkValue)}`
+    case 'COLLECTION':
+      return `/products?collection=${encodeURIComponent(linkValue)}`
+    case 'CUSTOM':
+    case 'INTERNAL':
+    default:
+      return linkValue.startsWith('/') ? linkValue : `/${linkValue.replace(/^\/+/, '')}`
+  }
+}
+
+function normalizeCarouselAction(linkType, linkValue, text, openInNewTab) {
+  if (!text || !linkValue) {
+    return null
+  }
+
+  const href = buildCarouselHref(linkType, linkValue)
+  if (!href) {
+    return null
+  }
+
+  return {
+    text,
+    href,
+    external: String(linkType || '').toUpperCase() === 'EXTERNAL',
+    openInNewTab: Boolean(openInNewTab)
+  }
+}
+
+function normalizeHeroSlide(slide) {
+  const theme = safeParseJson(slide?.themeMetadataJson)
+
+  return {
+    id: slide?.id,
+    title: slide?.title || '',
+    subtitle: theme?.eyebrow || slide?.audienceSegment || '',
+    description: slide?.description || '',
+    imageUrl: slide?.imageDesktop || slide?.imageMobile || null,
+    imageMobileUrl: slide?.imageMobile || slide?.imageDesktop || null,
+    altText: slide?.altText || slide?.title || 'Hero slide',
+    cta: normalizeCarouselAction(slide?.linkType, slide?.linkValue, slide?.buttonText, slide?.openInNewTab),
+    secondaryCta: normalizeCarouselAction(
+      slide?.secondaryLinkType,
+      slide?.secondaryLinkValue,
+      slide?.secondaryButtonText,
+      slide?.secondaryOpenInNewTab
+    ),
+    overlay: slide?.backgroundStyle || theme?.overlay || 'gradient',
+    textAlign: theme?.contentPosition || theme?.textAlign || 'left',
+    textColor: theme?.textColor || 'light',
+    analyticsKey: slide?.analyticsKey || null,
+    experimentKey: slide?.experimentKey || null
+  }
+}
+
+export async function getHeroSlides({ storeId, channelId, locale, audienceSegment, previewToken } = {}) {
+  const params = new URLSearchParams()
+  if (storeId) params.set('storeId', storeId)
+  if (channelId) params.set('channelId', channelId)
+  if (locale) params.set('locale', locale)
+  if (audienceSegment) params.set('audienceSegment', audienceSegment)
+  if (previewToken) params.set('previewToken', previewToken)
+
+  const suffix = params.toString() ? `?${params.toString()}` : ''
+  const data = await request(`${ACTIVE_API_PREFIX}/carousels/hero${suffix}`)
+  return (data || []).map(normalizeHeroSlide)
+}
+
 export async function getCategories() {
   const data = await request(`${ACTIVE_API_PREFIX}/categories/tree`)
   return normalizeCategoryTree(data)
@@ -295,16 +404,15 @@ export async function getCategories() {
 
 export async function getProducts({ q, categoryId, page = 0, size = 12, sort = 'featured' } = {}) {
   const params = new URLSearchParams()
-  const sortConfig = resolveCatalogSort(sort)
+  const safeSort = normalizeCatalogSort(sort)
 
   if (q) params.set('query', q)
   if (categoryId) params.set('categoryId', categoryId)
   params.set('page', String(page))
   params.set('size', String(size))
-  params.set('sortBy', sortConfig.sortBy)
-  params.set('direction', sortConfig.direction)
+  params.set('sort', safeSort)
 
-  const data = await request(`${ACTIVE_API_PREFIX}/products?${params.toString()}`)
+  const data = await request(`${ACTIVE_API_PREFIX}/merchandising/products?${params.toString()}`)
 
   return {
     items: (data?.content || []).map(normalizeProductCard),
@@ -391,7 +499,10 @@ export async function addCartItem(token, payload) {
       productId: payload?.productId,
       variantId: null,
       quantity: payload?.quantity || 1,
-      storeId: null
+      storeId: null,
+      analyticsListName: payload?.analyticsListName || null,
+      analyticsSlot: payload?.analyticsSlot ?? null,
+      analyticsPagePath: payload?.analyticsPagePath || null
     })
   })
 
@@ -516,27 +627,27 @@ export async function getTrendTags() {
 
 export async function getBestSellers() {
   const data = await request(`${ACTIVE_API_PREFIX}/recommendations/best-sellers`)
-  return (data || []).map(normalizeProductCard)
+  return (data || []).map(normalizeRecommendationCard)
 }
 
 export async function getTrendingProducts() {
   const data = await request(`${ACTIVE_API_PREFIX}/recommendations/trending`)
-  return (data || []).map(normalizeProductCard)
+  return (data || []).map(normalizeRecommendationCard)
 }
 
 export async function getDeals() {
   const data = await request(`${ACTIVE_API_PREFIX}/recommendations/deals`)
-  return (data || []).map(normalizeProductCard)
+  return (data || []).map(normalizeRecommendationCard)
 }
 
 export async function getPersonalizedRecommendations(token) {
   const data = await requestWithAuth(`${ACTIVE_API_PREFIX}/recommendations/personalized`, token)
-  return (data || []).map(normalizeProductCard)
+  return (data || []).map(normalizeRecommendationCard)
 }
 
 export async function getCrossSellProducts(token) {
   const data = await requestWithAuth(`${ACTIVE_API_PREFIX}/recommendations/cross-sell`, token)
-  return (data || []).map(normalizeProductCard)
+  return (data || []).map(normalizeRecommendationCard)
 }
 
 // ── Product Reviews ─────────────────────────────────────────────────
@@ -557,12 +668,12 @@ export async function addProductReview(token, productId, payload) {
 
 export async function getRelatedProducts(productId) {
   const data = await request(`${ACTIVE_API_PREFIX}/products/${productId}/related`)
-  return (data || []).map(normalizeProductCard)
+  return (data || []).map(normalizeRecommendationCard)
 }
 
 export async function getFrequentlyBoughtTogether(productId) {
   const data = await request(`${ACTIVE_API_PREFIX}/products/${productId}/frequently-bought-together`)
-  return (data || []).map(normalizeProductCard)
+  return (data || []).map(normalizeRecommendationCard)
 }
 
 // ── Promotions ──────────────────────────────────────────────────────

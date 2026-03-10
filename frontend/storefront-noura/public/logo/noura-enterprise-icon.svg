@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title>Noura enterprise platform icon</title>
+  <desc>Minimal black temple frame icon with a serif capital N centered inside.</desc>
+
+  <g fill="none" stroke="#111111" stroke-linecap="square" stroke-linejoin="miter">
+    <!-- roof -->
+    <path d="M150 120
+             C185 120 215 108 256 104
+             C297 108 327 120 362 120"
+          stroke-width="16"/>
+    <path d="M140 142
+             C180 142 214 132 256 128
+             C298 132 332 142 372 142"
+          stroke-width="14"/>
+
+    <!-- frame -->
+    <path d="M176 144 V372" stroke-width="14"/>
+    <path d="M336 144 V372" stroke-width="14"/>
+    <path d="M150 388 H362" stroke-width="16"/>
+
+    <!-- top side flares -->
+    <path d="M156 142 H130" stroke-width="12"/>
+    <path d="M356 142 H382" stroke-width="12"/>
+
+    <!-- base inner plinth -->
+    <path d="M206 352 H322" stroke-width="12"/>
+  </g>
+
+  <!-- central N -->
+  <g fill="#111111">
+    <!-- left stem -->
+    <rect x="214" y="184" width="18" height="118" rx="2"/>
+    <rect x="206" y="176" width="36" height="14" rx="2"/>
+    <rect x="206" y="296" width="36" height="14" rx="2"/>
+
+    <!-- right stem -->
+    <rect x="288" y="184" width="18" height="118" rx="2"/>
+    <rect x="280" y="176" width="36" height="14" rx="2"/>
+
+    <!-- diagonal -->
+    <polygon points="232,184 254,184 306,296 284,296"/>
+  </g>
+</svg>

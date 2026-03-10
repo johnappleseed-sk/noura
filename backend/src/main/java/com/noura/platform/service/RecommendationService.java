@@ -1,42 +1,21 @@
 package com.noura.platform.service;
 
-import com.noura.platform.dto.product.ProductDto;
+import com.noura.platform.dto.recommendation.ProductRecommendationResponse;
+import com.noura.platform.dto.recommendation.RecommendationProductDto;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface RecommendationService {
-    /**
-     * Executes personalized.
-     *
-     * @return A list of matching items.
-     */
-    List<ProductDto> personalized();
+    ProductRecommendationResponse getProductRecommendations(UUID productId, int limit);
 
-    /**
-     * Executes cross sell.
-     *
-     * @return A list of matching items.
-     */
-    List<ProductDto> crossSell();
+    List<RecommendationProductDto> getTrendingRecommendations(int limit);
 
-    /**
-     * Executes best sellers.
-     *
-     * @return A list of matching items.
-     */
-    List<ProductDto> bestSellers();
+    List<RecommendationProductDto> getBestSellerRecommendations(int limit);
 
-    /**
-     * Executes trending.
-     *
-     * @return A list of matching items.
-     */
-    List<ProductDto> trending();
+    List<RecommendationProductDto> getDealRecommendations(int limit);
 
-    /**
-     * Executes deals.
-     *
-     * @return A list of matching items.
-     */
-    List<ProductDto> deals();
+    List<RecommendationProductDto> getPersonalizedRecommendations(String customerRef, int limit);
+
+    List<RecommendationProductDto> getCrossSellRecommendations(String customerRef, int limit);
 }

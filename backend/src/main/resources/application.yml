@@ -124,6 +124,22 @@ app:
     forwarded-ip-header: ${RATE_LIMIT_FORWARDED_IP_HEADER:X-Forwarded-For}
     trusted-proxy-addresses: ${RATE_LIMIT_TRUSTED_PROXY_ADDRESSES:127.0.0.1,::1}
 
+  location:
+    geocoding:
+      base-url: ${APP_LOCATION_GEOCODING_BASE_URL:https://nominatim.openstreetmap.org}
+      user-agent: ${APP_LOCATION_GEOCODING_USER_AGENT:noura-platform/1.0}
+      timeout-ms: ${APP_LOCATION_GEOCODING_TIMEOUT_MS:3500}
+      default-limit: ${APP_LOCATION_GEOCODING_DEFAULT_LIMIT:6}
+    privacy:
+      persist-user-location: ${APP_LOCATION_PRIVACY_PERSIST_USER_LOCATION:true}
+      persist-precision-decimals: ${APP_LOCATION_PRIVACY_PERSIST_PRECISION_DECIMALS:5}
+      max-accuracy-meters: ${APP_LOCATION_PRIVACY_MAX_ACCURACY_METERS:200}
+    photo-exif:
+      enabled: ${APP_LOCATION_PHOTO_EXIF_ENABLED:false}
+      allowed-hosts: ${APP_LOCATION_PHOTO_EXIF_ALLOWED_HOSTS:}
+      max-bytes: ${APP_LOCATION_PHOTO_EXIF_MAX_BYTES:6000000}
+      timeout-ms: ${APP_LOCATION_PHOTO_EXIF_TIMEOUT_MS:4500}
+
   # --- POS Module Defaults ---
   currency:
     base: USD

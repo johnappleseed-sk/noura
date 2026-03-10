@@ -1,6 +1,7 @@
 package com.noura.platform.service.impl;
 
 import com.noura.platform.common.exception.NotFoundException;
+import com.noura.platform.common.exception.BadRequestException;
 import com.noura.platform.domain.entity.*;
 import com.noura.platform.dto.order.OrderDto;
 import com.noura.platform.dto.order.OrderItemDto;
@@ -92,14 +93,7 @@ public class UserAccountServiceImpl implements UserAccountService {
         }
         Address entity = new Address();
         entity.setUser(user);
-        entity.setLabel(request.label());
-        entity.setFullName(request.fullName());
-        entity.setLine1(request.line1());
-        entity.setCity(request.city());
-        entity.setState(request.state());
-        entity.setZipCode(request.zipCode());
-        entity.setCountry(request.country());
-        entity.setDefaultAddress(request.defaultAddress());
+        applyAddressFields(entity, request);
         return addressMapper.toDto(addressRepository.save(entity));
     }
 
@@ -122,14 +116,7 @@ public class UserAccountServiceImpl implements UserAccountService {
                 addressRepository.save(item);
             });
         }
-        address.setLabel(request.label());
-        address.setFullName(request.fullName());
-        address.setLine1(request.line1());
-        address.setCity(request.city());
-        address.setState(request.state());
-        address.setZipCode(request.zipCode());
-        address.setCountry(request.country());
-        address.setDefaultAddress(request.defaultAddress());
+        applyAddressFields(address, request);
         return addressMapper.toDto(addressRepository.save(address));
     }
 
@@ -358,6 +345,39 @@ public class UserAccountServiceImpl implements UserAccountService {
     private UserAccount currentUser() {
         return userAccountRepository.findByEmailIgnoreCase(SecurityUtils.currentEmail())
                 .orElseThrow(() -> new NotFoundException("USER_NOT_FOUND", "Authenticated user not found"));
+    }
+
+    /**
+     * Applies address fields with enterprise validation.
+     * <p>
+     * Coordinates are optional, but latitude/longitude must be provided together when present.
+     * This prevents partially-specified locations from being persisted and later misused for service-area logic.
+     * </p>
+     */
+    private void applyAddressFields(Address entity, AddressRequest request) {
+        boolean hasLat = request.latitude() != null;
+        boolean hasLng = request.longitude() != null;
+        if (hasLat != hasLng) {
+            throw new BadRequestException("ADDRESS_COORDINATES_INVALID", "Latitude and longitude must be provided together.");
+        }
+
+        entity.setLabel(request.label());
+        entity.setFullName(request.fullName());
+        entity.setPhone(request.phone());
+        entity.setLine1(request.line1());
+        entity.setLine2(request.line2());
+        entity.setDistrict(request.district());
+        entity.setCity(request.city());
+        entity.setState(request.state());
+        entity.setZipCode(request.zipCode());
+        entity.setCountry(request.country());
+        entity.setLatitude(request.latitude());
+        entity.setLongitude(request.longitude());
+        entity.setAccuracyMeters(request.accuracyMeters());
+        entity.setPlaceId(request.placeId());
+        entity.setFormattedAddress(request.formattedAddress());
+        entity.setDeliveryInstructions(request.deliveryInstructions());
+        entity.setDefaultAddress(request.defaultAddress());
     }
 
     /**

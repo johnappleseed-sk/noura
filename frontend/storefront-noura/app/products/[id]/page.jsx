@@ -6,6 +6,8 @@ import StarRating from '@/components/ui/StarRating'
 import Badge from '@/components/ui/Badge'
 import { Breadcrumbs } from '@/components/navigation'
 import AddToCartButton from '@/components/product/AddToCartButton'
+import ProductAnalyticsTracker from '@/components/analytics/ProductAnalyticsTracker'
+import TrackedProductGrid from '@/components/analytics/TrackedProductGrid'
 
 export const revalidate = 60
 
@@ -45,6 +47,8 @@ export default async function ProductDetailPage({ params }) {
 
   return (
     <>
+      <ProductAnalyticsTracker productId={resolvedParams.id} />
+
       {/* ── Breadcrumbs ── */}
       <section className="hero-compact" style={{ paddingBlock: 20 }}>
         <div className="container">
@@ -145,19 +149,15 @@ export default async function ProductDetailPage({ params }) {
         <section className="featured-section">
           <div className="container">
             <h2 className="section-title">Frequently Bought Together</h2>
-            <div className="scroll-row">
-              {fbt.map((p) => (
-                <Link key={p.id} href={`/products/${p.id}`} className="product-card" style={{ minWidth: 220 }}>
-                  <div className="product-visual" style={p.imageUrl ? { backgroundImage: `url(${p.imageUrl})` } : undefined}>
-                    {!p.imageUrl && <span>{p.categoryName || 'Product'}</span>}
-                  </div>
-                  <div className="product-meta">
-                    <strong>{p.name}</strong>
-                    <p>{formatCurrency(p.price)}</p>
-                  </div>
-                </Link>
-              ))}
-            </div>
+            <TrackedProductGrid
+              products={fbt}
+              listName="product-detail-frequently-bought-together-rail"
+              pagePath={`/products/${resolvedParams.id}`}
+              layoutClassName="scroll-row"
+              variant="compact"
+              cardClassName="product-card"
+              cardStyle={{ minWidth: 220 }}
+            />
           </div>
         </section>
       )}
@@ -167,20 +167,14 @@ export default async function ProductDetailPage({ params }) {
         <section className="featured-section">
           <div className="container">
             <h2 className="section-title">Related Products</h2>
-            <div className="product-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
-              {related.slice(0, 6).map((p) => (
-                <Link key={p.id} href={`/products/${p.id}`} className="product-card">
-                  <div className="product-visual" style={p.imageUrl ? { backgroundImage: `url(${p.imageUrl})` } : undefined}>
-                    {!p.imageUrl && <span>{p.categoryName || 'Product'}</span>}
-                  </div>
-                  <div className="product-meta">
-                    <span className="product-category">{p.categoryName || 'Product'}</span>
-                    <strong>{p.name}</strong>
-                    <p>{formatCurrency(p.price)}</p>
-                  </div>
-                </Link>
-              ))}
-            </div>
+            <TrackedProductGrid
+              products={related.slice(0, 6)}
+              listName="product-detail-related-grid"
+              pagePath={`/products/${resolvedParams.id}`}
+              layoutClassName="product-grid"
+              variant="compact"
+              cardClassName="product-card"
+            />
           </div>
         </section>
       )}

@@ -9,6 +9,7 @@ import {
 } from '../shared/api/endpoints/pricingApi'
 import { formatCurrency, formatDateTime } from '../shared/ui/formatters'
 import { Spinner } from '../shared/ui/Spinner'
+import { PromotionManagementPanel } from '../features/pricing/PromotionManagementPanel'
 
 const PRICE_LIST_TYPES = ['BASE', 'SALE', 'GROUP', 'CHANNEL']
 const PROMOTION_TYPES = ['PERCENTAGE', 'FIXED', 'BUY_X_GET_Y', 'FREE_SHIPPING']
@@ -247,6 +248,8 @@ export function PricingPage() {
 
       {flash ? <div className="alert alert-success">{flash}</div> : null}
       {error ? <div className="alert alert-error">{error}</div> : null}
+
+      <PromotionManagementPanel />
 
       <div className="panel-grid">
         <section className="panel">

@@ -7,6 +7,7 @@ import { listProducts } from '../shared/api/endpoints/inventoryProductsApi'
 import { MANAGER_ROLES, hasAnyRole } from '../shared/auth/roles'
 import { formatDateTime, formatDecimal } from '../shared/ui/formatters'
 import { Spinner } from '../shared/ui/Spinner'
+import { EnterpriseInventoryPanel } from '../features/inventory/EnterpriseInventoryPanel'
 
 const DEFAULT_ADJUSTMENT = {
   warehouseId: '',
@@ -185,6 +186,8 @@ export function InventoryPage() {
 
       {flash ? <div className="alert alert-success">{flash}</div> : null}
       {error ? <div className="alert alert-error">{error}</div> : null}
+
+      <EnterpriseInventoryPanel />
 
       <div className="card-grid">
         <article className="metric-card">

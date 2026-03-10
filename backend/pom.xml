@@ -28,6 +28,7 @@
         <stripe.version>28.2.0</stripe.version>
         <sendgrid.version>4.10.3</sendgrid.version>
         <openhtmltopdf.version>1.0.10</openhtmltopdf.version>
+        <metadata-extractor.version>2.19.0</metadata-extractor.version>
     </properties>
 
     <dependencies>
@@ -66,6 +67,11 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.drewnoakes</groupId>
+            <artifactId>metadata-extractor</artifactId>
+            <version>${metadata-extractor.version}</version>
         </dependency>
         <dependency>
             <groupId>org.flywaydb</groupId>

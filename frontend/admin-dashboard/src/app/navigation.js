@@ -10,6 +10,9 @@ export const NAV_SECTIONS = [
     label: 'Commerce',
     items: [
       { label: 'Catalog', to: '/admin/commerce/catalog', icon: 'box' },
+      { label: 'Carousels', to: '/admin/commerce/carousels', icon: 'chart' },
+      { label: 'Recommendations', to: '/admin/commerce/recommendations', icon: 'chart' },
+      { label: 'Merchandising', to: '/admin/commerce/merchandising', icon: 'chart' },
       { label: 'Orders', to: '/admin/orders', icon: 'bag' },
       { label: 'Returns', to: '/admin/returns', icon: 'bag' },
       { label: 'Stores', to: '/admin/stores', icon: 'warehouse' },
@@ -40,4 +43,3 @@ export const ADMIN_ONLY_ITEMS = [
   { label: 'Webhooks', to: '/admin/warehouse/webhooks', icon: 'chart' },
   { label: 'Audit logs', to: '/admin/warehouse/audit-logs', icon: 'chart' }
 ]
-

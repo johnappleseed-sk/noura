@@ -4,6 +4,8 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import { Carousel } from './Carousel'
 import { formatCurrency } from '@/lib/format'
+import { trackAnalyticsEvent } from '@/lib/analytics'
+import { setLastProductClickAttribution } from '@/lib/attribution'
 
 /**
  * ProductSlide - Individual product card for carousel
@@ -16,6 +18,9 @@ function ProductSlide({
   isWishlisted = false,
   variant = 'default',
   isLoaded = true,
+  listName,
+  pagePath = '/',
+  slot,
 }) {
   const {
     id,
@@ -36,10 +41,74 @@ function ProductSlide({
   } = product || {}
 
   const href = `/products/${slug || id}`
+  const cardRef = useRef(null)
+  const hasTrackedImpression = useRef(false)
   const hasDiscount = compareAtPrice && compareAtPrice > price
   const discountPercent = hasDiscount ? Math.round((1 - price / compareAtPrice) * 100) : 0
   const stockStatus = lowStock ? 'low-stock' : (stockQty == null || stockQty > 0) ? '' : 'out-of-stock'
   const stockLabel = lowStock ? 'Low stock' : (stockQty == null || stockQty > 0) ? 'In stock' : 'Out of stock'
+
+  useEffect(() => {
+    if (!id || !listName || !cardRef.current || hasTrackedImpression.current) {
+      return undefined
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting || hasTrackedImpression.current) {
+            return
+          }
+
+          hasTrackedImpression.current = true
+          observer.disconnect()
+
+          trackAnalyticsEvent({
+            eventType: 'PRODUCT_IMPRESSION',
+            productId: String(id),
+            pagePath,
+            metadata: {
+              listName,
+              slot,
+              productName: name,
+              categoryName,
+              merchandisingScore: product?.merchandisingScore ?? null,
+            },
+          })
+        })
+      },
+      { threshold: 0.35 }
+    )
+
+    observer.observe(cardRef.current)
+    return () => observer.disconnect()
+  }, [id, listName, pagePath, slot, name, categoryName, product])
+
+  const handleProductClick = useCallback(() => {
+    if (!id || !listName) {
+      return
+    }
+
+    setLastProductClickAttribution({
+      productId: String(id),
+      listName,
+      slot,
+      pagePath
+    })
+
+    trackAnalyticsEvent({
+      eventType: 'PRODUCT_CLICK',
+      productId: String(id),
+      pagePath,
+      metadata: {
+        listName,
+        slot,
+        productName: name,
+        categoryName,
+        merchandisingScore: product?.merchandisingScore ?? null,
+      },
+    })
+  }, [id, listName, pagePath, slot, name, categoryName, product])
 
   if (!isLoaded) {
     return (
@@ -55,8 +124,14 @@ function ProductSlide({
   }
 
   return (
-    <div className={`product-carousel-card product-carousel-card--${variant}`}>
-      <Link href={href} className="product-carousel-card__link">
+    <div
+      ref={cardRef}
+      className={`product-carousel-card product-carousel-card--${variant}`}
+      data-product-id={id ? String(id) : undefined}
+      data-product-slot={slot}
+      data-product-list={listName}
+    >
+      <Link href={href} className="product-carousel-card__link" onClick={handleProductClick}>
         {/* Image */}
         <div
           className="product-carousel-card__image"
@@ -206,6 +281,8 @@ export function ProductCarousel({
   cardVariant = 'default',
   loading = false,
   emptyMessage = 'No products available',
+  analyticsListName,
+  analyticsPagePath = '/',
   className = '',
 }) {
   const [responsiveSlidesToShow, setResponsiveSlidesToShow] = useState(slidesToShow)
@@ -330,6 +407,9 @@ export function ProductCarousel({
               onWishlist={onWishlist}
               isWishlisted={wishlistedIds.has(product.id)}
               variant={cardVariant}
+              listName={analyticsListName}
+              pagePath={analyticsPagePath}
+              slot={index}
             />
           ))}
         </Carousel>

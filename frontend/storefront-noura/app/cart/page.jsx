@@ -16,6 +16,7 @@ import {
 } from '@/lib/api'
 import { formatCurrency } from '@/lib/format'
 import { Breadcrumbs } from '@/components/navigation'
+import { trackAnalyticsEvent } from '@/lib/analytics'
 
 function CartItem({ item, onUpdate, onRemove, disabled }) {
   return (
@@ -130,6 +131,10 @@ export default function CartPage() {
     if (!token) return
     setLoading(true)
     try {
+      await trackAnalyticsEvent({
+        eventType: 'CHECKOUT_STARTED',
+        pagePath: '/cart'
+      })
       const shippingAddress = addresses.find((a) => String(a.id) === String(selectedAddressId)) || null
       await checkoutCart(token, {
         shippingAddress,
