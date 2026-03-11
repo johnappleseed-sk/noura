@@ -57,6 +57,11 @@ public class UserController {
         return ApiResponse.ok("Addresses", userAccountService.listAddresses(), http.getRequestURI());
     }
 
+    @GetMapping("/addresses/{addressId}")
+    public ApiResponse<AddressDto> address(@PathVariable UUID addressId, HttpServletRequest http) {
+        return ApiResponse.ok("Address", userAccountService.getAddress(addressId), http.getRequestURI());
+    }
+
     /**
      * Adds address.
      *
@@ -97,6 +102,11 @@ public class UserController {
     public ApiResponse<Void> deleteAddress(@PathVariable UUID addressId, HttpServletRequest http) {
         userAccountService.deleteAddress(addressId);
         return ApiResponse.ok("Address deleted", null, http.getRequestURI());
+    }
+
+    @PostMapping("/addresses/{addressId}/set-default")
+    public ApiResponse<AddressDto> setDefaultAddress(@PathVariable UUID addressId, HttpServletRequest http) {
+        return ApiResponse.ok("Default address updated", userAccountService.setDefaultAddress(addressId), http.getRequestURI());
     }
 
     /**

@@ -4,12 +4,14 @@ import com.noura.platform.domain.entity.Cart;
 import com.noura.platform.domain.entity.Store;
 import com.noura.platform.domain.entity.UserAccount;
 import com.noura.platform.dto.cart.CartDto;
+import com.noura.platform.repository.AddressRepository;
 import com.noura.platform.repository.CartItemRepository;
 import com.noura.platform.repository.CartRepository;
 import com.noura.platform.repository.ProductInventoryRepository;
 import com.noura.platform.repository.ProductRepository;
 import com.noura.platform.repository.StoreRepository;
 import com.noura.platform.repository.UserAccountRepository;
+import com.noura.platform.service.AnalyticsEventService;
 import com.noura.platform.service.PricingService;
 import com.noura.platform.service.impl.CartServiceImpl;
 import org.junit.jupiter.api.AfterEach;
@@ -40,6 +42,9 @@ class CartServiceImplClearCartTest {
     private UserAccountRepository userAccountRepository;
 
     @Mock
+    private AddressRepository addressRepository;
+
+    @Mock
     private CartRepository cartRepository;
 
     @Mock
@@ -57,6 +62,9 @@ class CartServiceImplClearCartTest {
     @Mock
     private PricingService pricingService;
 
+    @Mock
+    private AnalyticsEventService analyticsEventService;
+
     private CartServiceImpl cartService;
 
     @BeforeEach
@@ -70,12 +78,14 @@ class CartServiceImplClearCartTest {
         );
         cartService = new CartServiceImpl(
                 userAccountRepository,
+                addressRepository,
                 cartRepository,
                 cartItemRepository,
                 productRepository,
                 inventoryRepository,
                 storeRepository,
-                pricingService
+                pricingService,
+                analyticsEventService
         );
     }
 

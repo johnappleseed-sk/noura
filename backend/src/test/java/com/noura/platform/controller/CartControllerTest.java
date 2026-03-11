@@ -32,8 +32,9 @@ class CartControllerTest {
         CartDto cart = new CartDto(
                 UUID.randomUUID(),
                 null,
+                null,
                 List.of(),
-                new CartTotalsDto(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, null)
+                new CartTotalsDto(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, null, List.of(), false)
         );
         when(unifiedOrderService.clearCart()).thenReturn(cart);
 
@@ -47,4 +48,3 @@ class CartControllerTest {
         verify(unifiedOrderService, times(1)).clearCart();
     }
 }
-

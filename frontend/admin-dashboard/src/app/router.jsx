@@ -9,6 +9,7 @@ import { OrdersPage } from '../pages/OrdersPage'
 import { ReturnsPage } from '../pages/ReturnsPage'
 import { CommerceCatalogPage } from '../pages/CommerceCatalogPage'
 import { StoresPage } from '../pages/StoresPage'
+import { ServiceAreasPage } from '../pages/ServiceAreasPage'
 import { PricingPage } from '../pages/PricingPage'
 import { UsersPage } from '../pages/UsersPage'
 import { CarouselsPage } from '../pages/CarouselsPage'
@@ -60,6 +61,7 @@ export const router = createBrowserRouter([
           { path: 'orders', element: <OrdersPage /> },
           { path: 'returns', element: <ReturnsPage /> },
           { path: 'stores', element: <StoresPage /> },
+          { path: 'service-areas', element: <ServiceAreasPage /> },
           { path: 'pricing', element: <PricingPage /> },
           { path: 'users', element: <UsersPage /> },
           { path: 'notifications', element: <NotificationsPage /> },

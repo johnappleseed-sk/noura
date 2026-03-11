@@ -4,6 +4,8 @@ import com.noura.platform.common.exception.NotFoundException;
 import com.noura.platform.domain.entity.Store;
 import com.noura.platform.domain.entity.UserAccount;
 import com.noura.platform.domain.enums.StoreServiceType;
+import com.noura.platform.dto.location.StoreLocationDto;
+import com.noura.platform.dto.location.StoreLocationRequest;
 import com.noura.platform.dto.store.StoreDto;
 import com.noura.platform.dto.store.StoreRequest;
 import com.noura.platform.mapper.StoreMapper;
@@ -149,6 +151,38 @@ public class StoreServiceImpl implements StoreService {
         userAccountRepository.save(user);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    @PreAuthorize("hasRole('ADMIN')")
+    public StoreLocationDto getStoreLocation(UUID storeId) {
+        Store store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new NotFoundException("STORE_NOT_FOUND", "Store not found"));
+        return toLocationDto(store);
+    }
+
+    @Override
+    @Transactional
+    @CacheEvict(cacheNames = "stores", allEntries = true)
+    @PreAuthorize("hasRole('ADMIN')")
+    public StoreLocationDto updateStoreLocation(UUID storeId, StoreLocationRequest request) {
+        Store store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new NotFoundException("STORE_NOT_FOUND", "Store not found"));
+        store.setAddressLine1(request.addressLine1());
+        store.setCity(request.city());
+        store.setState(request.state());
+        store.setZipCode(request.zipCode());
+        store.setCountry(request.country());
+        store.setRegion(request.region());
+        store.setLatitude(request.latitude());
+        store.setLongitude(request.longitude());
+        store.setServiceRadiusMeters(request.serviceRadiusMeters());
+        store.setOpenTime(request.openTime());
+        store.setCloseTime(request.closeTime());
+        store.setActive(request.active());
+        store.setServices(request.services());
+        return toLocationDto(storeRepository.save(store));
+    }
+
     /**
      * Executes to entity.
      *
@@ -166,6 +200,7 @@ public class StoreServiceImpl implements StoreService {
         entity.setRegion(request.region());
         entity.setLatitude(request.latitude());
         entity.setLongitude(request.longitude());
+        entity.setServiceRadiusMeters(request.serviceRadiusMeters());
         entity.setOpenTime(request.openTime());
         entity.setCloseTime(request.closeTime());
         entity.setActive(request.active());
@@ -199,6 +234,7 @@ public class StoreServiceImpl implements StoreService {
                 base.region(),
                 base.latitude(),
                 base.longitude(),
+                base.serviceRadiusMeters(),
                 base.openTime(),
                 base.closeTime(),
                 base.active(),
@@ -229,5 +265,25 @@ public class StoreServiceImpl implements StoreService {
                 * Math.sin(dLng / 2);
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return earthRadiusKm * c;
+    }
+
+    private StoreLocationDto toLocationDto(Store store) {
+        return new StoreLocationDto(
+                store.getId(),
+                store.getName(),
+                store.getAddressLine1(),
+                store.getCity(),
+                store.getState(),
+                store.getZipCode(),
+                store.getCountry(),
+                store.getRegion(),
+                store.getLatitude(),
+                store.getLongitude(),
+                store.getServiceRadiusMeters(),
+                store.getOpenTime(),
+                store.getCloseTime(),
+                store.isActive(),
+                store.getServices()
+        );
     }
 }

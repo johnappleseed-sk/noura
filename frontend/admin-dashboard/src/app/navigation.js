@@ -16,6 +16,7 @@ export const NAV_SECTIONS = [
       { label: 'Orders', to: '/admin/orders', icon: 'bag' },
       { label: 'Returns', to: '/admin/returns', icon: 'bag' },
       { label: 'Stores', to: '/admin/stores', icon: 'warehouse' },
+      { label: 'Service areas', to: '/admin/service-areas', icon: 'chart' },
       { label: 'Pricing', to: '/admin/pricing', icon: 'chart' },
       { label: 'Users', to: '/admin/users', icon: 'users' },
       { label: 'Notifications', to: '/admin/notifications', icon: 'bell' }

@@ -11,6 +11,7 @@ import java.util.UUID;
 public record CheckoutConfirmRequest(
         FulfillmentMethod fulfillmentMethod,
         UUID storeId,
+        UUID addressId,
         String shippingAddressSnapshot,
         String paymentReference,
         String couponCode,

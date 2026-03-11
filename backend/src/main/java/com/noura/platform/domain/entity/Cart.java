@@ -35,6 +35,9 @@ public class Cart extends AuditableEntity {
     @JoinColumn(name = "store_id")
     private Store store;
 
+    @Column(name = "address_id")
+    private UUID addressId;
+
     // Draft checkout data captured during multi-step checkout.
     @Enumerated(EnumType.STRING)
     @Column(name = "fulfillment_method")

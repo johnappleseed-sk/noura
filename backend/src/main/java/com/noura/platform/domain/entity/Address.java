@@ -1,7 +1,10 @@
 package com.noura.platform.domain.entity;
 
+import com.noura.platform.domain.enums.AddressValidationStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -56,6 +59,10 @@ public class Address extends AuditableEntity {
 
     @Column(length = 600)
     private String deliveryInstructions;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "validation_status", length = 32)
+    private AddressValidationStatus validationStatus = AddressValidationStatus.UNVERIFIED;
 
     @Column(nullable = false)
     private boolean isDefaultAddress;

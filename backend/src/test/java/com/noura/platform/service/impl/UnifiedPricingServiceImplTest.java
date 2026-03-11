@@ -9,6 +9,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.ObjectProvider;
 
 import java.util.Iterator;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -28,13 +29,23 @@ class UnifiedPricingServiceImplTest {
         var expected = List.of(new PromotionDto(
                 UUID.randomUUID(),
                 "Flash Sale",
+                "FLASH-SALE",
+                "Limited time discount",
                 com.noura.platform.domain.enums.PromotionType.PERCENTAGE,
                 null,
-                java.util.Map.of(),
+                null,
                 null,
                 null,
                 true,
+                false,
                 10,
+                null,
+                null,
+                0,
+                null,
+                false,
+                BigDecimal.TEN,
+                BigDecimal.ZERO,
                 List.of()
         ));
         when(pricingCatalogService.activePromotions()).thenReturn(expected);

@@ -1,8 +1,10 @@
 package com.noura.platform.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.noura.platform.common.exception.UnauthorizedException;
 import com.noura.platform.common.exception.ForbiddenException;
 import com.noura.platform.config.AppProperties;
+import com.noura.platform.domain.entity.Address;
 import com.noura.platform.domain.entity.Cart;
 import com.noura.platform.domain.entity.CartItem;
 import com.noura.platform.domain.entity.Order;
@@ -18,6 +20,7 @@ import com.noura.platform.dto.order.CheckoutRequest;
 import com.noura.platform.dto.order.OrderDto;
 import com.noura.platform.mapper.OrderMapper;
 import com.noura.platform.repository.ApprovalRequestRepository;
+import com.noura.platform.repository.AddressRepository;
 import com.noura.platform.repository.B2BCompanyProfileRepository;
 import com.noura.platform.repository.CartItemRepository;
 import com.noura.platform.repository.CartRepository;
@@ -27,6 +30,8 @@ import com.noura.platform.repository.OrderTimelineEventRepository;
 import com.noura.platform.repository.ProductInventoryRepository;
 import com.noura.platform.repository.StoreRepository;
 import com.noura.platform.repository.UserAccountRepository;
+import com.noura.platform.service.AnalyticsEventService;
+import com.noura.platform.service.LocationIntelligenceService;
 import com.noura.platform.service.PricingService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -59,6 +64,7 @@ class CheckoutServiceImplTest {
     @Mock private CartRepository cartRepository;
     @Mock private CartItemRepository cartItemRepository;
     @Mock private ProductInventoryRepository inventoryRepository;
+    @Mock private AddressRepository addressRepository;
     @Mock private OrderRepository orderRepository;
     @Mock private OrderItemRepository orderItemRepository;
     @Mock private OrderTimelineEventRepository orderTimelineEventRepository;
@@ -68,6 +74,8 @@ class CheckoutServiceImplTest {
     @Mock private OrderMapper orderMapper;
     @Mock private ApplicationEventPublisher applicationEventPublisher;
     @Mock private PricingService pricingService;
+    @Mock private AnalyticsEventService analyticsEventService;
+    @Mock private LocationIntelligenceService locationIntelligenceService;
 
     private CheckoutServiceImpl checkoutService;
 
@@ -89,6 +97,7 @@ class CheckoutServiceImplTest {
                 cartRepository,
                 cartItemRepository,
                 inventoryRepository,
+                addressRepository,
                 orderRepository,
                 orderItemRepository,
                 orderTimelineEventRepository,
@@ -99,7 +108,10 @@ class CheckoutServiceImplTest {
                 applicationEventPublisher,
                 kafkaTemplate,
                 appProperties,
-                pricingService
+                pricingService,
+                analyticsEventService,
+                locationIntelligenceService,
+                new ObjectMapper()
         );
     }
 
@@ -132,6 +144,7 @@ class CheckoutServiceImplTest {
 
         OrderDto result = checkoutService.checkout(new CheckoutRequest(
                 FulfillmentMethod.DELIVERY,
+                null,
                 null,
                 "Bangkok address",
                 "PAY-123",
@@ -191,7 +204,9 @@ class CheckoutServiceImplTest {
                         BigDecimal.ZERO,
                         BigDecimal.ONE,
                         BigDecimal.valueOf(11),
-                        null
+                        null,
+                        List.of(),
+                        false
                 ));
         when(orderRepository.save(any(Order.class))).thenReturn(pendingOrder);
         when(inventoryRepository.decrementStockIfAvailable(product.getId(), store.getId(), 5)).thenReturn(0);
@@ -200,8 +215,9 @@ class CheckoutServiceImplTest {
         assertThrows(
                 UnauthorizedException.class,
                 () -> checkoutService.checkout(new CheckoutRequest(
-                        FulfillmentMethod.DELIVERY,
+                        FulfillmentMethod.PICKUP,
                         store.getId(),
+                        null,
                         "Bangkok address",
                         "PAY-456",
                         null,
@@ -246,8 +262,9 @@ class CheckoutServiceImplTest {
         assertThrows(
                 ForbiddenException.class,
                 () -> checkoutService.checkout(new CheckoutRequest(
-                        FulfillmentMethod.DELIVERY,
+                        FulfillmentMethod.PICKUP,
                         store.getId(),
+                        null,
                         "Bangkok address",
                         "PAY-999",
                         "OLD10",

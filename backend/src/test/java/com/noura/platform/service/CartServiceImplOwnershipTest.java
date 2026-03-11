@@ -6,6 +6,7 @@ import com.noura.platform.domain.entity.CartItem;
 import com.noura.platform.domain.entity.UserAccount;
 import com.noura.platform.dto.cart.UpdateCartItemRequest;
 import com.noura.platform.repository.*;
+import com.noura.platform.service.AnalyticsEventService;
 import com.noura.platform.service.PricingService;
 import com.noura.platform.service.impl.CartServiceImpl;
 import org.junit.jupiter.api.AfterEach;
@@ -31,12 +32,14 @@ import static org.mockito.Mockito.when;
 class CartServiceImplOwnershipTest {
 
     @Mock private UserAccountRepository userAccountRepository;
+    @Mock private AddressRepository addressRepository;
     @Mock private CartRepository cartRepository;
     @Mock private CartItemRepository cartItemRepository;
     @Mock private ProductRepository productRepository;
     @Mock private ProductInventoryRepository inventoryRepository;
     @Mock private StoreRepository storeRepository;
     @Mock private PricingService pricingService;
+    @Mock private AnalyticsEventService analyticsEventService;
 
     private CartServiceImpl cartService;
 
@@ -51,12 +54,14 @@ class CartServiceImplOwnershipTest {
         );
         cartService = new CartServiceImpl(
                 userAccountRepository,
+                addressRepository,
                 cartRepository,
                 cartItemRepository,
                 productRepository,
                 inventoryRepository,
                 storeRepository,
-                pricingService
+                pricingService,
+                analyticsEventService
         );
     }
 

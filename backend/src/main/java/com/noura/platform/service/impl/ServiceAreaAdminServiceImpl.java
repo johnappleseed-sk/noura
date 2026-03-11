@@ -11,8 +11,8 @@ import com.noura.platform.dto.location.ServiceAreaRequest;
 import com.noura.platform.location.util.GeoJsonUtils;
 import com.noura.platform.repository.ServiceAreaRepository;
 import com.noura.platform.repository.StoreRepository;
+import com.noura.platform.service.OptionalCommerceAuditService;
 import com.noura.platform.service.ServiceAreaAdminService;
-import com.noura.platform.commerce.service.AuditEventService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -32,7 +32,7 @@ public class ServiceAreaAdminServiceImpl implements ServiceAreaAdminService {
 
     private final ServiceAreaRepository serviceAreaRepository;
     private final StoreRepository storeRepository;
-    private final AuditEventService auditEventService;
+    private final OptionalCommerceAuditService auditEventService;
 
     @Override
     @Transactional(readOnly = true)
@@ -239,4 +239,3 @@ public class ServiceAreaAdminServiceImpl implements ServiceAreaAdminService {
         );
     }
 }
-

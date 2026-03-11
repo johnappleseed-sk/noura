@@ -1,5 +1,7 @@
 package com.noura.platform.dto.user;
 
+import com.noura.platform.domain.enums.AddressValidationStatus;
+
 import java.math.BigDecimal;
 import java.util.UUID;
 
@@ -21,6 +23,7 @@ public record AddressDto(
         String placeId,
         String formattedAddress,
         String deliveryInstructions,
+        AddressValidationStatus validationStatus,
         boolean defaultAddress
 ) {
 }

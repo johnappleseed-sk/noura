@@ -11,6 +11,8 @@ import com.noura.platform.repository.ProductInventoryRepository;
 import com.noura.platform.repository.ProductRepository;
 import com.noura.platform.repository.StoreRepository;
 import com.noura.platform.repository.UserAccountRepository;
+import com.noura.platform.repository.AddressRepository;
+import com.noura.platform.service.AnalyticsEventService;
 import com.noura.platform.service.PricingService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,6 +39,8 @@ class CartServiceImplOwnershipTest {
     @Mock
     private UserAccountRepository userAccountRepository;
     @Mock
+    private AddressRepository addressRepository;
+    @Mock
     private CartRepository cartRepository;
     @Mock
     private CartItemRepository cartItemRepository;
@@ -48,6 +52,8 @@ class CartServiceImplOwnershipTest {
     private StoreRepository storeRepository;
     @Mock
     private PricingService pricingService;
+    @Mock
+    private AnalyticsEventService analyticsEventService;
 
     private CartServiceImpl cartService;
 
@@ -62,12 +68,14 @@ class CartServiceImplOwnershipTest {
         );
         cartService = new CartServiceImpl(
                 userAccountRepository,
+                addressRepository,
                 cartRepository,
                 cartItemRepository,
                 productRepository,
                 inventoryRepository,
                 storeRepository,
-                pricingService
+                pricingService,
+                analyticsEventService
         );
     }
 

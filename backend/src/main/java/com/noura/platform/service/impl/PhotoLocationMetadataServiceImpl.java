@@ -5,7 +5,6 @@ import com.drew.lang.GeoLocation;
 import com.drew.metadata.Metadata;
 import com.drew.metadata.exif.ExifSubIFDDirectory;
 import com.drew.metadata.exif.GpsDirectory;
-import com.noura.platform.commerce.service.AuditEventService;
 import com.noura.platform.common.exception.BadRequestException;
 import com.noura.platform.common.exception.NotFoundException;
 import com.noura.platform.domain.entity.PhotoLocationMetadata;
@@ -18,6 +17,7 @@ import com.noura.platform.dto.location.ReverseGeocodeRequest;
 import com.noura.platform.repository.PhotoLocationMetadataRepository;
 import com.noura.platform.repository.ProductMediaRepository;
 import com.noura.platform.service.LocationGeocodingService;
+import com.noura.platform.service.OptionalCommerceAuditService;
 import com.noura.platform.service.PhotoLocationMetadataService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,7 +50,7 @@ public class PhotoLocationMetadataServiceImpl implements PhotoLocationMetadataSe
     private final PhotoLocationMetadataRepository photoLocationMetadataRepository;
     private final ProductMediaRepository productMediaRepository;
     private final LocationGeocodingService geocodingService;
-    private final AuditEventService auditEventService;
+    private final OptionalCommerceAuditService auditEventService;
 
     @Value("${app.location.photo-exif.enabled:false}")
     private boolean exifEnabled;
@@ -86,7 +86,7 @@ public class PhotoLocationMetadataServiceImpl implements PhotoLocationMetadataSe
 
         byte[] bytes = downloadBytes(uri);
         ExifResult exif = extractExif(bytes);
-        if (exif.location() == null || !exif.location().isValid()) {
+        if (!hasUsableLocation(exif.location())) {
             throw new BadRequestException("PHOTO_EXIF_NOT_FOUND", "No EXIF GPS metadata found in this image.");
         }
 
@@ -243,6 +243,20 @@ public class PhotoLocationMetadataServiceImpl implements PhotoLocationMetadataSe
         }
     }
 
+    private boolean hasUsableLocation(GeoLocation location) {
+        if (location == null) {
+            return false;
+        }
+        double latitude = location.getLatitude();
+        double longitude = location.getLongitude();
+        return !Double.isNaN(latitude)
+                && !Double.isNaN(longitude)
+                && latitude >= -90.0d
+                && latitude <= 90.0d
+                && longitude >= -180.0d
+                && longitude <= 180.0d;
+    }
+
     private URI safeUri(String url) {
         try {
             URI uri = URI.create(Optional.ofNullable(url).orElse("").trim());
@@ -301,4 +315,3 @@ public class PhotoLocationMetadataServiceImpl implements PhotoLocationMetadataSe
         }
     }
 }
-

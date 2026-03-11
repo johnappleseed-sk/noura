@@ -1,8 +1,10 @@
 {
   "/page": "app/page.js",
-  "/deals/page": "app/deals/page.js",
-  "/stores/page": "app/stores/page.js",
+  "/auth/page": "app/auth/page.js",
+  "/account/addresses/page": "app/account/addresses/page.js",
+  "/products/[id]/page": "app/products/[id]/page.js",
+  "/returns/page": "app/returns/page.js",
+  "/orders/page": "app/orders/page.js",
   "/products/page": "app/products/page.js",
-  "/auth/login/page": "app/auth/login/page.js",
-  "/auth/page": "app/auth/page.js"
+  "/stores/page": "app/stores/page.js"
 }

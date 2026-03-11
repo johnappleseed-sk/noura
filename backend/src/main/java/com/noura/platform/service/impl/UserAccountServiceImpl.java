@@ -3,12 +3,16 @@ package com.noura.platform.service.impl;
 import com.noura.platform.common.exception.NotFoundException;
 import com.noura.platform.common.exception.BadRequestException;
 import com.noura.platform.domain.entity.*;
+import com.noura.platform.domain.enums.AddressValidationStatus;
+import com.noura.platform.domain.enums.StoreServiceType;
+import com.noura.platform.dto.location.ServiceAreaValidationRequest;
 import com.noura.platform.dto.order.OrderDto;
 import com.noura.platform.dto.order.OrderItemDto;
 import com.noura.platform.dto.user.*;
 import com.noura.platform.mapper.*;
 import com.noura.platform.repository.*;
 import com.noura.platform.security.SecurityUtils;
+import com.noura.platform.service.LocationIntelligenceService;
 import com.noura.platform.service.UserAccountService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -17,6 +21,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -39,6 +45,7 @@ public class UserAccountServiceImpl implements UserAccountService {
     private final CompanyMapper companyMapper;
     private final ApprovalMapper approvalMapper;
     private final OrderMapper orderMapper;
+    private final LocationIntelligenceService locationIntelligenceService;
 
     /**
      * Retrieves my profile.
@@ -72,7 +79,13 @@ public class UserAccountServiceImpl implements UserAccountService {
      */
     @Override
     public List<AddressDto> listAddresses() {
-        return addressRepository.findByUser(currentUser()).stream().map(addressMapper::toDto).toList();
+        return addressRepository.findByUser(currentUser()).stream()
+                .sorted(Comparator
+                        .comparing(Address::isDefaultAddress)
+                        .reversed()
+                        .thenComparing(Address::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
+                .map(addressMapper::toDto)
+                .toList();
     }
 
     /**
@@ -86,15 +99,17 @@ public class UserAccountServiceImpl implements UserAccountService {
     public AddressDto addAddress(AddressRequest request) {
         UserAccount user = currentUser();
         if (request.defaultAddress()) {
-            addressRepository.findByUser(user).forEach(address -> {
-                address.setDefaultAddress(false);
-                addressRepository.save(address);
-            });
+            clearDefaultAddress(user, null);
         }
         Address entity = new Address();
         entity.setUser(user);
         applyAddressFields(entity, request);
         return addressMapper.toDto(addressRepository.save(entity));
+    }
+
+    @Override
+    public AddressDto getAddress(UUID addressId) {
+        return addressMapper.toDto(requireAddress(addressId, currentUser()));
     }
 
     /**
@@ -108,13 +123,9 @@ public class UserAccountServiceImpl implements UserAccountService {
     @Transactional
     public AddressDto updateAddress(UUID addressId, AddressRequest request) {
         UserAccount user = currentUser();
-        Address address = addressRepository.findByIdAndUser(addressId, user)
-                .orElseThrow(() -> new NotFoundException("ADDRESS_NOT_FOUND", "Address not found"));
+        Address address = requireAddress(addressId, user);
         if (request.defaultAddress()) {
-            addressRepository.findByUser(user).forEach(item -> {
-                item.setDefaultAddress(false);
-                addressRepository.save(item);
-            });
+            clearDefaultAddress(user, addressId);
         }
         applyAddressFields(address, request);
         return addressMapper.toDto(addressRepository.save(address));
@@ -129,9 +140,18 @@ public class UserAccountServiceImpl implements UserAccountService {
     @Transactional
     public void deleteAddress(UUID addressId) {
         UserAccount user = currentUser();
-        Address address = addressRepository.findByIdAndUser(addressId, user)
-                .orElseThrow(() -> new NotFoundException("ADDRESS_NOT_FOUND", "Address not found"));
+        Address address = requireAddress(addressId, user);
         addressRepository.delete(address);
+    }
+
+    @Override
+    @Transactional
+    public AddressDto setDefaultAddress(UUID addressId) {
+        UserAccount user = currentUser();
+        Address address = requireAddress(addressId, user);
+        clearDefaultAddress(user, addressId);
+        address.setDefaultAddress(true);
+        return addressMapper.toDto(addressRepository.save(address));
     }
 
     /**
@@ -347,6 +367,23 @@ public class UserAccountServiceImpl implements UserAccountService {
                 .orElseThrow(() -> new NotFoundException("USER_NOT_FOUND", "Authenticated user not found"));
     }
 
+    private Address requireAddress(UUID addressId, UserAccount user) {
+        return addressRepository.findByIdAndUser(addressId, user)
+                .orElseThrow(() -> new NotFoundException("ADDRESS_NOT_FOUND", "Address not found"));
+    }
+
+    private void clearDefaultAddress(UserAccount user, UUID skipAddressId) {
+        addressRepository.findByUser(user).forEach(address -> {
+            if (skipAddressId != null && skipAddressId.equals(address.getId())) {
+                return;
+            }
+            if (address.isDefaultAddress()) {
+                address.setDefaultAddress(false);
+                addressRepository.save(address);
+            }
+        });
+    }
+
     /**
      * Applies address fields with enterprise validation.
      * <p>
@@ -377,7 +414,32 @@ public class UserAccountServiceImpl implements UserAccountService {
         entity.setPlaceId(request.placeId());
         entity.setFormattedAddress(request.formattedAddress());
         entity.setDeliveryInstructions(request.deliveryInstructions());
+        entity.setValidationStatus(resolveAddressValidationStatus(request));
         entity.setDefaultAddress(request.defaultAddress());
+    }
+
+    private AddressValidationStatus resolveAddressValidationStatus(AddressRequest request) {
+        if (request.latitude() == null || request.longitude() == null) {
+            return AddressValidationStatus.UNVERIFIED;
+        }
+
+        String reason = locationIntelligenceService.validate(new ServiceAreaValidationRequest(
+                request.latitude(),
+                request.longitude(),
+                StoreServiceType.DELIVERY,
+                Instant.now(),
+                null
+        )).eligibilityReason();
+
+        if ("AVAILABLE".equals(reason) || "AVAILABLE_NO_SERVICE_AREAS".equals(reason)) {
+            return AddressValidationStatus.VALID;
+        }
+        return switch (reason) {
+            case "SERVICE_AREA_MISS" -> AddressValidationStatus.OUT_OF_SERVICE_AREA;
+            case "OUT_OF_RANGE", "OUT_OF_STORE_RADIUS" -> AddressValidationStatus.OUT_OF_STORE_RADIUS;
+            case "STORE_CLOSED" -> AddressValidationStatus.STORE_CLOSED;
+            default -> AddressValidationStatus.STORE_UNAVAILABLE;
+        };
     }
 
     /**

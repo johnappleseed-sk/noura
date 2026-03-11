@@ -19,6 +19,7 @@ public record StoreRequest(
         @NotBlank String region,
         @NotNull BigDecimal latitude,
         @NotNull BigDecimal longitude,
+        Integer serviceRadiusMeters,
         @NotNull LocalTime openTime,
         @NotNull LocalTime closeTime,
         boolean active,

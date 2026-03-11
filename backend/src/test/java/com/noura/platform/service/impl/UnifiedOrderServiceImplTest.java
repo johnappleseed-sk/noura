@@ -109,8 +109,9 @@ class UnifiedOrderServiceImplTest {
         CartDto cart = new CartDto(
                 UUID.randomUUID(),
                 UUID.randomUUID(),
+                null,
                 List.of(),
-                new CartTotalsDto(BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.TEN, null)
+                new CartTotalsDto(BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.TEN, null, List.of(), false)
         );
         when(cartService.getMyCart()).thenReturn(cart);
 
