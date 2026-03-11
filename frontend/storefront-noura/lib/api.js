@@ -228,14 +228,22 @@ function normalizeAddress(address) {
     id: address?.id,
     label: address?.label || '',
     recipientName: address?.fullName || '',
-    phone: null,
+    fullName: address?.fullName || '',
+    phone: address?.phone || '',
     line1: address?.line1 || '',
-    line2: null,
-    district: null,
+    line2: address?.line2 || '',
+    district: address?.district || '',
     city: address?.city || '',
     stateProvince: address?.state || '',
     postalCode: address?.zipCode || '',
     countryCode: address?.country || '',
+    latitude: address?.latitude ?? null,
+    longitude: address?.longitude ?? null,
+    accuracyMeters: address?.accuracyMeters ?? null,
+    placeId: address?.placeId || null,
+    formattedAddress: address?.formattedAddress || '',
+    deliveryInstructions: address?.deliveryInstructions || '',
+    validationStatus: address?.validationStatus || 'UNVERIFIED',
     defaultShipping: Boolean(address?.defaultAddress),
     defaultBilling: Boolean(address?.defaultAddress)
   }
@@ -257,12 +265,103 @@ function normalizeCart(cart) {
 
   return {
     id: cart?.cartId,
+    storeId: cart?.storeId || null,
+    addressId: cart?.addressId || null,
     status: 'ACTIVE',
     currencyCode: 'USD',
     items,
     subtotal: cart?.totals?.subtotal || 0,
-    totalItems: items.length,
+    totalItems: items.reduce((total, item) => total + Number(item.quantity || 0), 0),
     updatedAt: null
+  }
+}
+
+function normalizeGeocodeResult(result) {
+  if (!result) {
+    return null
+  }
+
+  return {
+    latitude: result?.latitude ?? null,
+    longitude: result?.longitude ?? null,
+    formattedAddress: result?.formattedAddress || '',
+    country: result?.country || '',
+    region: result?.region || '',
+    city: result?.city || '',
+    district: result?.district || '',
+    postalCode: result?.postalCode || '',
+    placeId: result?.placeId || ''
+  }
+}
+
+function normalizeServiceEligibility(eligibility) {
+  if (!eligibility) {
+    return null
+  }
+
+  const isServiceAvailable = Boolean(eligibility?.serviceAvailable)
+  return {
+    isServiceAvailable,
+    serviceAvailable: isServiceAvailable,
+    serviceType: eligibility?.serviceType || null,
+    matchedServiceAreaId: eligibility?.matchedServiceAreaId || null,
+    matchedStoreId: eligibility?.matchedStoreId || null,
+    distanceMeters: eligibility?.distanceMeters ?? null,
+    insideServiceArea: Boolean(eligibility?.insideServiceArea),
+    storeOpenNow: Boolean(eligibility?.storeOpenNow),
+    eligibilityReason: eligibility?.eligibilityReason || null
+  }
+}
+
+function normalizeLocationResolve(result) {
+  return {
+    locationId: result?.locationId || null,
+    geocode: normalizeGeocodeResult(result?.geocode),
+    eligibility: normalizeServiceEligibility(result?.eligibility)
+  }
+}
+
+function normalizeNearbyStore(store) {
+  return {
+    id: store?.storeId,
+    name: store?.name || '',
+    addressLine1: store?.addressLine1 || '',
+    city: store?.city || '',
+    state: store?.state || '',
+    zipCode: store?.zipCode || '',
+    country: store?.country || '',
+    region: store?.region || '',
+    latitude: store?.latitude ?? null,
+    longitude: store?.longitude ?? null,
+    serviceRadiusMeters: store?.serviceRadiusMeters ?? null,
+    openTime: store?.openTime || null,
+    closeTime: store?.closeTime || null,
+    active: Boolean(store?.active),
+    services: Array.isArray(store?.services) ? store.services : [],
+    distanceMeters: store?.distanceMeters ?? null,
+    openNow: Boolean(store?.openNow)
+  }
+}
+
+function buildAddressPayload(payload) {
+  return {
+    label: payload?.label || null,
+    fullName: payload?.recipientName || payload?.fullName || '',
+    phone: payload?.phone || null,
+    line1: payload?.line1 || '',
+    line2: payload?.line2 || null,
+    district: payload?.district || null,
+    city: payload?.city || '',
+    state: payload?.stateProvince || payload?.state || '',
+    zipCode: payload?.postalCode || payload?.zipCode || '',
+    country: payload?.countryCode || payload?.country || '',
+    latitude: payload?.latitude ?? null,
+    longitude: payload?.longitude ?? null,
+    accuracyMeters: payload?.accuracyMeters ?? null,
+    placeId: payload?.placeId || null,
+    formattedAddress: payload?.formattedAddress || null,
+    deliveryInstructions: payload?.deliveryInstructions || null,
+    defaultAddress: Boolean(payload?.defaultShipping || payload?.defaultBilling)
   }
 }
 
@@ -313,10 +412,15 @@ function buildShippingAddressSnapshot(address) {
     return 'Store pickup requested.'
   }
 
+  if (address?.formattedAddress) {
+    return address.formattedAddress
+  }
+
   return [
     address.recipientName,
     address.line1,
     address.line2,
+    address.district,
     address.city,
     address.stateProvince,
     address.postalCode,
@@ -516,19 +620,24 @@ export async function getCustomerAddresses(token) {
   return (data || []).map(normalizeAddress)
 }
 
+export async function getCustomerAddress(token, addressId) {
+  const data = await requestWithAuth(`${ACTIVE_API_PREFIX}/account/addresses/${addressId}`, token)
+  return normalizeAddress(data)
+}
+
 export async function addCustomerAddress(token, payload) {
   const data = await requestWithAuth(`${ACTIVE_API_PREFIX}/account/addresses`, token, {
     method: 'POST',
-    body: JSON.stringify({
-      label: payload?.label || null,
-      fullName: payload?.recipientName || payload?.fullName || '',
-      line1: payload?.line1 || '',
-      city: payload?.city || '',
-      state: payload?.stateProvince || payload?.state || '',
-      zipCode: payload?.postalCode || payload?.zipCode || '',
-      country: payload?.countryCode || payload?.country || '',
-      defaultAddress: Boolean(payload?.defaultShipping || payload?.defaultBilling)
-    })
+    body: JSON.stringify(buildAddressPayload(payload))
+  })
+
+  return normalizeAddress(data)
+}
+
+export async function updateCustomerAddress(token, addressId, payload) {
+  const data = await requestWithAuth(`${ACTIVE_API_PREFIX}/account/addresses/${addressId}`, token, {
+    method: 'PUT',
+    body: JSON.stringify(buildAddressPayload(payload))
   })
 
   return normalizeAddress(data)
@@ -538,6 +647,103 @@ export async function deleteCustomerAddress(token, addressId) {
   return requestWithAuth(`${ACTIVE_API_PREFIX}/account/addresses/${addressId}`, token, {
     method: 'DELETE'
   })
+}
+
+export async function setDefaultCustomerAddress(token, addressId) {
+  const data = await requestWithAuth(`${ACTIVE_API_PREFIX}/account/addresses/${addressId}/set-default`, token, {
+    method: 'POST'
+  })
+
+  return normalizeAddress(data)
+}
+
+export async function resolveLocation(token, payload) {
+  const data = await requestWithAuth(`${ACTIVE_API_PREFIX}/location/resolve`, token, {
+    method: 'POST',
+    body: JSON.stringify({
+      latitude: payload?.latitude,
+      longitude: payload?.longitude,
+      accuracyMeters: payload?.accuracyMeters ?? null,
+      source: payload?.source || null,
+      consentGiven: Boolean(payload?.consentGiven),
+      purpose: payload?.purpose || null,
+      persist: Boolean(payload?.persist),
+      serviceType: payload?.serviceType || 'DELIVERY'
+    })
+  })
+
+  return normalizeLocationResolve(data)
+}
+
+export async function reverseGeocode(payload) {
+  const data = await request(`${ACTIVE_API_PREFIX}/location/reverse-geocode`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      latitude: payload?.latitude,
+      longitude: payload?.longitude,
+      locale: payload?.locale || null
+    })
+  })
+
+  return normalizeGeocodeResult(data)
+}
+
+export async function forwardGeocode(payload) {
+  const data = await request(`${ACTIVE_API_PREFIX}/location/forward-geocode`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      query: payload?.query || '',
+      limit: payload?.limit ?? 5,
+      countryCodes: payload?.countryCodes || null,
+      locale: payload?.locale || null
+    })
+  })
+
+  return (data || []).map(normalizeGeocodeResult)
+}
+
+export async function validateServiceArea(payload) {
+  const data = await request(`${ACTIVE_API_PREFIX}/location/validate-service-area`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      latitude: payload?.latitude,
+      longitude: payload?.longitude,
+      serviceType: payload?.serviceType || 'DELIVERY',
+      at: payload?.at || null,
+      maxDistanceMeters: payload?.maxDistanceMeters ?? null
+    })
+  })
+
+  return normalizeServiceEligibility(data)
+}
+
+export async function getNearbyStores({
+  latitude,
+  longitude,
+  serviceType = 'DELIVERY',
+  openNow,
+  limit = 5,
+  maxDistanceMeters
+}) {
+  const params = new URLSearchParams()
+  params.set('lat', String(latitude))
+  params.set('lng', String(longitude))
+  if (serviceType) params.set('serviceType', serviceType)
+  if (typeof openNow === 'boolean') params.set('openNow', String(openNow))
+  if (limit) params.set('limit', String(limit))
+  if (maxDistanceMeters) params.set('maxDistanceMeters', String(maxDistanceMeters))
+
+  const data = await request(`${ACTIVE_API_PREFIX}/location/nearby-stores?${params.toString()}`)
+  return (data || []).map(normalizeNearbyStore)
 }
 
 export async function getCart(token) {
@@ -593,9 +799,12 @@ export async function checkoutCart(token, body) {
   const data = await requestWithAuth(`${ACTIVE_API_PREFIX}/checkout`, token, {
     method: 'POST',
     body: JSON.stringify({
-      fulfillmentMethod: body?.shippingAddress ? 'DELIVERY' : 'PICKUP',
+      fulfillmentMethod: body?.fulfillmentMethod || (body?.addressId || body?.shippingAddress ? 'DELIVERY' : 'PICKUP'),
       storeId: body?.storeId || null,
-      shippingAddressSnapshot: buildShippingAddressSnapshot(body?.shippingAddress),
+      addressId: body?.addressId || body?.shippingAddress?.id || null,
+      shippingAddressSnapshot:
+        body?.shippingAddressSnapshot ||
+        buildShippingAddressSnapshot(body?.shippingAddress),
       paymentReference:
         [body?.paymentMethod, body?.paymentProvider, body?.paymentProviderReference]
           .filter(Boolean)

@@ -38,6 +38,8 @@ class CartServiceImplOwnershipTest {
     @Mock
     private UserAccountRepository userAccountRepository;
     @Mock
+    private AddressRepository addressRepository;
+    @Mock
     private CartRepository cartRepository;
     @Mock
     private CartItemRepository cartItemRepository;
@@ -65,6 +67,7 @@ class CartServiceImplOwnershipTest {
         );
         cartService = new CartServiceImpl(
                 userAccountRepository,
+                addressRepository,
                 cartRepository,
                 cartItemRepository,
                 productRepository,

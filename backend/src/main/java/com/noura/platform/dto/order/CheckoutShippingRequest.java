@@ -1,7 +1,6 @@
 package com.noura.platform.dto.order;
 
 import com.noura.platform.domain.enums.FulfillmentMethod;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.UUID;
@@ -12,6 +11,7 @@ import java.util.UUID;
 public record CheckoutShippingRequest(
         @NotNull FulfillmentMethod fulfillmentMethod,
         UUID storeId,
-        @NotBlank String shippingAddressSnapshot
+        UUID addressId,
+        String shippingAddressSnapshot
 ) {
 }

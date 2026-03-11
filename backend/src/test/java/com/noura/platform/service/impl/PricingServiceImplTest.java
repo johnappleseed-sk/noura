@@ -20,9 +20,12 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -30,6 +33,9 @@ class PricingServiceImplTest {
 
     @Mock
     private CouponRepository couponRepository;
+    @Mock
+    private PromotionRuleEngineService promotionRuleEngineService;
+
     @Mock
     private PromotionRuleEngineService promotionRuleEngineService;
 
@@ -120,6 +126,21 @@ class PricingServiceImplTest {
                 ForbiddenException.class,
                 () -> service.calculateTotals(items(1, "100.00"), store("5.00", "100.00"), "SAVE10,PREMIUM15")
         );
+    }
+
+    private PricingServiceImpl service() {
+        return new PricingServiceImpl(couponRepository, promotionRuleEngineService);
+    }
+
+    private void stubNoPromotions() {
+        when(promotionRuleEngineService.evaluate(any(), any(), any(), anyList()))
+                .thenReturn(new PromotionEvaluationDto(
+                        BigDecimal.ZERO,
+                        BigDecimal.ZERO,
+                        false,
+                        List.of(),
+                        List.of()
+                ));
     }
 
     private List<CartItem> items(int quantity, String unitPrice) {

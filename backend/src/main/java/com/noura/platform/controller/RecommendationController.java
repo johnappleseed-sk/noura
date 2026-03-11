@@ -82,7 +82,7 @@ public class RecommendationController {
         );
     }
 
-    @GetMapping("${app.api.version-prefix:/api/v1}/products/{productId}/related")
+    @GetMapping("${app.api.version-prefix:/api/v1}/recommendations/product/{productId}/related")
     public ApiResponse<List<RecommendationProductDto>> relatedProducts(
             @PathVariable UUID productId,
             @RequestParam(defaultValue = "6") int limit,
@@ -95,7 +95,7 @@ public class RecommendationController {
         );
     }
 
-    @GetMapping("${app.api.version-prefix:/api/v1}/products/{productId}/frequently-bought-together")
+    @GetMapping("${app.api.version-prefix:/api/v1}/recommendations/product/{productId}/frequently-bought-together")
     public ApiResponse<List<RecommendationProductDto>> frequentlyBoughtTogether(
             @PathVariable UUID productId,
             @RequestParam(defaultValue = "6") int limit,

@@ -1,5 +1,7 @@
 package com.noura.platform.service;
 
+import com.noura.platform.dto.location.StoreLocationDto;
+import com.noura.platform.dto.location.StoreLocationRequest;
 import com.noura.platform.dto.store.StoreDto;
 import com.noura.platform.dto.store.StoreRequest;
 import org.springframework.data.domain.Page;
@@ -60,4 +62,21 @@ public interface StoreService {
      * @param storeId The store id used to locate the target record.
      */
     void setPreferredStore(UUID storeId);
+
+    /**
+     * Retrieves admin store location settings.
+     *
+     * @param storeId The store id used to locate the target record.
+     * @return The mapped DTO representation.
+     */
+    StoreLocationDto getStoreLocation(UUID storeId);
+
+    /**
+     * Updates admin store location settings.
+     *
+     * @param storeId The store id used to locate the target record.
+     * @param request The request payload for this operation.
+     * @return The mapped DTO representation.
+     */
+    StoreLocationDto updateStoreLocation(UUID storeId, StoreLocationRequest request);
 }

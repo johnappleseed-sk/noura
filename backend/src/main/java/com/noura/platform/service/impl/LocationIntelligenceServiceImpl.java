@@ -1,5 +1,7 @@
 package com.noura.platform.service.impl;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.noura.platform.common.exception.BadRequestException;
 import com.noura.platform.common.exception.NotFoundException;
 import com.noura.platform.common.exception.UnauthorizedException;
@@ -43,7 +45,6 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -57,6 +58,7 @@ public class LocationIntelligenceServiceImpl implements LocationIntelligenceServ
     private final StoreRepository storeRepository;
     private final UserAccountRepository userAccountRepository;
     private final UserLocationRepository userLocationRepository;
+    private final ObjectMapper objectMapper;
 
     @Value("${app.location.privacy.persist-user-location:true}")
     private boolean persistUserLocationEnabled;
@@ -79,78 +81,97 @@ public class LocationIntelligenceServiceImpl implements LocationIntelligenceServ
 
         ServiceArea matchedArea = selectMatchingArea(activeAreas, request.latitude(), request.longitude());
         boolean insideServiceArea = !hasConfiguredAreas || matchedArea != null;
+        AreaRules areaRules = parseAreaRules(matchedArea);
 
-        List<Store> candidates = candidateStores(matchedArea, serviceType);
-        Store nearest = candidates.stream()
-                .min(Comparator.comparingLong(store -> GeoUtils.haversineMeters(request.latitude(), request.longitude(), store.getLatitude(), store.getLongitude())))
-                .orElse(null);
+        if (matchedArea != null && areaRules.disallows(serviceType)) {
+            return buildEligibility(
+                    false,
+                    serviceType,
+                    matchedArea,
+                    null,
+                    null,
+                    true,
+                    false,
+                    serviceType == StoreServiceType.PICKUP ? "DELIVERY_ONLY_AREA" : "PICKUP_ONLY_AREA"
+            );
+        }
+
+        Integer effectiveMaxDistance = effectiveMaxDistance(request.maxDistanceMeters(), areaRules.maxDistanceMeters());
+        List<CandidateStore> scopedCandidates = candidateStores(matchedArea, serviceType, request.latitude(), request.longitude(), checkTime);
+        List<CandidateStore> rangeEligible = scopedCandidates.stream()
+                .filter(candidate -> effectiveMaxDistance == null || candidate.distanceMeters() <= effectiveMaxDistance)
+                .toList();
+
+        CandidateStore fallbackNearest = selectCandidate(
+                candidateStores(null, serviceType, request.latitude(), request.longitude(), checkTime),
+                null
+        );
 
         if (!insideServiceArea) {
-            Long distanceMeters = nearest == null ? null : GeoUtils.haversineMeters(request.latitude(), request.longitude(), nearest.getLatitude(), nearest.getLongitude());
-            return new ServiceEligibilityDto(
+            return buildEligibility(
                     false,
                     serviceType,
                     null,
-                    nearest == null ? null : nearest.getId(),
-                    distanceMeters,
+                    fallbackNearest,
+                    fallbackNearest == null ? null : fallbackNearest.distanceMeters(),
                     false,
-                    nearest != null && isOpenAt(nearest, checkTime),
+                    fallbackNearest != null && fallbackNearest.openNow(),
                     "SERVICE_AREA_MISS"
             );
         }
 
-        if (nearest == null) {
-            return new ServiceEligibilityDto(
-                    false,
-                    serviceType,
-                    matchedArea == null ? null : matchedArea.getId(),
-                    null,
-                    null,
-                    true,
-                    false,
-                    "NO_STORE_AVAILABLE"
-            );
+        if (scopedCandidates.isEmpty()) {
+            return buildEligibility(false, serviceType, matchedArea, null, null, true, false, "NO_STORE_AVAILABLE");
         }
 
-        long distanceMeters = GeoUtils.haversineMeters(request.latitude(), request.longitude(), nearest.getLatitude(), nearest.getLongitude());
-        boolean openNow = isOpenAt(nearest, checkTime);
-
-        if (request.maxDistanceMeters() != null && distanceMeters > request.maxDistanceMeters()) {
-            return new ServiceEligibilityDto(
+        if (rangeEligible.isEmpty()) {
+            CandidateStore nearest = selectCandidate(scopedCandidates, areaRules.defaultStoreId());
+            return buildEligibility(
                     false,
                     serviceType,
-                    matchedArea == null ? null : matchedArea.getId(),
-                    nearest.getId(),
-                    distanceMeters,
+                    matchedArea,
+                    nearest,
+                    nearest == null ? null : nearest.distanceMeters(),
                     true,
-                    openNow,
+                    nearest != null && nearest.openNow(),
                     "OUT_OF_RANGE"
             );
         }
 
-        if (!openNow) {
-            return new ServiceEligibilityDto(
-                    false,
-                    serviceType,
-                    matchedArea == null ? null : matchedArea.getId(),
-                    nearest.getId(),
-                    distanceMeters,
-                    true,
-                    false,
-                    "STORE_CLOSED"
-            );
+        CandidateStore selected = selectCandidate(rangeEligible, areaRules.defaultStoreId());
+        if (selected == null) {
+            return buildEligibility(false, serviceType, matchedArea, null, null, true, false, "NO_STORE_AVAILABLE");
         }
 
-        return new ServiceEligibilityDto(
-                true,
+        String reason;
+        boolean available;
+        if (!selected.openNow()) {
+            available = false;
+            reason = "STORE_CLOSED";
+        } else {
+            available = true;
+            reason = hasConfiguredAreas ? "AVAILABLE" : "AVAILABLE_NO_SERVICE_AREAS";
+        }
+
+        ServiceEligibilityDto eligibility = buildEligibility(
+                available,
                 serviceType,
-                matchedArea == null ? null : matchedArea.getId(),
-                nearest.getId(),
-                distanceMeters,
+                matchedArea,
+                selected,
+                selected.distanceMeters(),
                 true,
-                true,
-                hasConfiguredAreas ? "AVAILABLE" : "AVAILABLE_NO_SERVICE_AREAS"
+                selected.openNow(),
+                reason
         );
+        log.info(
+                "delivery_eligibility_checked serviceType={} available={} areaId={} storeId={} reason={}",
+                serviceType,
+                available,
+                eligibility.matchedServiceAreaId(),
+                eligibility.matchedStoreId(),
+                eligibility.eligibilityReason()
+        );
+        return eligibility;
     }
 
     @Override
@@ -173,6 +194,10 @@ public class LocationIntelligenceServiceImpl implements LocationIntelligenceServ
                 .filter(Store::isActive)
                 .filter(store -> serviceType == null || store.getServices().contains(serviceType))
                 .map(store -> toNearbyDto(store, latitude, longitude, now))
+                .filter(dto -> serviceType != StoreServiceType.DELIVERY
+                        || dto.serviceRadiusMeters() == null
+                        || dto.serviceRadiusMeters() <= 0
+                        || dto.distanceMeters() <= dto.serviceRadiusMeters())
                 .filter(dto -> maxDistanceMeters == null || dto.distanceMeters() <= maxDistanceMeters)
                 .filter(dto -> !Boolean.TRUE.equals(openNow) || dto.openNow())
                 .sorted(Comparator.comparingLong(NearbyStoreDto::distanceMeters))
@@ -191,7 +216,13 @@ public class LocationIntelligenceServiceImpl implements LocationIntelligenceServ
             throw new UnauthorizedException("AUTH_REQUIRED", "Authentication required to persist location.");
         }
 
-        GeocodeResultDto geocode = geocodingService.reverseGeocode(new ReverseGeocodeRequest(request.latitude(), request.longitude(), null));
+        GeocodeResultDto geocode = null;
+        try {
+            geocode = geocodingService.reverseGeocode(new ReverseGeocodeRequest(request.latitude(), request.longitude(), null));
+        } catch (Exception ex) {
+            // Provider outages should not prevent coordinate-based eligibility checks from proceeding.
+            log.warn("Reverse geocode unavailable during resolve: {}", ex.getMessage());
+        }
         ServiceEligibilityDto eligibility = validate(new ServiceAreaValidationRequest(
                 request.latitude(),
                 request.longitude(),
@@ -240,6 +271,9 @@ public class LocationIntelligenceServiceImpl implements LocationIntelligenceServ
             locationId = saved.getId();
         }
 
+        if (locationId != null) {
+            log.info("location_captured locationId={} source={} verified={}", locationId, request.source(), eligibility.eligibilityReason());
+        }
         return new LocationResolveDto(locationId, geocode, eligibility);
     }
 
@@ -267,6 +301,7 @@ public class LocationIntelligenceServiceImpl implements LocationIntelligenceServ
                 store.getRegion(),
                 store.getLatitude(),
                 store.getLongitude(),
+                store.getServiceRadiusMeters(),
                 store.getOpenTime(),
                 store.getCloseTime(),
                 store.isActive(),
@@ -356,7 +391,13 @@ public class LocationIntelligenceServiceImpl implements LocationIntelligenceServ
         };
     }
 
-    private List<Store> candidateStores(ServiceArea matchedArea, StoreServiceType serviceType) {
+    private List<CandidateStore> candidateStores(
+            ServiceArea matchedArea,
+            StoreServiceType serviceType,
+            BigDecimal latitude,
+            BigDecimal longitude,
+            LocalTime checkTime
+    ) {
         List<Store> allStores = storeRepository.findAll();
         List<Store> scoped = matchedArea != null && matchedArea.getStores() != null && !matchedArea.getStores().isEmpty()
                 ? matchedArea.getStores().stream().toList()
@@ -365,6 +406,15 @@ public class LocationIntelligenceServiceImpl implements LocationIntelligenceServ
         return scoped.stream()
                 .filter(Store::isActive)
                 .filter(store -> serviceType == null || store.getServices().contains(serviceType))
+                .map(store -> new CandidateStore(
+                        store,
+                        GeoUtils.haversineMeters(latitude, longitude, store.getLatitude(), store.getLongitude()),
+                        isOpenAt(store, checkTime)
+                ))
+                .filter(candidate -> serviceType != StoreServiceType.DELIVERY
+                        || candidate.store().getServiceRadiusMeters() == null
+                        || candidate.store().getServiceRadiusMeters() <= 0
+                        || candidate.distanceMeters() <= candidate.store().getServiceRadiusMeters())
                 .toList();
     }
 
@@ -372,5 +422,107 @@ public class LocationIntelligenceServiceImpl implements LocationIntelligenceServ
         String trimmed = value == null ? null : value.trim();
         return trimmed == null || trimmed.isBlank() ? null : trimmed;
     }
-}
 
+    private CandidateStore selectCandidate(List<CandidateStore> candidates, UUID defaultStoreId) {
+        if (candidates == null || candidates.isEmpty()) {
+            return null;
+        }
+
+        if (defaultStoreId != null) {
+            Optional<CandidateStore> defaultOpen = candidates.stream()
+                    .filter(candidate -> defaultStoreId.equals(candidate.store().getId()))
+                    .filter(CandidateStore::openNow)
+                    .findFirst();
+            if (defaultOpen.isPresent()) {
+                return defaultOpen.get();
+            }
+        }
+
+        Optional<CandidateStore> nearestOpen = candidates.stream()
+                .filter(CandidateStore::openNow)
+                .min(Comparator.comparingLong(CandidateStore::distanceMeters));
+        if (nearestOpen.isPresent()) {
+            return nearestOpen.get();
+        }
+
+        if (defaultStoreId != null) {
+            Optional<CandidateStore> defaultAny = candidates.stream()
+                    .filter(candidate -> defaultStoreId.equals(candidate.store().getId()))
+                    .findFirst();
+            if (defaultAny.isPresent()) {
+                return defaultAny.get();
+            }
+        }
+
+        return candidates.stream()
+                .min(Comparator.comparingLong(CandidateStore::distanceMeters))
+                .orElse(null);
+    }
+
+    private Integer effectiveMaxDistance(Integer requestDistance, Integer rulesDistance) {
+        if (requestDistance == null) return rulesDistance;
+        if (rulesDistance == null) return requestDistance;
+        return Math.min(requestDistance, rulesDistance);
+    }
+
+    private ServiceEligibilityDto buildEligibility(
+            boolean serviceAvailable,
+            StoreServiceType serviceType,
+            ServiceArea matchedArea,
+            CandidateStore candidate,
+            Long distanceMeters,
+            boolean insideServiceArea,
+            boolean storeOpenNow,
+            String reason
+    ) {
+        return new ServiceEligibilityDto(
+                serviceAvailable,
+                serviceType,
+                matchedArea == null ? null : matchedArea.getId(),
+                candidate == null ? null : candidate.store().getId(),
+                distanceMeters,
+                insideServiceArea,
+                storeOpenNow,
+                reason
+        );
+    }
+
+    private AreaRules parseAreaRules(ServiceArea area) {
+        if (area == null || area.getRulesJson() == null || area.getRulesJson().isBlank()) {
+            return AreaRules.empty();
+        }
+
+        try {
+            JsonNode root = objectMapper.readTree(area.getRulesJson());
+            UUID defaultStoreId = root.hasNonNull("defaultStoreId")
+                    ? UUID.fromString(root.get("defaultStoreId").asText())
+                    : null;
+            Integer maxDistanceMeters = root.hasNonNull("maxDistanceMeters")
+                    ? root.get("maxDistanceMeters").asInt()
+                    : null;
+            boolean pickupOnly = root.path("pickupOnly").asBoolean(false);
+            boolean deliveryOnly = root.path("deliveryOnly").asBoolean(false);
+            return new AreaRules(defaultStoreId, maxDistanceMeters, pickupOnly, deliveryOnly);
+        } catch (Exception ex) {
+            log.warn("Invalid service area rules for area {}: {}", area.getId(), ex.getMessage());
+            return AreaRules.empty();
+        }
+    }
+
+    private record CandidateStore(Store store, long distanceMeters, boolean openNow) {
+    }
+
+    private record AreaRules(UUID defaultStoreId, Integer maxDistanceMeters, boolean pickupOnly, boolean deliveryOnly) {
+        private static AreaRules empty() {
+            return new AreaRules(null, null, false, false);
+        }
+
+        private boolean disallows(StoreServiceType serviceType) {
+            if (serviceType == null) return false;
+            if (pickupOnly && serviceType != StoreServiceType.PICKUP) {
+                return true;
+            }
+            return deliveryOnly && serviceType != StoreServiceType.DELIVERY;
+        }
+    }
+}

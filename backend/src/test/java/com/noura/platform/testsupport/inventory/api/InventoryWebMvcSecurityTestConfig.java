@@ -35,6 +35,30 @@ public class InventoryWebMvcSecurityTestConfig {
     }
 
     @Bean
+    JwtAuthenticationFilter platformJwtAuthenticationFilter() {
+        AppProperties appProperties = new AppProperties();
+        appProperties.getJwt().setSecret("12345678901234567890123456789012");
+        appProperties.getJwt().setIssuer("inventory-webmvc-test");
+        JwtTokenProvider jwtTokenProvider = new JwtTokenProvider(appProperties);
+        CustomUserDetailsService userDetailsService = new CustomUserDetailsService(null) {
+            @Override
+            public UserDetails loadUserByUsername(String email) {
+                throw new UnsupportedOperationException("Platform JWT authentication is not exercised in inventory WebMvc controller tests");
+            }
+        };
+        return new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService) {
+            @Override
+            protected void doFilterInternal(
+                    HttpServletRequest request,
+                    HttpServletResponse response,
+                    FilterChain filterChain
+            ) throws ServletException, IOException {
+                filterChain.doFilter(request, response);
+            }
+        };
+    }
+
+    @Bean
     InventoryHeaderAuthenticationFilter inventoryHeaderAuthenticationFilter(InventorySecurityProperties securityProperties) {
         return new InventoryHeaderAuthenticationFilter(securityProperties);
     }

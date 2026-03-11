@@ -40,6 +40,14 @@ public interface UserAccountService {
     AddressDto addAddress(AddressRequest request);
 
     /**
+     * Retrieves a single address owned by the current user.
+     *
+     * @param addressId The address id used to locate the target record.
+     * @return The mapped DTO representation.
+     */
+    AddressDto getAddress(UUID addressId);
+
+    /**
      * Updates address.
      *
      * @param addressId The address id used to locate the target record.
@@ -54,6 +62,14 @@ public interface UserAccountService {
      * @param addressId The address id used to locate the target record.
      */
     void deleteAddress(UUID addressId);
+
+    /**
+     * Marks an address as the current user's default address.
+     *
+     * @param addressId The address id used to locate the target record.
+     * @return The mapped DTO representation.
+     */
+    AddressDto setDefaultAddress(UUID addressId);
 
     /**
      * Lists payment methods.

@@ -58,6 +58,9 @@ public class Store extends AuditableEntity {
     @Column(nullable = false, precision = 10, scale = 7)
     private BigDecimal longitude;
 
+    @Column(name = "service_radius_meters")
+    private Integer serviceRadiusMeters;
+
     @Column(nullable = false)
     private LocalTime openTime;
 

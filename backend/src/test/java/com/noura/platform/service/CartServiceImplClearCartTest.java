@@ -4,6 +4,7 @@ import com.noura.platform.domain.entity.Cart;
 import com.noura.platform.domain.entity.Store;
 import com.noura.platform.domain.entity.UserAccount;
 import com.noura.platform.dto.cart.CartDto;
+import com.noura.platform.repository.AddressRepository;
 import com.noura.platform.repository.CartItemRepository;
 import com.noura.platform.repository.CartRepository;
 import com.noura.platform.repository.ProductInventoryRepository;
@@ -41,6 +42,9 @@ class CartServiceImplClearCartTest {
     private UserAccountRepository userAccountRepository;
 
     @Mock
+    private AddressRepository addressRepository;
+
+    @Mock
     private CartRepository cartRepository;
 
     @Mock
@@ -74,6 +78,7 @@ class CartServiceImplClearCartTest {
         );
         cartService = new CartServiceImpl(
                 userAccountRepository,
+                addressRepository,
                 cartRepository,
                 cartItemRepository,
                 productRepository,

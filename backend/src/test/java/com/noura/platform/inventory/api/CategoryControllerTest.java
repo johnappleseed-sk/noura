@@ -17,6 +17,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.context.TestPropertySource;
 
@@ -34,6 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(CategoryController.class)
 @Import({CategoryController.class, InventorySecurityConfig.class, InventoryExceptionHandler.class, InventoryWebMvcSecurityTestConfig.class})
+@ActiveProfiles("inventory-webmvc-test")
 @TestPropertySource(properties = {
         "inventory.api.base-path=/api/inventory/v1",
         "inventory.security.dev-header-auth-enabled=false",

@@ -3,14 +3,17 @@ package com.noura.platform.service;
 import com.noura.platform.mapper.*;
 import com.noura.platform.repository.*;
 import com.noura.platform.service.impl.UserAccountServiceImpl;
+import com.noura.platform.service.LocationIntelligenceService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -18,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 
 @ExtendWith(SpringExtension.class)
+@ActiveProfiles("method-security-test")
 @ContextConfiguration(classes = UserAccountServiceMethodSecurityTest.Config.class)
 class UserAccountServiceMethodSecurityTest {
 
@@ -55,6 +59,7 @@ class UserAccountServiceMethodSecurityTest {
         @Bean CompanyMapper companyMapper() { return mock(CompanyMapper.class); }
         @Bean ApprovalMapper approvalMapper() { return mock(ApprovalMapper.class); }
         @Bean OrderMapper orderMapper() { return mock(OrderMapper.class); }
+        @Bean LocationIntelligenceService locationIntelligenceService() { return mock(LocationIntelligenceService.class); }
 
         @Bean
         UserAccountService userAccountService(
@@ -72,7 +77,8 @@ class UserAccountServiceMethodSecurityTest {
                 PaymentMethodMapper paymentMethodMapper,
                 CompanyMapper companyMapper,
                 ApprovalMapper approvalMapper,
-                OrderMapper orderMapper
+                OrderMapper orderMapper,
+                LocationIntelligenceService locationIntelligenceService
         ) {
             return new UserAccountServiceImpl(
                     userAccountRepository,
@@ -89,7 +95,8 @@ class UserAccountServiceMethodSecurityTest {
                     paymentMethodMapper,
                     companyMapper,
                     approvalMapper,
-                    orderMapper
+                    orderMapper,
+                    locationIntelligenceService
             );
         }
     }

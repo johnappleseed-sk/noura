@@ -4,26 +4,44 @@ import com.noura.platform.config.AppProperties;
 import com.noura.platform.config.RequestCorrelationFilter;
 import com.noura.platform.config.RateLimitFilter;
 import com.noura.platform.config.SecurityConfig;
+import com.noura.platform.controller.OrderController;
 import com.noura.platform.domain.enums.RoleType;
+import com.noura.platform.dto.cart.AddCartItemRequest;
+import com.noura.platform.dto.cart.ApplyCouponRequest;
+import com.noura.platform.dto.cart.CartDto;
+import com.noura.platform.dto.cart.UpdateCartItemRequest;
+import com.noura.platform.dto.order.CheckoutConfirmRequest;
+import com.noura.platform.dto.order.CheckoutPaymentRequest;
+import com.noura.platform.dto.order.CheckoutRequest;
+import com.noura.platform.dto.order.CheckoutShippingRequest;
+import com.noura.platform.dto.order.CheckoutStepPreviewDto;
 import com.noura.platform.dto.order.OrderDto;
 import com.noura.platform.dto.order.OrderTimelineEventDto;
 import com.noura.platform.dto.order.UpdateOrderStatusRequest;
-import com.noura.platform.service.OrderService;
+import com.noura.platform.dto.storefront.StorefrontAddCartItemRequest;
+import com.noura.platform.dto.storefront.StorefrontCartDto;
+import com.noura.platform.dto.storefront.StorefrontCheckoutRequest;
+import com.noura.platform.dto.storefront.StorefrontOrderResult;
+import com.noura.platform.dto.storefront.StorefrontOrderSummaryDto;
+import com.noura.platform.dto.storefront.StorefrontUpdateCartItemRequest;
+import com.noura.platform.service.UnifiedOrderService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.SpringBootConfiguration;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -54,6 +72,155 @@ class OrderControllerSecurityIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @MockBean
+    private CustomUserDetailsService customUserDetailsService;
+
+    @SpringBootConfiguration
+    @EnableAutoConfiguration
+    @Import(OrderController.class)
+    static class TestApplication {
+    }
+
+    @TestConfiguration
+    static class TestConfig {
+
+        @Bean
+        @Primary
+        UnifiedOrderService unifiedOrderService() {
+            return new UnifiedOrderService() {
+                @Override
+                @PreAuthorize("hasRole('ADMIN')")
+                public Page<OrderDto> adminOrders(Pageable pageable) {
+                    return Page.empty(pageable);
+                }
+
+                @Override
+                public OrderDto getPlatformOrderById(UUID orderId) {
+                    return null;
+                }
+
+                @Override
+                public List<OrderTimelineEventDto> orderTimeline(UUID orderId) {
+                    return List.of();
+                }
+
+                @Override
+                public OrderDto updateOrderStatus(UUID orderId, UpdateOrderStatusRequest request) {
+                    return null;
+                }
+
+                @Override
+                public CheckoutStepPreviewDto reviewCheckoutStep() {
+                    return null;
+                }
+
+                @Override
+                public CheckoutStepPreviewDto shippingCheckoutStep(CheckoutShippingRequest request) {
+                    return null;
+                }
+
+                @Override
+                public CheckoutStepPreviewDto paymentCheckoutStep(CheckoutPaymentRequest request) {
+                    return null;
+                }
+
+                @Override
+                public OrderDto confirmCheckout(CheckoutConfirmRequest request) {
+                    return null;
+                }
+
+                @Override
+                public OrderDto checkout(CheckoutRequest request) {
+                    return null;
+                }
+
+                @Override
+                public CartDto getMyCart() {
+                    return null;
+                }
+
+                @Override
+                public CartDto addCartItem(AddCartItemRequest request) {
+                    return null;
+                }
+
+                @Override
+                public CartDto updateCartItem(UUID cartItemId, UpdateCartItemRequest request) {
+                    return null;
+                }
+
+                @Override
+                public CartDto removeCartItem(UUID cartItemId) {
+                    return null;
+                }
+
+                @Override
+                public CartDto clearCart() {
+                    return null;
+                }
+
+                @Override
+                public CartDto applyCoupon(ApplyCouponRequest request) {
+                    return null;
+                }
+
+                @Override
+                public List<OrderDto> myOrderHistory() {
+                    return List.of();
+                }
+
+                @Override
+                public List<OrderDto> quickReorder(UUID orderId) {
+                    return List.of();
+                }
+
+                @Override
+                public StorefrontOrderResult checkoutStorefront(Long customerId, StorefrontCheckoutRequest request) {
+                    return null;
+                }
+
+                @Override
+                public List<StorefrontOrderSummaryDto> listStorefrontOrders(Long customerId) {
+                    return List.of();
+                }
+
+                @Override
+                public StorefrontOrderResult getStorefrontOrder(Long customerId, Long orderId) {
+                    return null;
+                }
+
+                @Override
+                public StorefrontOrderResult cancelStorefrontOrder(Long customerId, Long orderId) {
+                    return null;
+                }
+
+                @Override
+                public StorefrontCartDto getOrCreateStorefrontCart(Long customerId) {
+                    return null;
+                }
+
+                @Override
+                public StorefrontCartDto addStorefrontCartItem(Long customerId, StorefrontAddCartItemRequest request) {
+                    return null;
+                }
+
+                @Override
+                public StorefrontCartDto updateStorefrontCartItem(Long customerId, Long itemId, StorefrontUpdateCartItemRequest request) {
+                    return null;
+                }
+
+                @Override
+                public void removeStorefrontCartItem(Long customerId, Long itemId) {
+                }
+
+                @Override
+                public StorefrontCartDto clearStorefrontCart(Long customerId) {
+                    return null;
+                }
+            };
+        }
+    }
 
     @Test
     void adminOrders_shouldRejectAnonymousRequest() throws Exception {
@@ -98,51 +265,4 @@ class OrderControllerSecurityIntegrationTest {
         );
     }
 
-    @org.springframework.boot.test.context.TestConfiguration
-    static class TestConfig {
-
-        @Bean
-        @Primary
-        CustomUserDetailsService customUserDetailsService() {
-            return new CustomUserDetailsService(null) {
-                @Override
-                public UserDetails loadUserByUsername(String email) {
-                    return User.withUsername(email)
-                            .password("n/a")
-                            .authorities("ROLE_CUSTOMER")
-                            .build();
-                }
-            };
-        }
-
-        @Bean
-        @Primary
-        OrderService orderService() {
-            return new OrderService() {
-                @Override
-                @PreAuthorize("hasRole('ADMIN')")
-                public Page<OrderDto> adminOrders(Pageable pageable) {
-                    return Page.empty(pageable);
-                }
-
-                @Override
-                @PreAuthorize("hasRole('ADMIN')")
-                public OrderDto getById(UUID orderId) {
-                    return null;
-                }
-
-                @Override
-                @PreAuthorize("hasRole('ADMIN')")
-                public List<OrderTimelineEventDto> orderTimeline(UUID orderId) {
-                    return List.of();
-                }
-
-                @Override
-                @PreAuthorize("hasRole('ADMIN')")
-                public OrderDto updateStatus(UUID orderId, UpdateOrderStatusRequest request) {
-                    return null;
-                }
-            };
-        }
-    }
 }

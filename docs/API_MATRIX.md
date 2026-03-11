@@ -119,6 +119,16 @@ Contract status: transitional compatibility aliases. In OpenAPI these operations
 | POST | /api/v1/inventory/warehouses | createWarehouse | - | com.noura.platform.dto.inventory.WarehouseRequest | com.noura.platform.common.api.ApiResponseCom.noura.platform.dto.inventory.WarehouseDto |
 | GET | /api/v1/inventory/{variantId} | stock | variantId(path* string:uuid) | - | com.noura.platform.common.api.ApiResponseCom.noura.platform.dto.inventory.InventorySummaryDto |
 
+## location-controller
+
+| Method | Path | Summary | Params | Request Body | Response |
+| --- | --- | --- | --- | --- | --- |
+| POST | /api/v1/location/forward-geocode | forwardGeocode | - | com.noura.platform.dto.location.ForwardGeocodeRequest | com.noura.platform.common.api.ApiResponseJava.util.ListCom.noura.platform.dto.location.GeocodeResultDto |
+| GET | /api/v1/location/nearby-stores | nearbyStores | lat(query* number), lng(query* number), serviceType(query string), openNow(query boolean), limit(query integer:int32), maxDistanceMeters(query integer:int32) | - | com.noura.platform.common.api.ApiResponseJava.util.ListCom.noura.platform.dto.location.NearbyStoreDto |
+| POST | /api/v1/location/resolve | resolve | - | com.noura.platform.dto.location.LocationResolveRequest | com.noura.platform.common.api.ApiResponseCom.noura.platform.dto.location.LocationResolveDto |
+| POST | /api/v1/location/reverse-geocode | reverseGeocode | - | com.noura.platform.dto.location.ReverseGeocodeRequest | com.noura.platform.common.api.ApiResponseCom.noura.platform.dto.location.GeocodeResultDto |
+| POST | /api/v1/location/validate-service-area | validateServiceArea | - | com.noura.platform.dto.location.ServiceAreaValidationRequest | com.noura.platform.common.api.ApiResponseCom.noura.platform.dto.location.ServiceEligibilityDto |
+
 ## inventory-reporting-controller
 
 | Method | Path | Summary | Params | Request Body | Response |
@@ -148,6 +158,26 @@ Contract status: transitional compatibility aliases. In OpenAPI these operations
 | GET | /api/v1/orders/{orderId} | getById | orderId(path* string:uuid) | - | com.noura.platform.common.api.ApiResponseCom.noura.platform.dto.order.OrderDto |
 | PATCH | /api/v1/orders/{orderId}/status | updateStatus | orderId(path* string:uuid) | com.noura.platform.dto.order.UpdateOrderStatusRequest | com.noura.platform.common.api.ApiResponseCom.noura.platform.dto.order.OrderDto |
 | GET | /api/v1/orders/{orderId}/timeline | orderTimeline | orderId(path* string:uuid) | - | com.noura.platform.common.api.ApiResponseJava.util.ListCom.noura.platform.dto.order.OrderTimelineEventDto |
+
+## service-area-admin-controller
+
+| Method | Path | Summary | Params | Request Body | Response |
+| --- | --- | --- | --- | --- | --- |
+| POST | /api/v1/admin/service-areas | create | - | com.noura.platform.dto.location.ServiceAreaRequest | com.noura.platform.common.api.ApiResponseCom.noura.platform.dto.location.ServiceAreaDto |
+| GET | /api/v1/admin/service-areas | list | query(query string), status(query string), type(query string), page(query integer:int32), size(query integer:int32), sortBy(query string), direction(query string) | - | com.noura.platform.common.api.ApiResponseCom.noura.platform.common.api.PageResponseCom.noura.platform.dto.location.ServiceAreaDto |
+| POST | /api/v1/admin/service-areas/validate | validate | - | com.noura.platform.dto.location.ServiceAreaValidationRequest | com.noura.platform.common.api.ApiResponseCom.noura.platform.dto.location.ServiceEligibilityDto |
+| POST | /api/v1/admin/service-areas/{serviceAreaId}/activate | activate | serviceAreaId(path* string:uuid) | - | com.noura.platform.common.api.ApiResponseCom.noura.platform.dto.location.ServiceAreaDto |
+| POST | /api/v1/admin/service-areas/{serviceAreaId}/deactivate | deactivate | serviceAreaId(path* string:uuid) | - | com.noura.platform.common.api.ApiResponseCom.noura.platform.dto.location.ServiceAreaDto |
+| DELETE | /api/v1/admin/service-areas/{serviceAreaId} | delete | serviceAreaId(path* string:uuid) | - | com.noura.platform.common.api.ApiResponseJava.lang.Void |
+| GET | /api/v1/admin/service-areas/{serviceAreaId} | get | serviceAreaId(path* string:uuid) | - | com.noura.platform.common.api.ApiResponseCom.noura.platform.dto.location.ServiceAreaDto |
+| PUT | /api/v1/admin/service-areas/{serviceAreaId} | update | serviceAreaId(path* string:uuid) | com.noura.platform.dto.location.ServiceAreaRequest | com.noura.platform.common.api.ApiResponseCom.noura.platform.dto.location.ServiceAreaDto |
+
+## admin-store-location-controller
+
+| Method | Path | Summary | Params | Request Body | Response |
+| --- | --- | --- | --- | --- | --- |
+| GET | /api/v1/admin/stores/{storeId}/location | get | storeId(path* string:uuid) | - | com.noura.platform.common.api.ApiResponseCom.noura.platform.dto.location.StoreLocationDto |
+| PUT | /api/v1/admin/stores/{storeId}/location | update | storeId(path* string:uuid) | com.noura.platform.dto.location.StoreLocationRequest | com.noura.platform.common.api.ApiResponseCom.noura.platform.dto.location.StoreLocationDto |
 
 ## pricing-controller
 
@@ -259,6 +289,8 @@ Contract status: transitional compatibility aliases. In OpenAPI these operations
 | GET | /api/v1/account/addresses | addresses | - | - | com.noura.platform.common.api.ApiResponseJava.util.ListCom.noura.platform.dto.user.AddressDto |
 | POST | /api/v1/account/addresses | addAddress | - | com.noura.platform.dto.user.AddressRequest | com.noura.platform.common.api.ApiResponseCom.noura.platform.dto.user.AddressDto |
 | DELETE | /api/v1/account/addresses/{addressId} | deleteAddress | addressId(path* string:uuid) | - | com.noura.platform.common.api.ApiResponseJava.lang.Void |
+| GET | /api/v1/account/addresses/{addressId} | getAddress | addressId(path* string:uuid) | - | com.noura.platform.common.api.ApiResponseCom.noura.platform.dto.user.AddressDto |
+| POST | /api/v1/account/addresses/{addressId}/set-default | setDefaultAddress | addressId(path* string:uuid) | - | com.noura.platform.common.api.ApiResponseCom.noura.platform.dto.user.AddressDto |
 | PUT | /api/v1/account/addresses/{addressId} | updateAddress | addressId(path* string:uuid) | com.noura.platform.dto.user.AddressRequest | com.noura.platform.common.api.ApiResponseCom.noura.platform.dto.user.AddressDto |
 | GET | /api/v1/account/approvals | myApprovals | - | - | com.noura.platform.common.api.ApiResponseJava.util.ListCom.noura.platform.dto.user.ApprovalDto |
 | PUT | /api/v1/account/company-profile | upsertCompanyProfile | - | com.noura.platform.dto.user.CompanyProfileRequest | com.noura.platform.common.api.ApiResponseCom.noura.platform.dto.user.CompanyProfileDto |
@@ -302,4 +334,3 @@ Contract status: transitional compatibility aliases. In OpenAPI these operations
 | DELETE | /api/inventory/v1/webhooks/{subscriptionId} | deleteSubscription | subscriptionId(path* string) | - | com.noura.platform.common.api.ApiResponseJava.lang.Void |
 | GET | /api/inventory/v1/webhooks/{subscriptionId} | getSubscription | subscriptionId(path* string) | - | com.noura.platform.common.api.ApiResponseCom.noura.platform.inventory.dto.webhook.WebhookSubscriptionResponse |
 | PUT | /api/inventory/v1/webhooks/{subscriptionId} | updateSubscription | subscriptionId(path* string) | com.noura.platform.inventory.dto.webhook.WebhookSubscriptionRequest | com.noura.platform.common.api.ApiResponseCom.noura.platform.inventory.dto.webhook.WebhookSubscriptionResponse |
-

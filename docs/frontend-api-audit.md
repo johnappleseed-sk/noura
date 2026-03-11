@@ -82,7 +82,17 @@ This audit captures every API wrapper in the frontend apps. Endpoints are listed
 | admin-dashboard | frontend/admin-dashboard/src/shared/api/endpoints/storesApi.js | listStores | GET `/api/v1/stores` | GET `/api/v1/stores` | Keep | Pageable params. |
 | admin-dashboard | frontend/admin-dashboard/src/shared/api/endpoints/storesApi.js | createStore | POST `/api/v1/stores` | POST `/api/v1/stores` | Keep | - |
 | admin-dashboard | frontend/admin-dashboard/src/shared/api/endpoints/storesApi.js | updateStore | PUT `/api/v1/stores/{storeId}` | PUT `/api/v1/stores/{storeId}` | Keep | - |
+| admin-dashboard | frontend/admin-dashboard/src/shared/api/endpoints/storesApi.js | getStoreLocation | GET `/api/v1/admin/stores/{storeId}/location` | GET `/api/v1/admin/stores/{storeId}/location` | Keep | Location-specific admin read model. |
+| admin-dashboard | frontend/admin-dashboard/src/shared/api/endpoints/storesApi.js | updateStoreLocation | PUT `/api/v1/admin/stores/{storeId}/location` | PUT `/api/v1/admin/stores/{storeId}/location` | Keep | Store coverage and service radius workflow. |
 | admin-dashboard | frontend/admin-dashboard/src/shared/api/endpoints/storesApi.js | deleteStore | DELETE `/api/v1/stores/{storeId}` | DELETE `/api/v1/stores/{storeId}` | Keep | - |
+| admin-dashboard | frontend/admin-dashboard/src/shared/api/endpoints/serviceAreasApi.js | listServiceAreas | GET `/api/v1/admin/service-areas` | GET `/api/v1/admin/service-areas` | Keep | Pageable params. |
+| admin-dashboard | frontend/admin-dashboard/src/shared/api/endpoints/serviceAreasApi.js | getServiceArea | GET `/api/v1/admin/service-areas/{serviceAreaId}` | GET `/api/v1/admin/service-areas/{serviceAreaId}` | Keep | - |
+| admin-dashboard | frontend/admin-dashboard/src/shared/api/endpoints/serviceAreasApi.js | createServiceArea | POST `/api/v1/admin/service-areas` | POST `/api/v1/admin/service-areas` | Keep | - |
+| admin-dashboard | frontend/admin-dashboard/src/shared/api/endpoints/serviceAreasApi.js | updateServiceArea | PUT `/api/v1/admin/service-areas/{serviceAreaId}` | PUT `/api/v1/admin/service-areas/{serviceAreaId}` | Keep | - |
+| admin-dashboard | frontend/admin-dashboard/src/shared/api/endpoints/serviceAreasApi.js | deleteServiceArea | DELETE `/api/v1/admin/service-areas/{serviceAreaId}` | DELETE `/api/v1/admin/service-areas/{serviceAreaId}` | Keep | - |
+| admin-dashboard | frontend/admin-dashboard/src/shared/api/endpoints/serviceAreasApi.js | activateServiceArea | POST `/api/v1/admin/service-areas/{serviceAreaId}/activate` | POST `/api/v1/admin/service-areas/{serviceAreaId}/activate` | Keep | - |
+| admin-dashboard | frontend/admin-dashboard/src/shared/api/endpoints/serviceAreasApi.js | deactivateServiceArea | POST `/api/v1/admin/service-areas/{serviceAreaId}/deactivate` | POST `/api/v1/admin/service-areas/{serviceAreaId}/deactivate` | Keep | - |
+| admin-dashboard | frontend/admin-dashboard/src/shared/api/endpoints/serviceAreasApi.js | validateServiceAreaRules | POST `/api/v1/admin/service-areas/validate` | POST `/api/v1/admin/service-areas/validate` | Keep | Admin coordinate sandbox. |
 | admin-dashboard | frontend/admin-dashboard/src/shared/api/endpoints/systemApi.js | getInventorySystemStatus | GET `/api/inventory/v1/system/status` | GET `/api/inventory/v1/system/status` | Keep | Returns raw status payload (not wrapped). |
 | admin-dashboard | frontend/admin-dashboard/src/shared/api/endpoints/webhooksApi.js | listSubscriptions | GET `/api/inventory/v1/webhooks` | GET `/api/inventory/v1/webhooks` | Keep | - |
 | admin-dashboard | frontend/admin-dashboard/src/shared/api/endpoints/webhooksApi.js | getSubscription | GET `/api/inventory/v1/webhooks/{subscriptionId}` | GET `/api/inventory/v1/webhooks/{subscriptionId}` | Keep | - |
@@ -103,14 +113,22 @@ This audit captures every API wrapper in the frontend apps. Endpoints are listed
 | storefront | frontend/storefront-noura/lib/api.js | loginCustomer | POST `/api/v1/auth/login` | POST `/api/v1/auth/login` | Keep | Payload `{ email, password }`. |
 | storefront | frontend/storefront-noura/lib/api.js | getCustomerMe | GET `/api/v1/account/profile` | GET `/api/v1/account/profile` | Keep | - |
 | storefront | frontend/storefront-noura/lib/api.js | getCustomerAddresses | GET `/api/v1/account/addresses` | GET `/api/v1/account/addresses` | Keep | - |
-| storefront | frontend/storefront-noura/lib/api.js | addCustomerAddress | POST `/api/v1/account/addresses` | POST `/api/v1/account/addresses` | Keep | Payload mapped to `{ fullName, line1, city, state, zipCode, country, defaultAddress }`. |
+| storefront | frontend/storefront-noura/lib/api.js | getCustomerAddress | GET `/api/v1/account/addresses/{addressId}` | GET `/api/v1/account/addresses/{addressId}` | Keep | Address detail endpoint for location-aware edits. |
+| storefront | frontend/storefront-noura/lib/api.js | addCustomerAddress | POST `/api/v1/account/addresses` | POST `/api/v1/account/addresses` | Keep | Payload now includes phone, line2, district, coordinates, accuracy, placeId, formattedAddress, deliveryInstructions. |
+| storefront | frontend/storefront-noura/lib/api.js | updateCustomerAddress | PUT `/api/v1/account/addresses/{addressId}` | PUT `/api/v1/account/addresses/{addressId}` | Keep | Same payload shape as create. |
 | storefront | frontend/storefront-noura/lib/api.js | deleteCustomerAddress | DELETE `/api/v1/account/addresses/{addressId}` | DELETE `/api/v1/account/addresses/{addressId}` | Keep | - |
+| storefront | frontend/storefront-noura/lib/api.js | setDefaultCustomerAddress | POST `/api/v1/account/addresses/{addressId}/set-default` | POST `/api/v1/account/addresses/{addressId}/set-default` | Keep | Default-address workflow. |
+| storefront | frontend/storefront-noura/lib/api.js | resolveLocation | POST `/api/v1/location/resolve` | POST `/api/v1/location/resolve` | Keep | Authenticated resolve + eligibility workflow. |
+| storefront | frontend/storefront-noura/lib/api.js | reverseGeocode | POST `/api/v1/location/reverse-geocode` | POST `/api/v1/location/reverse-geocode` | Keep | Public geocoder wrapper. |
+| storefront | frontend/storefront-noura/lib/api.js | forwardGeocode | POST `/api/v1/location/forward-geocode` | POST `/api/v1/location/forward-geocode` | Keep | Public place-search wrapper. |
+| storefront | frontend/storefront-noura/lib/api.js | validateServiceArea | POST `/api/v1/location/validate-service-area` | POST `/api/v1/location/validate-service-area` | Keep | Delivery eligibility check. |
+| storefront | frontend/storefront-noura/lib/api.js | getNearbyStores | GET `/api/v1/location/nearby-stores` | GET `/api/v1/location/nearby-stores` | Keep | Nearby service-point lookup. |
 | storefront | frontend/storefront-noura/lib/api.js | getCart | GET `/api/v1/cart` | GET `/api/v1/cart` | Keep | - |
 | storefront | frontend/storefront-noura/lib/api.js | addCartItem | POST `/api/v1/cart/items` | POST `/api/v1/cart/items` | Keep | - |
 | storefront | frontend/storefront-noura/lib/api.js | updateCartItem | PUT `/api/v1/cart/items/{itemId}` | PUT `/api/v1/cart/items/{itemId}` | Keep | - |
 | storefront | frontend/storefront-noura/lib/api.js | removeCartItem | DELETE `/api/v1/cart/items/{itemId}` | DELETE `/api/v1/cart/items/{itemId}` | Keep | - |
 | storefront | frontend/storefront-noura/lib/api.js | clearCart | DELETE `/api/v1/cart/items` | DELETE `/api/v1/cart/items` | Keep | - |
-| storefront | frontend/storefront-noura/lib/api.js | checkoutCart | POST `/api/v1/checkout` | POST `/api/v1/checkout` | Keep | - |
+| storefront | frontend/storefront-noura/lib/api.js | checkoutCart | POST `/api/v1/checkout` | POST `/api/v1/checkout` | Keep | Now sends `addressId` and backend-derived shipping snapshot for delivery checkout. |
 | storefront | frontend/storefront-noura/lib/api.js | getMyOrders | GET `/api/v1/account/orders` | GET `/api/v1/account/orders` | Keep | - |
 | storefront | frontend/storefront-noura/lib/api.js | quickReorder | POST `/api/v1/account/orders/{orderId}/quick-reorder` | POST `/api/v1/account/orders/{orderId}/quick-reorder` | Keep | - |
 | storefront | frontend/storefront-noura/lib/api.js | predictiveSearch | GET `/api/v1/search/predictive` | GET `/api/v1/search/predictive` | Keep | Uses `q` + `scope`. |

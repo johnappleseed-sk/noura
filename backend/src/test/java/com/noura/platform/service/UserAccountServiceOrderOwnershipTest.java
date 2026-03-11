@@ -18,6 +18,7 @@ import com.noura.platform.repository.OrderItemRepository;
 import com.noura.platform.repository.OrderRepository;
 import com.noura.platform.repository.PaymentMethodRepository;
 import com.noura.platform.repository.UserAccountRepository;
+import com.noura.platform.service.LocationIntelligenceService;
 import com.noura.platform.service.impl.UserAccountServiceImpl;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,6 +57,7 @@ class UserAccountServiceOrderOwnershipTest {
     @Mock private CompanyMapper companyMapper;
     @Mock private ApprovalMapper approvalMapper;
     @Mock private OrderMapper orderMapper;
+    @Mock private LocationIntelligenceService locationIntelligenceService;
 
     private UserAccountServiceImpl userAccountService;
 
@@ -83,7 +85,8 @@ class UserAccountServiceOrderOwnershipTest {
                 paymentMethodMapper,
                 companyMapper,
                 approvalMapper,
-                orderMapper
+                orderMapper,
+                locationIntelligenceService
         );
     }
 

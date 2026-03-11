@@ -1,10 +1,13 @@
 package com.noura.platform.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.noura.platform.common.exception.BadRequestException;
 import com.noura.platform.common.exception.NotFoundException;
 import com.noura.platform.common.exception.UnauthorizedException;
 import com.noura.platform.config.AppProperties;
 import com.noura.platform.domain.enums.AnalyticsEventType;
 import com.noura.platform.domain.entity.ApprovalRequest;
+import com.noura.platform.domain.entity.Address;
 import com.noura.platform.domain.entity.Cart;
 import com.noura.platform.domain.entity.CartItem;
 import com.noura.platform.domain.entity.Order;
@@ -13,11 +16,15 @@ import com.noura.platform.domain.entity.OrderTimelineEvent;
 import com.noura.platform.domain.entity.ProductInventory;
 import com.noura.platform.domain.entity.Store;
 import com.noura.platform.domain.entity.UserAccount;
+import com.noura.platform.domain.enums.AddressValidationStatus;
 import com.noura.platform.domain.enums.ApprovalStatus;
+import com.noura.platform.domain.enums.StoreServiceType;
 import com.noura.platform.domain.enums.OrderStatus;
 import com.noura.platform.dto.cart.CartTotalsDto;
 import com.noura.platform.dto.analytics.AnalyticsEventRequest;
 import com.noura.platform.domain.enums.FulfillmentMethod;
+import com.noura.platform.dto.location.ServiceAreaValidationRequest;
+import com.noura.platform.dto.location.ServiceEligibilityDto;
 import com.noura.platform.dto.order.CheckoutConfirmRequest;
 import com.noura.platform.dto.order.CheckoutRequest;
 import com.noura.platform.dto.order.OrderDto;
@@ -25,6 +32,7 @@ import com.noura.platform.dto.order.OrderItemDto;
 import com.noura.platform.event.OrderCreatedEvent;
 import com.noura.platform.mapper.OrderMapper;
 import com.noura.platform.repository.ApprovalRequestRepository;
+import com.noura.platform.repository.AddressRepository;
 import com.noura.platform.repository.B2BCompanyProfileRepository;
 import com.noura.platform.repository.CartItemRepository;
 import com.noura.platform.repository.CartRepository;
@@ -35,6 +43,7 @@ import com.noura.platform.repository.ProductInventoryRepository;
 import com.noura.platform.repository.StoreRepository;
 import com.noura.platform.repository.UserAccountRepository;
 import com.noura.platform.security.SecurityUtils;
+import com.noura.platform.service.LocationIntelligenceService;
 import com.noura.platform.service.CheckoutService;
 import com.noura.platform.service.PricingService;
 import com.noura.platform.service.AnalyticsEventService;
@@ -47,7 +56,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -59,6 +71,7 @@ public class CheckoutServiceImpl implements CheckoutService {
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
     private final ProductInventoryRepository inventoryRepository;
+    private final AddressRepository addressRepository;
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final OrderTimelineEventRepository orderTimelineEventRepository;
@@ -71,6 +84,8 @@ public class CheckoutServiceImpl implements CheckoutService {
     private final AppProperties appProperties;
     private final PricingService pricingService;
     private final AnalyticsEventService analyticsEventService;
+    private final LocationIntelligenceService locationIntelligenceService;
+    private final ObjectMapper objectMapper;
 
     /**
      * Validates checkout.
@@ -98,20 +113,28 @@ public class CheckoutServiceImpl implements CheckoutService {
             throw new UnauthorizedException("CART_EMPTY", "Cart is empty");
         }
 
-        Store store = resolveCheckoutStore(cart, request.storeId());
+        CheckoutLocationContext locationContext = resolveCheckoutLocation(user, cart, request);
+        Store store = locationContext.store();
         CartTotalsDto totals = pricingService.calculateTotals(cartItems, store, request.couponCode());
 
         Order order = new Order();
         order.setUser(user);
         order.setStore(store);
+        order.setAddressId(locationContext.address() == null ? null : locationContext.address().getId());
         order.setSubtotal(totals.subtotal());
         order.setDiscountAmount(totals.discountAmount());
         order.setShippingAmount(totals.shippingAmount());
         order.setTotalAmount(totals.totalAmount());
         order.setFulfillmentMethod(request.fulfillmentMethod());
-        order.setShippingAddressSnapshot(request.shippingAddressSnapshot());
+        order.setShippingAddressSnapshot(locationContext.shippingAddressSnapshot());
         order.setPaymentReference(request.paymentReference());
         order.setCouponCode(totals.couponCode());
+        order.setLocationSnapshotJson(locationContext.locationSnapshotJson());
+        order.setMatchedServiceAreaId(locationContext.eligibility() == null ? null : locationContext.eligibility().matchedServiceAreaId());
+        order.setEligibilityReason(locationContext.eligibility() == null ? null : locationContext.eligibility().eligibilityReason());
+        order.setDeliveryLatitude(locationContext.address() == null ? null : locationContext.address().getLatitude());
+        order.setDeliveryLongitude(locationContext.address() == null ? null : locationContext.address().getLongitude());
+        order.setAddressValidationStatus(locationContext.validationStatus());
         order.setIdempotencyKey(idempotencyKey);
         order.setStatus(request.b2bInvoice() ? OrderStatus.REVIEWED : OrderStatus.PAID);
         try {
@@ -280,9 +303,6 @@ public class CheckoutServiceImpl implements CheckoutService {
         if (fulfillmentMethod == null) {
             throw new UnauthorizedException("CHECKOUT_FULFILLMENT_REQUIRED", "Fulfillment method is required");
         }
-        if (shippingSnapshot == null) {
-            throw new UnauthorizedException("CHECKOUT_SHIPPING_REQUIRED", "Shipping address snapshot is required");
-        }
         String paymentReference = normalizeSnapshot(request.paymentReference());
         if (paymentReference == null) {
             paymentReference = normalizeSnapshot(cart.getPaymentReference());
@@ -301,6 +321,7 @@ public class CheckoutServiceImpl implements CheckoutService {
         return new CheckoutRequest(
                 fulfillmentMethod,
                 request.storeId(),
+                request.addressId() != null ? request.addressId() : cart.getAddressId(),
                 shippingSnapshot,
                 paymentReference,
                 couponCode,
@@ -309,13 +330,13 @@ public class CheckoutServiceImpl implements CheckoutService {
         );
     }
 
-    private Store resolveCheckoutStore(Cart cart, java.util.UUID requestedStoreId) {
+    private Store resolveCheckoutStore(Cart cart, UUID requestedStoreId, boolean authoritative) {
         Store store = cart.getStore();
         if (requestedStoreId != null) {
-            if (store != null && !store.getId().equals(requestedStoreId)) {
+            if (!authoritative && store != null && !store.getId().equals(requestedStoreId)) {
                 throw new UnauthorizedException("STORE_CONFLICT", "Checkout store mismatch");
             }
-            if (store == null) {
+            if (store == null || !store.getId().equals(requestedStoreId)) {
                 Store requested = storeRepository.findById(requestedStoreId)
                         .orElseThrow(() -> new NotFoundException("STORE_NOT_FOUND", "Store not found"));
                 cart.setStore(requested);
@@ -328,6 +349,7 @@ public class CheckoutServiceImpl implements CheckoutService {
 
     private void clearCheckoutDraft(Cart cart) {
         cart.setStore(null);
+        cart.setAddressId(null);
         cart.setFulfillmentMethod(null);
         cart.setShippingAddressSnapshot(null);
         cart.setPaymentReference(null);
@@ -339,6 +361,150 @@ public class CheckoutServiceImpl implements CheckoutService {
 
     private String normalizeSnapshot(String value) {
         return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    private CheckoutLocationContext resolveCheckoutLocation(UserAccount user, Cart cart, CheckoutRequest request) {
+        if (request.fulfillmentMethod() == FulfillmentMethod.DELIVERY) {
+            UUID addressId = request.addressId() != null ? request.addressId() : cart.getAddressId();
+            if (addressId == null) {
+                throw new BadRequestException("CHECKOUT_ADDRESS_REQUIRED", "A saved delivery address is required for delivery checkout.");
+            }
+
+            Address address = addressRepository.findByIdAndUser(addressId, user)
+                    .orElseThrow(() -> new NotFoundException("ADDRESS_NOT_FOUND", "Address not found"));
+            if (address.getLatitude() == null || address.getLongitude() == null) {
+                throw new BadRequestException("CHECKOUT_ADDRESS_COORDINATES_REQUIRED", "Delivery address must include coordinates.");
+            }
+
+            ServiceEligibilityDto eligibility = locationIntelligenceService.validate(new ServiceAreaValidationRequest(
+                    address.getLatitude(),
+                    address.getLongitude(),
+                    StoreServiceType.DELIVERY,
+                    Instant.now(),
+                    null
+            ));
+            AddressValidationStatus validationStatus = toAddressValidationStatus(eligibility);
+            address.setValidationStatus(validationStatus);
+            addressRepository.save(address);
+
+            if (!eligibility.serviceAvailable()) {
+                throw new BadRequestException(
+                        "DELIVERY_UNAVAILABLE",
+                        "Delivery is unavailable for the selected address: " + eligibility.eligibilityReason()
+                );
+            }
+
+            UUID storeId = eligibility.matchedStoreId() != null ? eligibility.matchedStoreId() : request.storeId();
+            Store store = resolveCheckoutStore(cart, storeId, true);
+            if (store == null) {
+                throw new BadRequestException("CHECKOUT_STORE_REQUIRED", "No eligible fulfillment store was assigned.");
+            }
+
+            return new CheckoutLocationContext(
+                    address,
+                    store,
+                    eligibility,
+                    validationStatus,
+                    buildLocationSnapshot(address, eligibility),
+                    buildShippingAddressSnapshot(address)
+            );
+        }
+
+        Store pickupStore = resolveCheckoutStore(cart, request.storeId(), false);
+        if (pickupStore == null) {
+            throw new BadRequestException("CHECKOUT_STORE_REQUIRED", "Pickup checkout requires a selected store.");
+        }
+        return new CheckoutLocationContext(
+                null,
+                pickupStore,
+                null,
+                null,
+                null,
+                normalizeSnapshot(request.shippingAddressSnapshot()) != null
+                        ? normalizeSnapshot(request.shippingAddressSnapshot())
+                        : buildPickupAddressSnapshot(pickupStore)
+        );
+    }
+
+    private String buildShippingAddressSnapshot(Address address) {
+        if (address.getFormattedAddress() != null && !address.getFormattedAddress().isBlank()) {
+            return address.getFormattedAddress().trim();
+        }
+        return String.join(
+                ", ",
+                List.of(
+                        address.getFullName(),
+                        address.getLine1(),
+                        address.getLine2(),
+                        address.getDistrict(),
+                        address.getCity(),
+                        address.getState(),
+                        address.getZipCode(),
+                        address.getCountry()
+                ).stream().filter(value -> value != null && !value.isBlank()).toList()
+        );
+    }
+
+    private String buildPickupAddressSnapshot(Store store) {
+        return String.join(
+                ", ",
+                List.of(
+                        store.getName(),
+                        store.getAddressLine1(),
+                        store.getCity(),
+                        store.getState(),
+                        store.getZipCode(),
+                        store.getCountry()
+                ).stream().filter(value -> value != null && !value.isBlank()).toList()
+        );
+    }
+
+    private String buildLocationSnapshot(Address address, ServiceEligibilityDto eligibility) {
+        Map<String, Object> snapshot = new LinkedHashMap<>();
+        snapshot.put("capturedAt", Instant.now());
+        snapshot.put("addressId", address.getId());
+        snapshot.put("formattedAddress", address.getFormattedAddress());
+        snapshot.put("line1", address.getLine1());
+        snapshot.put("line2", address.getLine2());
+        snapshot.put("district", address.getDistrict());
+        snapshot.put("city", address.getCity());
+        snapshot.put("state", address.getState());
+        snapshot.put("postalCode", address.getZipCode());
+        snapshot.put("country", address.getCountry());
+        snapshot.put("latitude", address.getLatitude());
+        snapshot.put("longitude", address.getLongitude());
+        snapshot.put("placeId", address.getPlaceId());
+        snapshot.put("validationStatus", toAddressValidationStatus(eligibility));
+        if (eligibility != null) {
+            Map<String, Object> eligibilitySnapshot = new LinkedHashMap<>();
+            eligibilitySnapshot.put("serviceAvailable", eligibility.serviceAvailable());
+            eligibilitySnapshot.put("serviceType", eligibility.serviceType());
+            eligibilitySnapshot.put("matchedServiceAreaId", eligibility.matchedServiceAreaId());
+            eligibilitySnapshot.put("matchedStoreId", eligibility.matchedStoreId());
+            eligibilitySnapshot.put("distanceMeters", eligibility.distanceMeters());
+            eligibilitySnapshot.put("eligibilityReason", eligibility.eligibilityReason());
+            snapshot.put("eligibility", eligibilitySnapshot);
+        }
+        try {
+            return objectMapper.writeValueAsString(snapshot);
+        } catch (Exception ex) {
+            throw new IllegalStateException("Failed to serialize order location snapshot.", ex);
+        }
+    }
+
+    private AddressValidationStatus toAddressValidationStatus(ServiceEligibilityDto eligibility) {
+        if (eligibility == null) {
+            return AddressValidationStatus.UNVERIFIED;
+        }
+        if (eligibility.serviceAvailable()) {
+            return AddressValidationStatus.VALID;
+        }
+        return switch (eligibility.eligibilityReason()) {
+            case "SERVICE_AREA_MISS" -> AddressValidationStatus.OUT_OF_SERVICE_AREA;
+            case "OUT_OF_RANGE", "OUT_OF_STORE_RADIUS" -> AddressValidationStatus.OUT_OF_STORE_RADIUS;
+            case "STORE_CLOSED" -> AddressValidationStatus.STORE_CLOSED;
+            default -> AddressValidationStatus.STORE_UNAVAILABLE;
+        };
     }
 
     /**
@@ -410,5 +576,15 @@ public class CheckoutServiceImpl implements CheckoutService {
             return existing;
         }
         throw ex;
+    }
+
+    private record CheckoutLocationContext(
+            Address address,
+            Store store,
+            ServiceEligibilityDto eligibility,
+            AddressValidationStatus validationStatus,
+            String locationSnapshotJson,
+            String shippingAddressSnapshot
+    ) {
     }
 }

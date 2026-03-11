@@ -3,6 +3,7 @@ package com.noura.platform.service.impl;
 import com.noura.platform.common.exception.NotFoundException;
 import com.noura.platform.common.exception.UnauthorizedException;
 import com.noura.platform.domain.enums.AnalyticsEventType;
+import com.noura.platform.domain.entity.Address;
 import com.noura.platform.domain.entity.Cart;
 import com.noura.platform.domain.entity.CartItem;
 import com.noura.platform.domain.entity.Product;
@@ -18,6 +19,7 @@ import com.noura.platform.dto.cart.UpdateCartItemRequest;
 import com.noura.platform.dto.analytics.AnalyticsEventRequest;
 import com.noura.platform.dto.order.CheckoutPaymentRequest;
 import com.noura.platform.dto.order.CheckoutShippingRequest;
+import com.noura.platform.repository.AddressRepository;
 import com.noura.platform.repository.CartItemRepository;
 import com.noura.platform.repository.CartRepository;
 import com.noura.platform.repository.ProductInventoryRepository;
@@ -43,6 +45,7 @@ import java.util.UUID;
 public class CartServiceImpl implements CartService {
 
     private final UserAccountRepository userAccountRepository;
+    private final AddressRepository addressRepository;
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
@@ -176,6 +179,7 @@ public class CartServiceImpl implements CartService {
         cart.setStore(null);
         cart.setFulfillmentMethod(null);
         cart.setShippingAddressSnapshot(null);
+        cart.setAddressId(null);
         cart.setPaymentReference(null);
         cart.setCouponCode(null);
         cart.setB2bInvoice(false);
@@ -218,6 +222,7 @@ public class CartServiceImpl implements CartService {
     @Transactional
     public CartDto updateShippingDraft(CheckoutShippingRequest request) {
         Cart cart = currentCart();
+        UserAccount user = currentUser();
         if (request.storeId() != null) {
             if (cart.getStore() != null && !cart.getStore().getId().equals(request.storeId())) {
                 throw new UnauthorizedException("STORE_CONFLICT", "Cart already belongs to another store");
@@ -226,8 +231,15 @@ public class CartServiceImpl implements CartService {
                     .orElseThrow(() -> new NotFoundException("STORE_NOT_FOUND", "Store not found"));
             cart.setStore(store);
         }
+        if (request.addressId() != null) {
+            Address address = addressRepository.findByIdAndUser(request.addressId(), user)
+                    .orElseThrow(() -> new NotFoundException("ADDRESS_NOT_FOUND", "Address not found"));
+            cart.setAddressId(address.getId());
+        } else {
+            cart.setAddressId(null);
+        }
         cart.setFulfillmentMethod(request.fulfillmentMethod());
-        cart.setShippingAddressSnapshot(request.shippingAddressSnapshot().trim());
+        cart.setShippingAddressSnapshot(normalizeNullable(request.shippingAddressSnapshot()));
         cartRepository.save(cart);
         return toCartDto(cart);
     }
@@ -258,8 +270,7 @@ public class CartServiceImpl implements CartService {
      * @return The result of current cart.
      */
     private Cart currentCart() {
-        UserAccount user = userAccountRepository.findByEmailIgnoreCase(SecurityUtils.currentEmail())
-                .orElseThrow(() -> new NotFoundException("USER_NOT_FOUND", "User not found"));
+        UserAccount user = currentUser();
         return cartRepository.findByUser(user).orElseGet(() -> {
             Cart created = new Cart();
             created.setUser(user);
@@ -287,7 +298,13 @@ public class CartServiceImpl implements CartService {
                 ))
                 .toList();
         CartTotalsDto totals = pricingService.calculateTotals(items, cart.getStore(), cart.getCouponCode());
-        return new CartDto(cart.getId(), cart.getStore() == null ? null : cart.getStore().getId(), lines, totals);
+        return new CartDto(
+                cart.getId(),
+                cart.getStore() == null ? null : cart.getStore().getId(),
+                cart.getAddressId(),
+                lines,
+                totals
+        );
     }
 
     private void trackAnalytics(
@@ -370,5 +387,10 @@ public class CartServiceImpl implements CartService {
         if (inventory.getStock() < quantity) {
             throw new UnauthorizedException("STOCK_INSUFFICIENT", "Not enough stock at selected store");
         }
+    }
+
+    private UserAccount currentUser() {
+        return userAccountRepository.findByEmailIgnoreCase(SecurityUtils.currentEmail())
+                .orElseThrow(() -> new NotFoundException("USER_NOT_FOUND", "User not found"));
     }
 }

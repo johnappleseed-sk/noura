@@ -16,6 +16,16 @@ export async function updateStore(storeId, payload) {
   return unwrapApiResponse(response.data)
 }
 
+export async function getStoreLocation(storeId) {
+  const response = await commerceApiClient.get(`/admin/stores/${storeId}/location`)
+  return unwrapApiResponse(response.data)
+}
+
+export async function updateStoreLocation(storeId, payload) {
+  const response = await commerceApiClient.put(`/admin/stores/${storeId}/location`, payload)
+  return unwrapApiResponse(response.data)
+}
+
 export async function deleteStore(storeId) {
   const response = await commerceApiClient.delete(`/stores/${storeId}`)
   return unwrapApiResponse(response.data)

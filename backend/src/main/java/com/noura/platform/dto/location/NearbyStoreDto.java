@@ -18,6 +18,7 @@ public record NearbyStoreDto(
         String region,
         BigDecimal latitude,
         BigDecimal longitude,
+        Integer serviceRadiusMeters,
         LocalTime openTime,
         LocalTime closeTime,
         boolean active,
@@ -26,4 +27,3 @@ public record NearbyStoreDto(
         boolean openNow
 ) {
 }
-

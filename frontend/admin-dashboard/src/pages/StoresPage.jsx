@@ -15,6 +15,7 @@ const DEFAULT_STORE_FORM = {
   region: '',
   latitude: '',
   longitude: '',
+  serviceRadiusMeters: '',
   openTime: '09:00',
   closeTime: '18:00',
   active: true,
@@ -44,6 +45,18 @@ function toNumber(value, label) {
   const raw = String(value ?? '').trim()
   if (!raw) {
     throw new Error(`${label} is required.`)
+  }
+  const numeric = Number(raw)
+  if (Number.isNaN(numeric)) {
+    throw new Error(`${label} must be a number.`)
+  }
+  return numeric
+}
+
+function toOptionalNumber(value, label) {
+  const raw = String(value ?? '').trim()
+  if (!raw) {
+    return null
   }
   const numeric = Number(raw)
   if (Number.isNaN(numeric)) {
@@ -134,6 +147,7 @@ export function StoresPage() {
       region: store.region || '',
       latitude: store.latitude?.toString?.() || '',
       longitude: store.longitude?.toString?.() || '',
+      serviceRadiusMeters: store.serviceRadiusMeters?.toString?.() || '',
       openTime: normalizeTimeForInput(store.openTime),
       closeTime: normalizeTimeForInput(store.closeTime),
       active: Boolean(store.active),
@@ -168,6 +182,7 @@ export function StoresPage() {
         region: storeForm.region.trim(),
         latitude: toNumber(storeForm.latitude, 'Latitude'),
         longitude: toNumber(storeForm.longitude, 'Longitude'),
+        serviceRadiusMeters: toOptionalNumber(storeForm.serviceRadiusMeters, 'Service radius'),
         openTime: toLocalTime(storeForm.openTime, 'Open time'),
         closeTime: toLocalTime(storeForm.closeTime, 'Close time'),
         active: Boolean(storeForm.active),
@@ -216,7 +231,7 @@ export function StoresPage() {
     <div className="page">
       <div className="page-head">
         <h2>Stores</h2>
-        <p>Create and manage store locations, operating hours, service types, and shipping thresholds.</p>
+        <p>Create and manage store coverage, operating hours, service types, and shipping thresholds.</p>
       </div>
 
       {flash ? <div className="alert alert-success">{flash}</div> : null}
@@ -280,6 +295,7 @@ export function StoresPage() {
                   <SortableHeader label="Store" field="name" sortBy={storeSort.sortBy} direction={storeSort.direction} onSort={(f, d) => setStoreSort({ sortBy: f, direction: d })} />
                   <SortableHeader label="Region" field="region" sortBy={storeSort.sortBy} direction={storeSort.direction} onSort={(f, d) => setStoreSort({ sortBy: f, direction: d })} />
                   <th>Services</th>
+                  <th>Radius</th>
                   <th>Hours</th>
                   <th>Shipping</th>
                 </tr>
@@ -300,6 +316,7 @@ export function StoresPage() {
                       </td>
                       <td>{store.region || '-'}</td>
                       <td className="mono">{(store.services || []).join(', ') || '-'}</td>
+                      <td className="mono">{store.serviceRadiusMeters != null ? `${store.serviceRadiusMeters} m` : '-'}</td>
                       <td className="mono">
                         {normalizeTimeForInput(store.openTime)}-{normalizeTimeForInput(store.closeTime)}
                       </td>
@@ -310,7 +327,7 @@ export function StoresPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="5" className="empty-row">No stores found.</td>
+                    <td colSpan="6" className="empty-row">No stores found.</td>
                   </tr>
                 )}
               </tbody>
@@ -371,6 +388,14 @@ export function StoresPage() {
               <label>
                 Longitude
                 <input value={storeForm.longitude} onChange={(event) => setStoreForm((c) => ({ ...c, longitude: event.target.value }))} required />
+              </label>
+              <label>
+                Service radius (meters)
+                <input
+                  value={storeForm.serviceRadiusMeters}
+                  onChange={(event) => setStoreForm((c) => ({ ...c, serviceRadiusMeters: event.target.value }))}
+                  placeholder="Optional"
+                />
               </label>
               <label>
                 Open time
