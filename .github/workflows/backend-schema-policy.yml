@@ -1,0 +1,43 @@
+name: Backend Schema Policy
+
+on:
+  pull_request:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-schema-policy.yml'
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-schema-policy.yml'
+  workflow_dispatch:
+
+jobs:
+  schema-policy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Validate profile schema policy
+        run: python backend/scripts/check_schema_policy.py
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Verify runtime schema safety validator tests
+        run: |
+          chmod +x backend/mvnw
+          cd backend
+          ./mvnw -q -Dtest=SchemaSafetyStartupValidatorTest test

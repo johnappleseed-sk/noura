@@ -68,3 +68,6 @@ Startup validator behavior:
   - Warn on unsafe ddl modes instead of failing
 
 This policy is enforced by `SchemaSafetyStartupValidator`.
+CI enforcement:
+- `.github/workflows/backend-schema-policy.yml`
+- `backend/scripts/check_schema_policy.py`

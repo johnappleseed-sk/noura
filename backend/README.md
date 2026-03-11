@@ -57,6 +57,11 @@ export CORS_ALLOWED_ORIGINS="https://admin.example.com,https://ops.example.com"
 
 Local profiles (`local`, `local-mysql`, `test`) emit warnings instead of failing.
 
+CI guard:
+
+- `backend/scripts/check_schema_policy.py` validates effective `staging` and `prod` profile policy from configuration files.
+- `.github/workflows/backend-schema-policy.yml` runs this guard and `SchemaSafetyStartupValidatorTest` on pull requests and protected branch pushes.
+
 ### Rate Limit Controls
 
 - `RATE_LIMIT_CAPACITY`
