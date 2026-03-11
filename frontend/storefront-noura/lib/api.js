@@ -6,6 +6,24 @@ const ACTIVE_API_PREFIX = ''
 const CUSTOMER_TOKEN_KEY = 'noura_customer_access_token'
 const UNSUPPORTED_PROFILE_MESSAGE =
   'This backend profile does not expose storefront returns, fulfillment tracking, or post-checkout payment APIs.'
+const RUNTIME_FEATURE_ENDPOINT = `${ACTIVE_API_PREFIX}/runtime/features`
+const RUNTIME_FEATURE_KEYS = {
+  ORDER_CANCELLATION: 'storefront.orderCancellation',
+  POST_CHECKOUT_PAYMENTS: 'storefront.postCheckoutPayments',
+  FULFILLMENT_TRACKING: 'storefront.fulfillmentTracking',
+  RETURNS: 'storefront.returns'
+}
+const DEFAULT_RUNTIME_FEATURES = {
+  contractVersion: '1.0',
+  features: {
+    [RUNTIME_FEATURE_KEYS.ORDER_CANCELLATION]: false,
+    [RUNTIME_FEATURE_KEYS.POST_CHECKOUT_PAYMENTS]: false,
+    [RUNTIME_FEATURE_KEYS.FULFILLMENT_TRACKING]: false,
+    [RUNTIME_FEATURE_KEYS.RETURNS]: false
+  },
+  messages: {}
+}
+let runtimeFeaturesPromise = null
 
 function resolveTokenFromWindow() {
   if (typeof window === 'undefined') {
@@ -308,8 +326,43 @@ function buildShippingAddressSnapshot(address) {
     .join(', ')
 }
 
-function unsupportedFeatureError(feature) {
-  return new Error(`${feature} are not available on the active backend profile. ${UNSUPPORTED_PROFILE_MESSAGE}`)
+function unsupportedFeatureError(feature, detail = null) {
+  const reason = detail || UNSUPPORTED_PROFILE_MESSAGE
+  return new Error(`${feature} are not available on the active backend profile. ${reason}`)
+}
+
+function normalizeRuntimeFeatures(payload) {
+  const features = {
+    ...DEFAULT_RUNTIME_FEATURES.features,
+    ...(payload?.features || {})
+  }
+
+  return {
+    contractVersion: payload?.contractVersion || DEFAULT_RUNTIME_FEATURES.contractVersion,
+    features,
+    messages: payload?.messages || {}
+  }
+}
+
+export async function getRuntimeFeatures({ forceRefresh = false } = {}) {
+  if (!forceRefresh && runtimeFeaturesPromise) {
+    return runtimeFeaturesPromise
+  }
+
+  runtimeFeaturesPromise = request(RUNTIME_FEATURE_ENDPOINT)
+    .then((payload) => normalizeRuntimeFeatures(payload))
+    .catch(() => DEFAULT_RUNTIME_FEATURES)
+
+  return runtimeFeaturesPromise
+}
+
+async function assertRuntimeFeature(featureKey, featureLabel) {
+  const runtime = await getRuntimeFeatures()
+  if (runtime?.features?.[featureKey]) {
+    return runtime
+  }
+  const detail = runtime?.messages?.[featureKey] || null
+  throw unsupportedFeatureError(featureLabel, detail)
 }
 
 function safeParseJson(value) {
@@ -557,15 +610,18 @@ export async function checkoutCart(token, body) {
 }
 
 export async function getOrderPayments() {
+  await assertRuntimeFeature(RUNTIME_FEATURE_KEYS.POST_CHECKOUT_PAYMENTS, 'Post-checkout payment listing')
   return []
 }
 
 export async function createOrderPayment() {
-  throw unsupportedFeatureError('Post-checkout payment creation')
+  await assertRuntimeFeature(RUNTIME_FEATURE_KEYS.POST_CHECKOUT_PAYMENTS, 'Post-checkout payment creation')
+  throw new Error('Post-checkout payment APIs are enabled in backend but not yet wired in this storefront client.')
 }
 
 export async function captureOrderPayment() {
-  throw unsupportedFeatureError('Post-checkout payment capture')
+  await assertRuntimeFeature(RUNTIME_FEATURE_KEYS.POST_CHECKOUT_PAYMENTS, 'Post-checkout payment capture')
+  throw new Error('Post-checkout payment APIs are enabled in backend but not yet wired in this storefront client.')
 }
 
 export async function getMyOrders(token) {
@@ -585,27 +641,36 @@ export async function getOrder(token, orderId) {
 }
 
 export async function cancelOrder() {
-  throw unsupportedFeatureError('Order cancellation')
+  await assertRuntimeFeature(RUNTIME_FEATURE_KEYS.ORDER_CANCELLATION, 'Order cancellation')
+  throw new Error('Order cancellation APIs are enabled in backend but not yet wired in this storefront client.')
 }
 
 export async function getOrderFulfillment() {
+  await assertRuntimeFeature(RUNTIME_FEATURE_KEYS.FULFILLMENT_TRACKING, 'Fulfillment tracking')
   return null
 }
 
 export async function listReturns() {
-  return []
+  const runtime = await getRuntimeFeatures()
+  if (!runtime?.features?.[RUNTIME_FEATURE_KEYS.RETURNS]) {
+    return []
+  }
+  throw new Error('Returns APIs are enabled in backend but not yet wired in this storefront client.')
 }
 
 export async function getReturnRequest() {
-  throw unsupportedFeatureError('Returns')
+  await assertRuntimeFeature(RUNTIME_FEATURE_KEYS.RETURNS, 'Returns')
+  throw new Error('Returns APIs are enabled in backend but not yet wired in this storefront client.')
 }
 
 export async function createReturnRequest() {
-  throw unsupportedFeatureError('Returns')
+  await assertRuntimeFeature(RUNTIME_FEATURE_KEYS.RETURNS, 'Returns')
+  throw new Error('Returns APIs are enabled in backend but not yet wired in this storefront client.')
 }
 
 export async function cancelReturnRequest() {
-  throw unsupportedFeatureError('Returns')
+  await assertRuntimeFeature(RUNTIME_FEATURE_KEYS.RETURNS, 'Returns')
+  throw new Error('Returns APIs are enabled in backend but not yet wired in this storefront client.')
 }
 
 // ── Search & Discovery ──────────────────────────────────────────────

@@ -105,6 +105,8 @@ Generated from `/v3/api-docs`.
 
 ## inventory-controller
 
+Contract status: transitional compatibility aliases. In OpenAPI these operations are marked `deprecated: true` with `x-contract-status: transitional`. Canonical inventory surface remains `/api/inventory/v1/*`.
+
 | Method | Path | Summary | Params | Request Body | Response |
 | --- | --- | --- | --- | --- | --- |
 | POST | /api/v1/inventory/adjust | adjust | - | com.noura.platform.dto.inventory.InventoryAdjustRequest | com.noura.platform.common.api.ApiResponseCom.noura.platform.dto.inventory.InventoryLevelDto |

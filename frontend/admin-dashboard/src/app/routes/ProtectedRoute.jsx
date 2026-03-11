@@ -1,9 +1,9 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../../features/auth/useAuth'
-import { hasAnyRole } from '../../shared/auth/roles'
+import { hasAnyRole, hasCapability } from '../../shared/auth/roles'
 import { Spinner } from '../../shared/ui/Spinner'
 
-export function ProtectedRoute({ allowedRoles = [] }) {
+export function ProtectedRoute({ allowedRoles = [], requiredCapability = null, children = null }) {
   const { auth, initializing, isAuthenticated } = useAuth()
   const location = useLocation()
 
@@ -17,6 +17,14 @@ export function ProtectedRoute({ allowedRoles = [] }) {
 
   if (!hasAnyRole(auth?.roles, allowedRoles)) {
     return <Navigate to="/unauthorized" replace />
+  }
+
+  if (!hasCapability(auth, requiredCapability)) {
+    return <Navigate to="/unauthorized" replace />
+  }
+
+  if (children) {
+    return children
   }
 
   return <Outlet />

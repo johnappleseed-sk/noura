@@ -11,6 +11,7 @@ import com.noura.platform.repository.ProductInventoryRepository;
 import com.noura.platform.repository.ProductRepository;
 import com.noura.platform.repository.StoreRepository;
 import com.noura.platform.repository.UserAccountRepository;
+import com.noura.platform.service.AnalyticsEventService;
 import com.noura.platform.service.PricingService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,6 +49,8 @@ class CartServiceImplOwnershipTest {
     private StoreRepository storeRepository;
     @Mock
     private PricingService pricingService;
+    @Mock
+    private AnalyticsEventService analyticsEventService;
 
     private CartServiceImpl cartService;
 
@@ -67,7 +70,8 @@ class CartServiceImplOwnershipTest {
                 productRepository,
                 inventoryRepository,
                 storeRepository,
-                pricingService
+                pricingService,
+                analyticsEventService
         );
     }
 

@@ -8,7 +8,7 @@ import com.noura.platform.service.impl.NotificationServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -33,7 +33,7 @@ class NotificationServiceMethodSecurityTest {
         assertThrows(AccessDeniedException.class, () -> notificationService.pushToUser(UUID.randomUUID(), null));
     }
 
-    @Configuration
+    @TestConfiguration
     @EnableMethodSecurity
     static class Config {
 

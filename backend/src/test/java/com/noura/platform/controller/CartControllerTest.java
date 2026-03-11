@@ -33,7 +33,7 @@ class CartControllerTest {
                 UUID.randomUUID(),
                 null,
                 List.of(),
-                new CartTotalsDto(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, null)
+                new CartTotalsDto(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, null, List.of(), false)
         );
         when(unifiedOrderService.clearCart()).thenReturn(cart);
 

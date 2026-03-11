@@ -109,6 +109,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, appProperties.getApi().getVersionPrefix() + "/price-lists").permitAll()
                         .requestMatchers(HttpMethod.GET, appProperties.getApi().getVersionPrefix() + "/prices/**").permitAll()
                         .requestMatchers(HttpMethod.GET, appProperties.getApi().getVersionPrefix() + "/promotions/active").permitAll()
+                        .requestMatchers(HttpMethod.GET, appProperties.getApi().getVersionPrefix() + "/runtime/features").permitAll()
                         .requestMatchers(HttpMethod.POST, appProperties.getApi().getVersionPrefix() + "/analytics/events").permitAll()
                         .requestMatchers(HttpMethod.GET, appProperties.getApi().getVersionPrefix() + "/carousels/hero").permitAll()
                         .requestMatchers(HttpMethod.POST, appProperties.getApi().getVersionPrefix() + "/location/reverse-geocode").permitAll()

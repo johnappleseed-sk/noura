@@ -86,7 +86,10 @@ public class PhotoLocationMetadataServiceImpl implements PhotoLocationMetadataSe
 
         byte[] bytes = downloadBytes(uri);
         ExifResult exif = extractExif(bytes);
-        if (exif.location() == null || !exif.location().isValid()) {
+        if (exif.location() == null
+                || Double.isNaN(exif.location().getLatitude())
+                || Double.isNaN(exif.location().getLongitude())
+                || exif.location().isZero()) {
             throw new BadRequestException("PHOTO_EXIF_NOT_FOUND", "No EXIF GPS metadata found in this image.");
         }
 

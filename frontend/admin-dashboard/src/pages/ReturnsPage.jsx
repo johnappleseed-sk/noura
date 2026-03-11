@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { listOrders, updateOrderStatus } from '../shared/api/endpoints/ordersApi'
+import { getRuntimeFeatures } from '../shared/api/endpoints/runtimeFeaturesApi'
 import { Spinner } from '../shared/ui/Spinner'
 
 const REFUND_STATUS_FLOW = ['NONE', 'REQUESTED', 'APPROVED', 'REJECTED', 'COMPLETED']
@@ -28,13 +29,18 @@ export function ReturnsPage() {
   const [flash, setFlash] = useState('')
   const [refundFilter, setRefundFilter] = useState('')
   const [orders, setOrders] = useState([])
+  const [runtimeFeatures, setRuntimeFeatures] = useState(null)
 
   async function load() {
     setLoading(true)
     setError('')
     try {
-      const page = await listOrders({ page: 0, size: 100, sortBy: 'createdAt', direction: 'desc' })
+      const [page, featureSnapshot] = await Promise.all([
+        listOrders({ page: 0, size: 100, sortBy: 'createdAt', direction: 'desc' }),
+        getRuntimeFeatures().catch(() => null)
+      ])
       setOrders(page?.content || [])
+      setRuntimeFeatures(featureSnapshot)
     } catch (err) {
       setError(err.message || 'Failed to load refund workflow.')
     } finally {
@@ -49,6 +55,9 @@ export function ReturnsPage() {
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => !refundFilter || order.refundStatus === refundFilter)
   }, [orders, refundFilter])
+
+  const storefrontReturnsEnabled = runtimeFeatures?.features?.['storefront.returns'] === true
+  const storefrontReturnsMessage = runtimeFeatures?.messages?.['storefront.returns'] || ''
 
   async function applyRefundUpdate(order, nextRefundStatus, markOrderRefunded = false) {
     setWorkingId(order.id)
@@ -79,6 +88,15 @@ export function ReturnsPage() {
         <h2>Returns and refunds</h2>
         <p>Current runtime uses the active platform refund workflow on orders instead of the archived Thymeleaf RMA screens.</p>
       </div>
+
+      {!storefrontReturnsEnabled && runtimeFeatures ? (
+        <section className="panel">
+          <p style={{ margin: 0 }}>
+            Storefront self-service returns are currently disabled, so this admin refund workflow is the canonical operational path.
+            {storefrontReturnsMessage ? ` ${storefrontReturnsMessage}` : ''}
+          </p>
+        </section>
+      ) : null}
 
       {flash ? <div className="alert alert-success">{flash}</div> : null}
       {error ? <div className="alert alert-error">{error}</div> : null}

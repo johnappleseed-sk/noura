@@ -4,9 +4,12 @@ import com.noura.platform.common.exception.ForbiddenException;
 import com.noura.platform.common.exception.NotFoundException;
 import com.noura.platform.domain.entity.CartItem;
 import com.noura.platform.domain.entity.Coupon;
+import com.noura.platform.domain.entity.Product;
 import com.noura.platform.domain.entity.Store;
 import com.noura.platform.dto.cart.CartTotalsDto;
+import com.noura.platform.dto.pricing.PromotionEvaluationDto;
 import com.noura.platform.repository.CouponRepository;
+import com.noura.platform.service.PromotionRuleEngineService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -27,10 +30,13 @@ class PricingServiceImplTest {
 
     @Mock
     private CouponRepository couponRepository;
+    @Mock
+    private PromotionRuleEngineService promotionRuleEngineService;
 
     @Test
     void calculateTotals_shouldApplyCouponAndShippingFee() {
-        PricingServiceImpl service = new PricingServiceImpl(couponRepository);
+        PricingServiceImpl service = new PricingServiceImpl(couponRepository, promotionRuleEngineService);
+        mockPromotionEvaluation(BigDecimal.ZERO, false);
         Coupon save10 = coupon("SAVE10", 10, false, BigDecimal.ZERO);
         when(couponRepository.findByCodeIgnoreCaseAndActiveTrue("SAVE10")).thenReturn(Optional.of(save10));
 
@@ -45,7 +51,8 @@ class PricingServiceImplTest {
 
     @Test
     void calculateTotals_shouldApplyFreeShippingCoupon() {
-        PricingServiceImpl service = new PricingServiceImpl(couponRepository);
+        PricingServiceImpl service = new PricingServiceImpl(couponRepository, promotionRuleEngineService);
+        mockPromotionEvaluation(BigDecimal.ZERO, false);
         Coupon freeShip = coupon("FREESHIP5", 5, true, BigDecimal.ZERO);
         when(couponRepository.findByCodeIgnoreCaseAndActiveTrue("FREESHIP5")).thenReturn(Optional.of(freeShip));
 
@@ -58,7 +65,7 @@ class PricingServiceImplTest {
 
     @Test
     void calculateTotals_shouldRejectInvalidCoupon() {
-        PricingServiceImpl service = new PricingServiceImpl(couponRepository);
+        PricingServiceImpl service = new PricingServiceImpl(couponRepository, promotionRuleEngineService);
         when(couponRepository.findByCodeIgnoreCaseAndActiveTrue("BADCODE")).thenReturn(Optional.empty());
 
         assertThrows(
@@ -69,7 +76,7 @@ class PricingServiceImplTest {
 
     @Test
     void calculateTotals_shouldRejectWhenOrderBelowCouponMinimum() {
-        PricingServiceImpl service = new PricingServiceImpl(couponRepository);
+        PricingServiceImpl service = new PricingServiceImpl(couponRepository, promotionRuleEngineService);
         Coupon premium = coupon("PREMIUM15", 15, false, new BigDecimal("100.00"));
         when(couponRepository.findByCodeIgnoreCaseAndActiveTrue("PREMIUM15")).thenReturn(Optional.of(premium));
 
@@ -81,7 +88,7 @@ class PricingServiceImplTest {
 
     @Test
     void calculateTotals_shouldRejectExpiredCoupon() {
-        PricingServiceImpl service = new PricingServiceImpl(couponRepository);
+        PricingServiceImpl service = new PricingServiceImpl(couponRepository, promotionRuleEngineService);
         Coupon expired = coupon("OLD10", 10, false, BigDecimal.ZERO);
         expired.setValidUntil(Instant.now().minus(1, ChronoUnit.DAYS));
         when(couponRepository.findByCodeIgnoreCaseAndActiveTrue("OLD10")).thenReturn(Optional.of(expired));
@@ -94,7 +101,7 @@ class PricingServiceImplTest {
 
     @Test
     void calculateTotals_shouldRejectCouponBeforeValidFrom() {
-        PricingServiceImpl service = new PricingServiceImpl(couponRepository);
+        PricingServiceImpl service = new PricingServiceImpl(couponRepository, promotionRuleEngineService);
         Coupon future = coupon("FUTURE10", 10, false, BigDecimal.ZERO);
         future.setValidFrom(Instant.now().plus(1, ChronoUnit.DAYS));
         when(couponRepository.findByCodeIgnoreCaseAndActiveTrue("FUTURE10")).thenReturn(Optional.of(future));
@@ -107,7 +114,7 @@ class PricingServiceImplTest {
 
     @Test
     void calculateTotals_shouldRejectMultipleCouponInput() {
-        PricingServiceImpl service = new PricingServiceImpl(couponRepository);
+        PricingServiceImpl service = new PricingServiceImpl(couponRepository, promotionRuleEngineService);
 
         assertThrows(
                 ForbiddenException.class,
@@ -116,10 +123,18 @@ class PricingServiceImplTest {
     }
 
     private List<CartItem> items(int quantity, String unitPrice) {
+        Product product = new Product();
+        product.setId(java.util.UUID.randomUUID());
         CartItem item = new CartItem();
+        item.setProduct(product);
         item.setQuantity(quantity);
         item.setUnitPrice(new BigDecimal(unitPrice));
         return List.of(item);
+    }
+
+    private void mockPromotionEvaluation(BigDecimal discountAmount, boolean freeShipping) {
+        when(promotionRuleEngineService.evaluate(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.anyList()))
+                .thenReturn(new PromotionEvaluationDto(BigDecimal.ZERO, discountAmount, freeShipping, List.of(), List.of()));
     }
 
     private Store store(String shippingFee, String freeShippingThreshold) {

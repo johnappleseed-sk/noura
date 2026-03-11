@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import {
   createInventoryTransfer,
   createRestockSchedule,
-  listCommerceWarehouses,
+  listEnterpriseWarehouses,
   listInventoryReservations,
   listInventoryTransfers,
   listLowStockAlerts,
@@ -50,7 +50,7 @@ export function EnterpriseInventoryPanel() {
     setError('')
     try {
       const [warehouseData, alertsData, reservationsData, transfersData, restocksData] = await Promise.all([
-        listCommerceWarehouses(),
+        listEnterpriseWarehouses(),
         listLowStockAlerts(),
         listInventoryReservations(),
         listInventoryTransfers(),

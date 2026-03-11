@@ -1,4 +1,4 @@
-// File: /Users/Saturn/Downloads/Coding/Projects/noura/frontend/storefront-noura/app/products/page.jsx
+// File: C:\Users\Admin\Desktop\noura\frontend\storefront-noura\app\products\page.jsx
 import * as entry from '../../../../app/products/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

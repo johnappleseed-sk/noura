@@ -9,7 +9,7 @@ import com.noura.platform.service.impl.OrderServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -33,7 +33,7 @@ class OrderServiceMethodSecurityTest {
         assertThrows(AccessDeniedException.class, () -> orderService.adminOrders(PageRequest.of(0, 5)));
     }
 
-    @Configuration
+    @TestConfiguration
     @EnableMethodSecurity
     static class Config {
 

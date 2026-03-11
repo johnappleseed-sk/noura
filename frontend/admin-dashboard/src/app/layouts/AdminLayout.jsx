@@ -1,7 +1,7 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '../../features/auth/useAuth'
-import { ADMIN_ROLES, hasAnyRole } from '../../shared/auth/roles'
+import { ADMIN_ROLES, hasAnyRole, hasCapability } from '../../shared/auth/roles'
 import { NAV_SECTIONS, ADMIN_ONLY_ITEMS } from '../navigation'
 import { Icon } from '../../shared/ui/Icon'
 import { useTheme } from '../../shared/ui/ThemeProvider'
@@ -55,6 +55,20 @@ export function AdminLayout() {
   const [commandOpen, setCommandOpen] = useState(false)
   const profileRef = useRef(null)
   const [unreadCount, setUnreadCount] = useState(0)
+
+  const visibleSections = useMemo(() => (
+    NAV_SECTIONS
+      .map((section) => ({
+        ...section,
+        items: section.items.filter((item) => hasCapability(auth, item.capability))
+      }))
+      .filter((section) => section.items.length > 0)
+  ), [auth])
+
+  const visibleAdminOnlyItems = useMemo(
+    () => ADMIN_ONLY_ITEMS.filter((item) => hasCapability(auth, item.capability)),
+    [auth]
+  )
 
   const avatarLabel = useMemo(() => initialsForUser(auth), [auth])
   const primaryRole = useMemo(() => (auth?.roles?.[0] ? String(auth.roles[0]) : 'STAFF'), [auth])
@@ -113,7 +127,7 @@ export function AdminLayout() {
   }
 
   const commandItems = useMemo(() => {
-    const navItems = NAV_SECTIONS.flatMap((section) =>
+    const navItems = visibleSections.flatMap((section) =>
       section.items.map((item) => ({
         id: item.to,
         label: item.label,
@@ -128,7 +142,7 @@ export function AdminLayout() {
     )
 
     const adminItems = isAdmin
-      ? ADMIN_ONLY_ITEMS.map((item) => ({
+      ? visibleAdminOnlyItems.map((item) => ({
           id: item.to,
           label: item.label,
           description: 'Admin',
@@ -175,7 +189,7 @@ export function AdminLayout() {
     ]
 
     return [...navItems, ...adminItems, ...actions]
-  }, [handleLogout, isAdmin, navigate, theme, toggleTheme])
+  }, [handleLogout, isAdmin, navigate, theme, toggleTheme, visibleAdminOnlyItems, visibleSections])
 
   return (
     <div className={`admin-shell${sidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
@@ -222,7 +236,7 @@ export function AdminLayout() {
         </div>
 
         <nav className="side-nav" aria-label="Primary">
-          {NAV_SECTIONS.map((section) => (
+          {visibleSections.map((section) => (
             <div className="nav-group" key={section.label}>
               {sidebarCollapsed ? null : <p className="side-section">{section.label}</p>}
               {section.items.map((item) => (
@@ -241,10 +255,10 @@ export function AdminLayout() {
             </div>
           ))}
 
-          {isAdmin ? (
+          {isAdmin && visibleAdminOnlyItems.length > 0 ? (
             <div className="nav-group">
               {sidebarCollapsed ? null : <p className="side-section">Admin</p>}
-              {ADMIN_ONLY_ITEMS.map((item) => (
+              {visibleAdminOnlyItems.map((item) => (
                 <NavLink
                   key={item.to}
                   to={item.to}

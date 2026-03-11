@@ -7,7 +7,9 @@ import com.noura.platform.dto.inventory.InventoryRestockScheduleRequest;
 import com.noura.platform.dto.inventory.InventoryTransferDto;
 import com.noura.platform.dto.inventory.InventoryTransferRequest;
 import com.noura.platform.dto.inventory.LowStockAlertDto;
+import com.noura.platform.dto.inventory.WarehouseDto;
 import com.noura.platform.service.EnterpriseInventoryOperationsService;
+import com.noura.platform.service.UnifiedInventoryService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +31,12 @@ import java.util.List;
 public class EnterpriseInventoryController {
 
     private final EnterpriseInventoryOperationsService enterpriseInventoryOperationsService;
+    private final UnifiedInventoryService unifiedInventoryService;
+
+    @GetMapping("/warehouses")
+    public ApiResponse<List<WarehouseDto>> warehouses(HttpServletRequest http) {
+        return ApiResponse.ok("Inventory warehouses", unifiedInventoryService.warehouses(), http.getRequestURI());
+    }
 
     @GetMapping("/alerts/low-stock")
     public ApiResponse<List<LowStockAlertDto>> lowStockAlerts(HttpServletRequest http) {

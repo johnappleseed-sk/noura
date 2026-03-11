@@ -28,13 +28,23 @@ class UnifiedPricingServiceImplTest {
         var expected = List.of(new PromotionDto(
                 UUID.randomUUID(),
                 "Flash Sale",
+                "FLASH-SALE",
+                null,
                 com.noura.platform.domain.enums.PromotionType.PERCENTAGE,
                 null,
                 java.util.Map.of(),
                 null,
                 null,
                 true,
+                false,
                 10,
+                null,
+                null,
+                0,
+                null,
+                false,
+                null,
+                null,
                 List.of()
         ));
         when(pricingCatalogService.activePromotions()).thenReturn(expected);

@@ -1,23 +1,44 @@
-'use client'
-
 import Link from 'next/link'
+import { getRuntimeFeatures } from '@/lib/api'
 
-export default function ReturnsPage() {
+export default async function ReturnsPage() {
+  let runtimeFeatures = null
+
+  try {
+    runtimeFeatures = await getRuntimeFeatures()
+  } catch {
+    runtimeFeatures = null
+  }
+
+  const returnsEnabled = runtimeFeatures?.features?.['storefront.returns'] === true
+  const returnsMessage =
+    runtimeFeatures?.messages?.['storefront.returns'] ||
+    'The active runtime does not expose storefront returns APIs.'
+
   return (
     <section className="section stack-gap">
       <div className="section-head">
         <div>
           <span className="eyebrow">Returns</span>
-          <h1>Returns are not active on this backend profile</h1>
+          <h1>
+            {returnsEnabled
+              ? 'Returns are enabled in backend but not yet wired in this storefront client'
+              : 'Returns are not active on this backend profile'}
+          </h1>
         </div>
       </div>
 
       <article className="panel notice">
         <p>
-          The current local backend exposes catalog, account, cart, checkout, and order history through
-          <code> /api/v1 </code>
-          endpoints. Customer return workflows are implemented in a separate storefront module that is not active in
-          this runtime.
+          {returnsEnabled ? (
+            <>The runtime contract reports customer returns as enabled, but this storefront route is currently informational only.</>
+          ) : (
+            <>
+              The current backend exposes catalog, account, cart, checkout, and order history through
+              <code> /api/v1 </code>
+              endpoints. {returnsMessage}
+            </>
+          )}
         </p>
       </article>
 

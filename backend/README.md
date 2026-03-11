@@ -48,6 +48,15 @@ Example:
 export CORS_ALLOWED_ORIGINS="https://admin.example.com,https://ops.example.com"
 ```
 
+### Schema Safety Guard
+
+`SchemaSafetyStartupValidator` enforces migration-first behavior in non-local profiles:
+
+- startup fails if `spring.jpa.hibernate.ddl-auto` is `update`, `create`, or `create-drop`
+- startup fails if `spring.flyway.enabled=false`
+
+Local profiles (`local`, `local-mysql`, `test`) emit warnings instead of failing.
+
 ### Rate Limit Controls
 
 - `RATE_LIMIT_CAPACITY`
@@ -155,3 +164,8 @@ Example:
 curl "http://localhost:8080/api/v1/orders/7d8f.../timeline" \
   -H "Authorization: Bearer <JWT>"
 ```
+
+### Admin Capabilities
+
+- `GET /api/v1/admin/capabilities`
+  - Returns normalized roles plus a capability map used by the admin dashboard for route/action gating.

@@ -21,3 +21,13 @@ Default inventory admin login (seeded via `application-inventory-local.yml`):
 
 - username: `inventory.admin`
 - password: `Admin123!`
+
+## Runtime authorization model (v1.0 foundation)
+
+- Backend capability contract: `GET /api/v1/admin/capabilities`
+- Router + navigation are capability-aware and no longer hard-coded as admin-only for all warehouse routes.
+
+Role intent:
+- `ADMIN`: full commerce + warehouse + tool access
+- `WAREHOUSE_MANAGER`: warehouse operations access
+- `VIEWER`: warehouse read-oriented access

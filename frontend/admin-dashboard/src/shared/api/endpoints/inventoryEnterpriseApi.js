@@ -1,8 +1,8 @@
 import { unwrapApiResponse } from '../apiResult'
 import { commerceApiClient } from '../httpClient'
 
-export async function listCommerceWarehouses() {
-  const response = await commerceApiClient.get('/inventory/warehouses')
+export async function listEnterpriseWarehouses() {
+  const response = await commerceApiClient.get('/admin/inventory/warehouses')
   return unwrapApiResponse(response.data)
 }
 

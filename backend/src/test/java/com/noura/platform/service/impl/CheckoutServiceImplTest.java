@@ -27,6 +27,7 @@ import com.noura.platform.repository.OrderTimelineEventRepository;
 import com.noura.platform.repository.ProductInventoryRepository;
 import com.noura.platform.repository.StoreRepository;
 import com.noura.platform.repository.UserAccountRepository;
+import com.noura.platform.service.AnalyticsEventService;
 import com.noura.platform.service.PricingService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -68,6 +69,7 @@ class CheckoutServiceImplTest {
     @Mock private OrderMapper orderMapper;
     @Mock private ApplicationEventPublisher applicationEventPublisher;
     @Mock private PricingService pricingService;
+    @Mock private AnalyticsEventService analyticsEventService;
 
     private CheckoutServiceImpl checkoutService;
 
@@ -99,7 +101,8 @@ class CheckoutServiceImplTest {
                 applicationEventPublisher,
                 kafkaTemplate,
                 appProperties,
-                pricingService
+                pricingService,
+                analyticsEventService
         );
     }
 
@@ -191,7 +194,9 @@ class CheckoutServiceImplTest {
                         BigDecimal.ZERO,
                         BigDecimal.ONE,
                         BigDecimal.valueOf(11),
-                        null
+                        null,
+                        List.of(),
+                        false
                 ));
         when(orderRepository.save(any(Order.class))).thenReturn(pendingOrder);
         when(inventoryRepository.decrementStockIfAvailable(product.getId(), store.getId(), 5)).thenReturn(0);

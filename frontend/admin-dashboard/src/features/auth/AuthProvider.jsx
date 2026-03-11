@@ -4,26 +4,29 @@ import {
   me,
   registerUser
 } from '../../shared/api/endpoints/authApi'
+import { getAdminCapabilities } from '../../shared/api/endpoints/adminCapabilitiesApi'
 import {
   clearAuthSnapshot,
   loadAuthSnapshot,
   saveAuthSnapshot
 } from '../../shared/auth/tokenStorage'
-import { normalizeRoles } from '../../shared/auth/roles'
+import { deriveCapabilities, normalizeRoles } from '../../shared/auth/roles'
 
 const AuthContext = createContext(null)
 
 function toSnapshot(payload) {
   const user = payload || {}
+  const roles = normalizeRoles(user.roles)
   return {
     accessToken: user.accessToken,
     refreshToken: user.refreshToken,
     userId: user.userId,
     email: user.email,
     fullName: user.fullName,
-    roles: normalizeRoles(user.roles),
+    roles,
     enabled: user.enabled,
-    permissions: []
+    permissions: [],
+    capabilities: deriveCapabilities(roles)
   }
 }
 
@@ -42,15 +45,20 @@ export function AuthProvider({ children }) {
       }
 
       try {
-        const profile = await me()
+        const [profile, capabilitiesResponse] = await Promise.all([
+          me(),
+          getAdminCapabilities().catch(() => null)
+        ])
         if (!active) return
+        const roles = normalizeRoles(profile.roles || snapshot.roles)
         const merged = {
           ...snapshot,
           userId: profile.id || snapshot.userId,
           email: profile.email || snapshot.email,
           fullName: profile.fullName || snapshot.fullName,
-          roles: normalizeRoles(profile.roles || snapshot.roles),
-          enabled: profile.enabled ?? snapshot.enabled
+          roles,
+          enabled: profile.enabled ?? snapshot.enabled,
+          capabilities: capabilitiesResponse?.capabilities || deriveCapabilities(roles)
         }
         saveAuthSnapshot(merged)
         setAuth(merged)
@@ -79,14 +87,19 @@ export function AuthProvider({ children }) {
       saveAuthSnapshot(snapshot)
       setAuth(snapshot)
       try {
-        const profile = await me()
+        const [profile, capabilitiesResponse] = await Promise.all([
+          me(),
+          getAdminCapabilities().catch(() => null)
+        ])
+        const roles = normalizeRoles(profile.roles || snapshot.roles)
         const merged = {
           ...snapshot,
           userId: profile.id || snapshot.userId,
           email: profile.email || snapshot.email,
           fullName: profile.fullName || snapshot.fullName,
-          roles: normalizeRoles(profile.roles || snapshot.roles),
-          enabled: profile.enabled ?? snapshot.enabled
+          roles,
+          enabled: profile.enabled ?? snapshot.enabled,
+          capabilities: capabilitiesResponse?.capabilities || deriveCapabilities(roles)
         }
         saveAuthSnapshot(merged)
         setAuth(merged)

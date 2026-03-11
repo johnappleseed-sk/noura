@@ -45,7 +45,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @TestPropertySource(properties = {
         "app.api.version-prefix=/api/v1",
         "app.jwt.secret=0123456789abcdef0123456789abcdef",
-        "app.jwt.issuer=noura-test"
+        "app.jwt.issuer=noura-test",
+        "spring.main.allow-bean-definition-overriding=true"
 })
 class ProductControllerSecurityIntegrationTest {
 

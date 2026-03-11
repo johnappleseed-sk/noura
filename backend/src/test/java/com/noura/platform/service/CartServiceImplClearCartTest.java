@@ -10,6 +10,7 @@ import com.noura.platform.repository.ProductInventoryRepository;
 import com.noura.platform.repository.ProductRepository;
 import com.noura.platform.repository.StoreRepository;
 import com.noura.platform.repository.UserAccountRepository;
+import com.noura.platform.service.AnalyticsEventService;
 import com.noura.platform.service.PricingService;
 import com.noura.platform.service.impl.CartServiceImpl;
 import org.junit.jupiter.api.AfterEach;
@@ -57,6 +58,9 @@ class CartServiceImplClearCartTest {
     @Mock
     private PricingService pricingService;
 
+    @Mock
+    private AnalyticsEventService analyticsEventService;
+
     private CartServiceImpl cartService;
 
     @BeforeEach
@@ -75,7 +79,8 @@ class CartServiceImplClearCartTest {
                 productRepository,
                 inventoryRepository,
                 storeRepository,
-                pricingService
+                pricingService,
+                analyticsEventService
         );
     }
 

@@ -28,13 +28,6 @@ const commerceBase = normalizeBaseUrl(
   '/api/v1'
 )
 
-const inventoryBase = normalizeBaseUrl(
-  process.env.NEXT_PUBLIC_INVENTORY_API_BASE_URL ||
-    process.env.INVENTORY_API_BASE_URL ||
-    apiHost,
-  '/api/inventory/v1'
-)
-
 function buildHeaders(token, initHeaders = {}) {
   const headers = {
     Accept: 'application/json',
@@ -97,4 +90,3 @@ function createClient(baseUrl) {
 }
 
 export const commerceApiClient = createClient(commerceBase)
-export const inventoryApiClient = createClient(inventoryBase)
