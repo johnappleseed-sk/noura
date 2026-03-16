@@ -1,0 +1,17 @@
+/Users/Saturn/Downloads/Coding/Projects/noura/services/search-service/src/main/java/com/noura/search/SearchServiceApplication.java
+/Users/Saturn/Downloads/Coding/Projects/noura/services/search-service/src/main/java/com/noura/search/common/ApiResponse.java
+/Users/Saturn/Downloads/Coding/Projects/noura/services/search-service/src/main/java/com/noura/search/config/RequestCorrelationFilter.java
+/Users/Saturn/Downloads/Coding/Projects/noura/services/search-service/src/main/java/com/noura/search/controller/SearchPublicController.java
+/Users/Saturn/Downloads/Coding/Projects/noura/services/search-service/src/main/java/com/noura/search/domain/entity/SearchBrand.java
+/Users/Saturn/Downloads/Coding/Projects/noura/services/search-service/src/main/java/com/noura/search/domain/entity/SearchCategory.java
+/Users/Saturn/Downloads/Coding/Projects/noura/services/search-service/src/main/java/com/noura/search/domain/entity/SearchProduct.java
+/Users/Saturn/Downloads/Coding/Projects/noura/services/search-service/src/main/java/com/noura/search/domain/entity/SearchStore.java
+/Users/Saturn/Downloads/Coding/Projects/noura/services/search-service/src/main/java/com/noura/search/dto/SearchSuggestionDto.java
+/Users/Saturn/Downloads/Coding/Projects/noura/services/search-service/src/main/java/com/noura/search/dto/TrendTagDto.java
+/Users/Saturn/Downloads/Coding/Projects/noura/services/search-service/src/main/java/com/noura/search/exception/ApiExceptionHandler.java
+/Users/Saturn/Downloads/Coding/Projects/noura/services/search-service/src/main/java/com/noura/search/repository/SearchBrandRepository.java
+/Users/Saturn/Downloads/Coding/Projects/noura/services/search-service/src/main/java/com/noura/search/repository/SearchCategoryRepository.java
+/Users/Saturn/Downloads/Coding/Projects/noura/services/search-service/src/main/java/com/noura/search/repository/SearchProductRepository.java
+/Users/Saturn/Downloads/Coding/Projects/noura/services/search-service/src/main/java/com/noura/search/repository/SearchStoreRepository.java
+/Users/Saturn/Downloads/Coding/Projects/noura/services/search-service/src/main/java/com/noura/search/service/SearchQueryService.java
+/Users/Saturn/Downloads/Coding/Projects/noura/services/search-service/src/main/java/com/noura/search/service/impl/SearchQueryServiceImpl.java

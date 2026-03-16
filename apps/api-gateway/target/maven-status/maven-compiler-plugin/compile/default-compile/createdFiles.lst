@@ -1,0 +1,5 @@
+com/company/platform/gateway/config/AuthClaimForwardingFilter.class
+com/company/platform/gateway/config/GatewayAuthProperties.class
+com/company/platform/gateway/health/GatewayHealthController.class
+com/company/platform/gateway/config/GatewaySecurityConfig.class
+com/company/platform/gateway/EdgeGatewayApplication.class

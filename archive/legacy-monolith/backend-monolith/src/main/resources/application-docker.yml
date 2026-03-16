@@ -1,0 +1,65 @@
+spring:
+  config:
+    activate:
+      on-profile: docker
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://postgres:5432/commerce_platform}
+    username: ${DB_USERNAME:commerce}
+    password: ${DB_PASSWORD:commerce}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:redpanda:9092}
+  flyway:
+    enabled: true
+    connect-retries: 30
+    connect-retries-interval: 2
+    locations: classpath:db/migration
+    validate-on-migrate: true
+    clean-disabled: true
+    out-of-order: false
+  cache:
+    type: redis
+  session:
+    store-type: redis
+
+server:
+  port: ${SERVER_PORT:8080}
+  forward-headers-strategy: framework
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+      probes:
+        enabled: true
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:${APP_SECURITY_JWT_SECRET:docker-dev-jwt-secret-change-me-please}}
+    issuer: ${JWT_ISSUER:noura-docker}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:4173,http://localhost:3000,http://localhost:3001}
+  auth:
+    sso:
+      enabled: ${APP_AUTH_SSO_ENABLED:false}
+
+inventory:
+  enabled: false

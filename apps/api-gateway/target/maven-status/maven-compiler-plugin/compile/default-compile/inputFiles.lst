@@ -1,0 +1,5 @@
+/Users/Saturn/Downloads/Coding/Projects/noura/apps/api-gateway/src/main/java/com/company/platform/gateway/EdgeGatewayApplication.java
+/Users/Saturn/Downloads/Coding/Projects/noura/apps/api-gateway/src/main/java/com/company/platform/gateway/config/AuthClaimForwardingFilter.java
+/Users/Saturn/Downloads/Coding/Projects/noura/apps/api-gateway/src/main/java/com/company/platform/gateway/config/GatewayAuthProperties.java
+/Users/Saturn/Downloads/Coding/Projects/noura/apps/api-gateway/src/main/java/com/company/platform/gateway/config/GatewaySecurityConfig.java
+/Users/Saturn/Downloads/Coding/Projects/noura/apps/api-gateway/src/main/java/com/company/platform/gateway/health/GatewayHealthController.java

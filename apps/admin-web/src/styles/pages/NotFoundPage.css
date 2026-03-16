@@ -1,0 +1,31 @@
+.notfound-shell {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 70vh;
+}
+
+.notfound-panel {
+  text-align: center;
+  padding: 40px;
+}
+
+.notfound-code {
+  font-size: 72px;
+  font-weight: 800;
+  color: #ea580c;
+  margin-bottom: 10px;
+}
+
+.notfound-text {
+  margin-top: 10px;
+  margin-bottom: 25px;
+  color: #64748b;
+}
+
+.notfound-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}

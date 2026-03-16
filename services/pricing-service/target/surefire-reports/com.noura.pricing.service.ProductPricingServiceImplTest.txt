@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.noura.pricing.service.ProductPricingServiceImplTest
+-------------------------------------------------------------------------------
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.274 s -- in com.noura.pricing.service.ProductPricingServiceImplTest

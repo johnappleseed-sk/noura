@@ -1,0 +1,227 @@
+spring:
+  application:
+    name: edge-gateway
+  main:
+    web-application-type: reactive
+  cloud:
+    gateway:
+      x-forwarded:
+        enabled: true
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+        - RemoveRequestHeader=Cookie
+      routes:
+        - id: search-service-legacy-search
+          uri: ${SEARCH_SERVICE_URL:http://localhost:8085}
+          predicates:
+            - Method=GET
+            - Path=/api/search/**
+          filters:
+            - RewritePath=/api/search/(?<segment>.*), /api/v1/search/${segment}
+            - PreserveHostHeader
+        - id: catalog-service-admin-search-legacy
+          uri: ${CATALOG_SERVICE_URL:http://localhost:8084}
+          predicates:
+            - Method=GET
+            - Path=/api/admin/products/search
+          filters:
+            - RewritePath=/api/admin/products/search, /api/v1/admin/products/search
+            - PreserveHostHeader
+        - id: catalog-service-admin-products-search
+          uri: ${CATALOG_SERVICE_URL:http://localhost:8084}
+          predicates:
+            - Method=GET
+            - Path=/api/v1/admin/products/search
+          filters:
+            - PreserveHostHeader
+        - id: catalog-service-product-list-search
+          uri: ${CATALOG_SERVICE_URL:http://localhost:8084}
+          predicates:
+            - Method=GET
+            - Path=/api/v1/products,/api/v1/products/search
+          filters:
+            - PreserveHostHeader
+        - id: catalog-service-product-detail
+          uri: ${CATALOG_SERVICE_URL:http://localhost:8084}
+          predicates:
+            - Method=GET
+            - Path=/api/v1/products/{productId}
+          filters:
+            - PreserveHostHeader
+        - id: catalog-service-product-inventory
+          uri: ${CATALOG_SERVICE_URL:http://localhost:8084}
+          predicates:
+            - Method=GET
+            - Path=/api/v1/products/{productId}/inventory
+          filters:
+            - PreserveHostHeader
+        - id: search-service
+          uri: ${SEARCH_SERVICE_URL:http://localhost:8085}
+          predicates:
+            - Method=GET
+            - Path=/api/v1/search/**
+          filters:
+            - PreserveHostHeader
+        - id: catalog-service-categories-tree
+          uri: ${CATALOG_SERVICE_URL:http://localhost:8084}
+          predicates:
+            - Method=GET
+            - Path=/api/v1/categories/tree
+          filters:
+            - PreserveHostHeader
+        - id: catalog-service-health
+          uri: ${CATALOG_SERVICE_URL:http://localhost:8084}
+          predicates:
+            - Path=/internal/catalog-service/health
+          filters:
+            - RewritePath=/internal/catalog-service/health, /actuator/health
+        - id: catalog-service-readiness
+          uri: ${CATALOG_SERVICE_URL:http://localhost:8084}
+          predicates:
+            - Path=/internal/catalog-service/readiness
+          filters:
+            - RewritePath=/internal/catalog-service/readiness, /actuator/health/readiness
+        - id: search-service-health
+          uri: ${SEARCH_SERVICE_URL:http://localhost:8085}
+          predicates:
+            - Path=/internal/search-service/health
+          filters:
+            - RewritePath=/internal/search-service/health, /actuator/health
+        - id: search-service-readiness
+          uri: ${SEARCH_SERVICE_URL:http://localhost:8085}
+          predicates:
+            - Path=/internal/search-service/readiness
+          filters:
+            - RewritePath=/internal/search-service/readiness, /actuator/health/readiness
+        - id: notification-service-api
+          uri: ${NOTIFICATION_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/api/v1/notifications/**
+          filters:
+            - PreserveHostHeader
+        - id: notification-service-api-legacy
+          uri: ${NOTIFICATION_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/api/notifications/**
+          filters:
+            - RewritePath=/api/notifications/(?<segment>.*), /api/v1/notifications/${segment}
+            - PreserveHostHeader
+        - id: inventory-service-stock-levels
+          uri: ${INVENTORY_SERVICE_URL:http://localhost:8086}
+          predicates:
+            - Method=GET,POST
+            - Path=/api/inventory/v1/stock-levels,/api/inventory/v1/stock-levels/**
+          filters:
+            - PreserveHostHeader
+        - id: inventory-service-adjustments-compat
+          uri: ${INVENTORY_SERVICE_URL:http://localhost:8086}
+          predicates:
+            - Method=POST
+            - Path=/api/inventory/v1/movements/adjustments
+          filters:
+            - PreserveHostHeader
+        - id: inventory-service-health
+          uri: ${INVENTORY_SERVICE_URL:http://localhost:8086}
+          predicates:
+            - Path=/internal/inventory-service/health
+          filters:
+            - RewritePath=/internal/inventory-service/health, /actuator/health
+        - id: inventory-service-readiness
+          uri: ${INVENTORY_SERVICE_URL:http://localhost:8086}
+          predicates:
+            - Path=/internal/inventory-service/readiness
+          filters:
+            - RewritePath=/internal/inventory-service/readiness, /actuator/health/readiness
+        - id: pricing-service-api
+          uri: ${PRICING_SERVICE_URL:http://localhost:8087}
+          predicates:
+            - Method=GET,POST,PUT
+            - Path=/api/pricing/v1/**,/api/pricing/v1
+          filters:
+            - PreserveHostHeader
+        - id: pricing-service-health
+          uri: ${PRICING_SERVICE_URL:http://localhost:8087}
+          predicates:
+            - Path=/internal/pricing-service/health
+          filters:
+            - RewritePath=/internal/pricing-service/health, /actuator/health
+        - id: pricing-service-readiness
+          uri: ${PRICING_SERVICE_URL:http://localhost:8087}
+          predicates:
+            - Path=/internal/pricing-service/readiness
+          filters:
+            - RewritePath=/internal/pricing-service/readiness, /actuator/health/readiness
+        - id: app-service
+          uri: ${APP_SERVICE_URL:http://localhost:8082}
+          predicates:
+            - Path=/api/**,/swagger-ui/**,/v3/api-docs/**,/uploads/**
+          filters:
+            - PreserveHostHeader
+        - id: notification-service-internal
+          uri: ${NOTIFICATION_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/internal/notifications/**
+          filters:
+            - PreserveHostHeader
+        - id: notification-service-health
+          uri: ${NOTIFICATION_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/internal/notification-service/health
+          filters:
+            - RewritePath=/internal/notification-service/health, /actuator/health
+        - id: notification-service-readiness
+          uri: ${NOTIFICATION_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/internal/notification-service/readiness
+          filters:
+            - RewritePath=/internal/notification-service/readiness, /actuator/health/readiness
+        - id: app-service-health
+          uri: ${APP_SERVICE_URL:http://localhost:8082}
+          predicates:
+            - Path=/internal/app/health
+          filters:
+            - RewritePath=/internal/app/health, /actuator/health
+        - id: app-service-readiness
+          uri: ${APP_SERVICE_URL:http://localhost:8082}
+          predicates:
+            - Path=/internal/app/readiness
+          filters:
+            - RewritePath=/internal/app/readiness, /actuator/health/readiness
+        - id: keycloak
+          uri: ${KEYCLOAK_URL:http://localhost:18080}
+          predicates:
+            - Path=/keycloak/**
+          filters:
+            - RewritePath=/keycloak/?(?<segment>.*), /${segment}
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:18080/realms/noura}
+
+gateway:
+  auth:
+    enabled: ${GATEWAY_AUTH_ENABLED:false}
+    forward-claims: ${GATEWAY_FORWARD_CLAIMS:true}
+    subject-header: ${GATEWAY_SUBJECT_HEADER:X-Auth-Subject}
+    username-header: ${GATEWAY_USERNAME_HEADER:X-Auth-Username}
+    roles-header: ${GATEWAY_ROLES_HEADER:X-Auth-Roles}
+
+server:
+  port: ${SERVER_PORT:8080}
+  forward-headers-strategy: framework
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always
+
+logging:
+  level:
+    org.springframework.cloud.gateway: INFO

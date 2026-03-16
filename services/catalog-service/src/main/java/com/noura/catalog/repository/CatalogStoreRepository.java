@@ -1,0 +1,14 @@
+package com.noura.catalog.repository;
+
+import com.noura.catalog.domain.entity.CatalogStore;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.UUID;
+
+public interface CatalogStoreRepository extends JpaRepository<CatalogStore, UUID> {
+    List<CatalogStore> findByIdIn(Collection<UUID> ids);
+
+    List<CatalogStore> findTop10ByNameContainingIgnoreCaseOrderByNameAsc(String name);
+}

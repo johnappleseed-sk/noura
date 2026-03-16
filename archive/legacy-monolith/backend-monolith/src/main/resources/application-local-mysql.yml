@@ -1,0 +1,65 @@
+spring:
+  config:
+    activate:
+      on-profile: local-mysql
+  datasource:
+    url: ${DB_URL:jdbc:${DATABASE_URL:postgresql://localhost:5432/noura}}
+    username: ${DB_USERNAME:saturn}
+    password: ${DB_PASSWORD:123qweasdzxc!}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+  flyway:
+    enabled: true
+    validate-on-migrate: true
+    clean-disabled: true
+    out-of-order: false
+  cache:
+    type: simple
+  session:
+    store-type: none
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisReactiveAutoConfiguration
+      - org.springframework.boot.actuate.autoconfigure.data.redis.RedisHealthContributorAutoConfiguration
+
+app:
+  redis:
+    enabled: false
+  jwt:
+    secret: noura_local_postgres_secret_key_2026_at_least_32_chars_long
+    issuer: noura-local-postgres
+  cors:
+    allowed-origins: http://localhost:5173,http://localhost:5174,http://localhost:3001,http://127.0.0.1:5173,http://127.0.0.1:5174,http://127.0.0.1:3001
+
+management:
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+  health:
+    elasticsearch:
+      enabled: false
+
+inventory:
+  enabled: true
+  datasource:
+    url: ${INVENTORY_DB_URL:jdbc:postgresql://localhost:5432/noura?currentSchema=inventory}
+    username: ${INVENTORY_DB_USERNAME:${spring.datasource.username}}
+    password: ${INVENTORY_DB_PASSWORD:${spring.datasource.password}}
+    driver-class-name: org.postgresql.Driver
+  security:
+    jwt:
+      secret: ${INVENTORY_JWT_SECRET:inventory-monolith-local-secret-key-change-me-123456789}
+      access-token-minutes: ${INVENTORY_JWT_ACCESS_TOKEN_MINUTES:720}
+      allowed-clock-skew-seconds: ${INVENTORY_JWT_ALLOWED_CLOCK_SKEW_SECONDS:60}
+    dev-header-auth-enabled: ${INVENTORY_DEV_HEADER_AUTH_ENABLED:false}
+    seed-admin:
+      enabled: true
+      username: ${INVENTORY_ADMIN_USERNAME:inventory.admin}
+      email: ${INVENTORY_ADMIN_EMAIL:inventory.admin@noura.local}
+      password: ${INVENTORY_ADMIN_PASSWORD:Admin123!}
+      full-name: ${INVENTORY_ADMIN_FULL_NAME:Inventory Admin}

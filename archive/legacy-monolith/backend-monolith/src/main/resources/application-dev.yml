@@ -1,0 +1,34 @@
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: jdbc:postgresql://localhost:5432/commerce_platform
+    username: commerce
+    password: commerce
+    driver-class-name: org.postgresql.Driver
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  kafka:
+    bootstrap-servers: localhost:19092
+  elasticsearch:
+    uris: http://localhost:9200
+
+management:
+  endpoint:
+    health:
+      show-details: always
+
+company:
+  platform:
+    environment: dev
+    security:
+      enabled: false
+      permit-all: true
+
+logging:
+  level:
+    com.company.platform: DEBUG
+    org.springframework.security: INFO

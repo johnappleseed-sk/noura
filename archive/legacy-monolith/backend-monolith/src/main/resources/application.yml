@@ -1,0 +1,298 @@
+spring:
+  application:
+    name: noura-spring-boot-api
+  profiles:
+    default: local-postgres
+    group:
+      local: local-postgres
+  datasource:
+    url: ${DB_URL:jdbc:${DATABASE_URL:postgresql://localhost:5432/noura}}
+    username: ${DB_USERNAME:saturn}
+    password: ${DB_PASSWORD:}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    validate-on-migrate: true
+    clean-disabled: true
+    out-of-order: false
+    fail-on-missing-locations: true
+  cache:
+    type: redis
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+  session:
+    store-type: redis
+  jackson:
+    default-property-inclusion: non_null
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: com.noura.platform.event
+  elasticsearch:
+    uris: ${ELASTICSEARCH_URIS:http://localhost:9200}
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 12MB
+
+server:
+  port: ${SERVER_PORT:8080}
+  forward-headers-strategy: framework
+  servlet:
+    context-path: /
+  tomcat:
+    max-part-count: 200
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: never
+      show-components: never
+      probes:
+        enabled: true
+      group:
+        readiness:
+          include: readinessState,db,ping
+        liveness:
+          include: livenessState,ping
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+
+logging:
+  level:
+    root: INFO
+    org.springframework.web: INFO
+    org.springframework.security: INFO
+
+springdoc:
+  use-fqn: true
+  swagger-ui:
+    path: /swagger-ui
+  api-docs:
+    path: /v3/api-docs
+
+app:
+  api:
+    version-prefix: /api/v1
+  rbac:
+    bootstrap-enabled: ${APP_RBAC_BOOTSTRAP_ENABLED:true}
+  media:
+    upload-dir: ${APP_MEDIA_UPLOAD_DIR:${user.home}/.noura/uploads}
+    public-path-prefix: ${APP_MEDIA_PUBLIC_PATH_PREFIX:/uploads}
+    max-bytes: ${APP_MEDIA_MAX_BYTES:8000000}
+    allow-svg: ${APP_MEDIA_ALLOW_SVG:false}
+    import-timeout-ms: ${APP_MEDIA_IMPORT_TIMEOUT_MS:6000}
+  jwt:
+    access-token-validity-minutes: ${JWT_ACCESS_MINUTES:30}
+    refresh-token-validity-days: ${JWT_REFRESH_DAYS:14}
+    secret: ${JWT_SECRET:}
+    issuer: ${JWT_ISSUER:noura-api}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001}
+  auth:
+    b2b-email-pattern: ${B2B_EMAIL_PATTERN:.*(@enterprise\\.com|@b2b\\.com|b2b).*}
+    sso:
+      enabled: ${APP_AUTH_SSO_ENABLED:false}
+      registration-id: ${APP_AUTH_SSO_REGISTRATION_ID:corp}
+      auto-provision: ${APP_AUTH_SSO_AUTO_PROVISION:true}
+      default-role: ${APP_AUTH_SSO_DEFAULT_ROLE:CASHIER}
+      email-claim: ${APP_AUTH_SSO_EMAIL_CLAIM:email}
+      username-claim: ${APP_AUTH_SSO_USERNAME_CLAIM:preferred_username}
+      demo:
+        enabled: ${APP_AUTH_SSO_DEMO_ENABLED:false}
+  notifications:
+    redis-channel: ${NOTIFICATION_REDIS_CHANNEL:notifications.channel}
+    remote:
+      enabled: ${APP_NOTIFICATIONS_REMOTE_ENABLED:false}
+      base-url: ${APP_NOTIFICATIONS_REMOTE_BASE_URL:http://localhost:8083}
+      command-path: ${APP_NOTIFICATIONS_REMOTE_COMMAND_PATH:/internal/notifications}
+      internal-api-key: ${APP_NOTIFICATIONS_REMOTE_INTERNAL_API_KEY:}
+      fallback-to-local: ${APP_NOTIFICATIONS_REMOTE_FALLBACK_LOCAL:true}
+      connect-timeout-ms: ${APP_NOTIFICATIONS_REMOTE_CONNECT_TIMEOUT_MS:2000}
+      read-timeout-ms: ${APP_NOTIFICATIONS_REMOTE_READ_TIMEOUT_MS:3000}
+    email:
+      enabled: ${APP_NOTIFICATIONS_EMAIL_ENABLED:false}
+      from-address: ${APP_NOTIFICATIONS_EMAIL_FROM:noreply@example.com}
+      from-name: ${APP_NOTIFICATIONS_EMAIL_FROM_NAME:Noura Platform}
+    sendgrid:
+      enabled: ${APP_NOTIFICATIONS_SENDGRID_ENABLED:false}
+      api-key: ${APP_NOTIFICATIONS_SENDGRID_API_KEY:}
+    smtp:
+      enabled: ${APP_NOTIFICATIONS_SMTP_ENABLED:false}
+  search:
+    elastic-enabled: ${ELASTIC_ENABLED:false}
+  product-generator:
+    product-url-template: ${APP_PRODUCT_GENERATOR_PRODUCT_URL_TEMPLATE:https://store.example.com/products/{id}}
+    llm:
+      enabled: ${APP_PRODUCT_GENERATOR_LLM_ENABLED:false}
+      endpoint: ${APP_PRODUCT_GENERATOR_LLM_ENDPOINT:https://api.openai.com/v1/chat/completions}
+      api-key: ${APP_PRODUCT_GENERATOR_LLM_API_KEY:}
+      model: ${APP_PRODUCT_GENERATOR_LLM_MODEL:gpt-4o-mini}
+      timeout-ms: ${APP_PRODUCT_GENERATOR_LLM_TIMEOUT_MS:8000}
+    mirror:
+      max-attempts: ${APP_PRODUCT_GENERATOR_MIRROR_MAX_ATTEMPTS:5}
+      batch-size: ${APP_PRODUCT_GENERATOR_MIRROR_BATCH_SIZE:25}
+      retry-base-seconds: ${APP_PRODUCT_GENERATOR_MIRROR_RETRY_BASE_SECONDS:60}
+      worker-delay-ms: ${APP_PRODUCT_GENERATOR_MIRROR_WORKER_DELAY_MS:30000}
+  kafka:
+    enabled: ${KAFKA_ENABLED:false}
+    topic-order-created: ${KAFKA_TOPIC_ORDER_CREATED:orders.created}
+  rate-limit:
+    capacity: ${RATE_LIMIT_CAPACITY:120}
+    refill-tokens: ${RATE_LIMIT_REFILL_TOKENS:120}
+    refill-minutes: ${RATE_LIMIT_REFILL_MINUTES:1}
+    key-ttl-minutes: ${RATE_LIMIT_KEY_TTL_MINUTES:30}
+    max-keys: ${RATE_LIMIT_MAX_KEYS:10000}
+    trust-forwarded-headers: ${RATE_LIMIT_TRUST_FORWARDED_HEADERS:false}
+    forwarded-ip-header: ${RATE_LIMIT_FORWARDED_IP_HEADER:X-Forwarded-For}
+    trusted-proxy-addresses: ${RATE_LIMIT_TRUSTED_PROXY_ADDRESSES:127.0.0.1,::1}
+
+  location:
+    geocoding:
+      base-url: ${APP_LOCATION_GEOCODING_BASE_URL:https://nominatim.openstreetmap.org}
+      user-agent: ${APP_LOCATION_GEOCODING_USER_AGENT:noura-platform/1.0}
+      timeout-ms: ${APP_LOCATION_GEOCODING_TIMEOUT_MS:3500}
+      default-limit: ${APP_LOCATION_GEOCODING_DEFAULT_LIMIT:6}
+    privacy:
+      persist-user-location: ${APP_LOCATION_PRIVACY_PERSIST_USER_LOCATION:true}
+      persist-precision-decimals: ${APP_LOCATION_PRIVACY_PERSIST_PRECISION_DECIMALS:5}
+      max-accuracy-meters: ${APP_LOCATION_PRIVACY_MAX_ACCURACY_METERS:200}
+    photo-exif:
+      enabled: ${APP_LOCATION_PHOTO_EXIF_ENABLED:false}
+      allowed-hosts: ${APP_LOCATION_PHOTO_EXIF_ALLOWED_HOSTS:}
+      max-bytes: ${APP_LOCATION_PHOTO_EXIF_MAX_BYTES:6000000}
+      timeout-ms: ${APP_LOCATION_PHOTO_EXIF_TIMEOUT_MS:4500}
+  recovery:
+    default-tenant-key: ${APP_RECOVERY_DEFAULT_TENANT_KEY:default}
+    default-retention-days: ${APP_RECOVERY_DEFAULT_RETENTION_DAYS:30}
+    retention-purge-cron: ${APP_RECOVERY_RETENTION_PURGE_CRON:0 0 2 * * *}
+
+  # --- POS Module Defaults ---
+  currency:
+    base: USD
+    base-name: US Dollar
+    base-symbol: $
+    base-decimals: 2
+    rate-url: https://open.er-api.com/v6/latest/{base}
+    rate-path: rates
+    refresh-ms: 3600000
+    refresh-initial-ms: 5000
+  shift:
+    variance-threshold: 20.00
+  pagination:
+    cursor-secret: ${APP_PAGINATION_CURSOR_SECRET:change-me-in-prod}
+    feed:
+      rate-limit-per-minute: 240
+  uom:
+    product-units:
+      enabled: ${APP_UOM_PRODUCT_UNITS_ENABLED:true}
+      global-barcode-unique: ${APP_UOM_GLOBAL_BARCODE_UNIQUE:false}
+  security:
+    remember-me:
+      key: ${APP_SECURITY_REMEMBER_ME_KEY:dev-remember-me-key-change-me}
+    login:
+      max-failed-attempts: 5
+      lock-duration-minutes: 15
+    totp:
+      node-command: node
+      script-path: scripts/dev/speakeasy-totp.js
+      issuer: Noura POS
+      verify-window: 2
+    jwt:
+      secret: ${APP_SECURITY_JWT_SECRET:dev-jwt-secret-change-me-1234567890123456}
+      access-token-minutes: 720
+      challenge-token-minutes: 30
+      allowed-clock-skew-seconds: 60
+  payments:
+    stripe:
+      enabled: ${APP_PAYMENTS_STRIPE_ENABLED:false}
+      secret-key: ${APP_PAYMENTS_STRIPE_SECRET_KEY:}
+      publishable-key: ${APP_PAYMENTS_STRIPE_PUBLISHABLE_KEY:}
+      webhook-secret: ${APP_PAYMENTS_STRIPE_WEBHOOK_SECRET:}
+  shipping:
+    fedex:
+      enabled: ${APP_SHIPPING_FEDEX_ENABLED:false}
+      api-key: ${APP_SHIPPING_FEDEX_API_KEY:}
+      secret-key: ${APP_SHIPPING_FEDEX_SECRET_KEY:}
+      account-number: ${APP_SHIPPING_FEDEX_ACCOUNT_NUMBER:}
+      sandbox: ${APP_SHIPPING_FEDEX_SANDBOX:true}
+    ups:
+      enabled: ${APP_SHIPPING_UPS_ENABLED:false}
+      client-id: ${APP_SHIPPING_UPS_CLIENT_ID:}
+      client-secret: ${APP_SHIPPING_UPS_CLIENT_SECRET:}
+      account-number: ${APP_SHIPPING_UPS_ACCOUNT_NUMBER:}
+      sandbox: ${APP_SHIPPING_UPS_SANDBOX:true}
+  multistore:
+    enabled: ${APP_MULTISTORE_ENABLED:false}
+    default-store-code: ${APP_MULTISTORE_DEFAULT_STORE_CODE:MAIN}
+  b2b:
+    enabled: ${APP_B2B_ENABLED:false}
+    default-payment-terms-days: ${APP_B2B_DEFAULT_PAYMENT_TERMS:30}
+    auto-approve-below: ${APP_B2B_AUTO_APPROVE_BELOW:0}
+  marketplace:
+    enabled: ${APP_MARKETPLACE_ENABLED:false}
+    order-sync-enabled: ${APP_MARKETPLACE_ORDER_SYNC_ENABLED:true}
+    inventory-sync-enabled: ${APP_MARKETPLACE_INVENTORY_SYNC_ENABLED:true}
+    amazon:
+      refresh-token: ${APP_MARKETPLACE_AMAZON_REFRESH_TOKEN:}
+      client-id: ${APP_MARKETPLACE_AMAZON_CLIENT_ID:}
+      client-secret: ${APP_MARKETPLACE_AMAZON_CLIENT_SECRET:}
+      marketplace-id: ${APP_MARKETPLACE_AMAZON_MARKETPLACE_ID:ATVPDKIKX0DER}
+    ebay:
+      client-id: ${APP_MARKETPLACE_EBAY_CLIENT_ID:}
+      client-secret: ${APP_MARKETPLACE_EBAY_CLIENT_SECRET:}
+      refresh-token: ${APP_MARKETPLACE_EBAY_REFRESH_TOKEN:}
+      marketplace-id: ${APP_MARKETPLACE_EBAY_MARKETPLACE_ID:EBAY_US}
+    shopify:
+      api-key: ${APP_MARKETPLACE_SHOPIFY_API_KEY:}
+      api-secret: ${APP_MARKETPLACE_SHOPIFY_API_SECRET:}
+      store-url: ${APP_MARKETPLACE_SHOPIFY_STORE_URL:}
+      access-token: ${APP_MARKETPLACE_SHOPIFY_ACCESS_TOKEN:}
+  scheduler:
+    enabled: ${APP_SCHEDULER_ENABLED:true}
+    marketplace-order-sync-cron: ${APP_SCHEDULER_MARKET_ORDER_SYNC:0 */15 * * * *}
+    marketplace-inventory-sync-cron: ${APP_SCHEDULER_MARKET_INV_SYNC:0 0 */2 * * *}
+    b2b-overdue-check-cron: ${APP_SCHEDULER_B2B_OVERDUE:0 0 9 * * *}
+
+company:
+  platform:
+    name: ${COMPANY_PLATFORM_NAME:Enterprise Commerce Platform}
+    environment: ${APP_ENV:dev}
+    api:
+      version-prefix: ${COMPANY_PLATFORM_API_VERSION_PREFIX:/api/v1}
+    docs:
+      title: ${COMPANY_PLATFORM_DOCS_TITLE:Enterprise Commerce Platform API}
+      description: ${COMPANY_PLATFORM_DOCS_DESCRIPTION:Base Spring Boot foundation for the enterprise commerce platform.}
+      version: ${COMPANY_PLATFORM_DOCS_VERSION:v0}
+    security:
+      enabled: ${COMPANY_PLATFORM_SECURITY_ENABLED:false}
+      permit-all: ${COMPANY_PLATFORM_SECURITY_PERMIT_ALL:true}
+      allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001}
+
+inventory:
+  enabled: false

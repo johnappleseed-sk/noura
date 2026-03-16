@@ -1,0 +1,32 @@
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: catalog-governance
+          uri: ${CATALOG_GOVERNANCE_URL:http://catalog-governance:8080}
+          predicates:
+            - Path=/api/catalog/**
+          filters:
+            - StripPrefix=1
+            - PrefixPath=/api
+
+        - id: inventory-availability
+          uri: ${INVENTORY_AVAILABILITY_URL:http://inventory-availability:8080}
+          predicates:
+            - Path=/api/inventory/**
+          filters:
+            - StripPrefix=1
+            - PrefixPath=/api
+
+        - id: search-discovery
+          uri: ${SEARCH_DISCOVERY_URL:http://search-discovery:8080}
+          predicates:
+            - Path=/api/search/**
+          filters:
+            - StripPrefix=1
+            - PrefixPath=/api
+
+        - id: commerce-core
+          uri: ${COMMERCE_CORE_URL:http://app-service:8080}
+          predicates:
+            - Path=/api/**,/swagger-ui/**,/v3/api-docs/**

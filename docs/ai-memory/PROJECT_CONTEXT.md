@@ -1,0 +1,73 @@
+# Project Context
+
+## What We Are Building
+Noura is a startup commerce platform being re-initialized into an enterprise-ready architecture.
+
+This is **not** a greenfield rewrite.
+This is a controlled migration from the current codebase into a scalable platform.
+
+## Platform Scope
+The platform must support:
+- B2B
+- B2C
+- C2C marketplace
+- multi-vendor merchant stores
+- partner contract stores
+- branch stores
+- merchant-managed stores
+
+## Strategic Core
+The platform is built around:
+- centralized product governance
+- a master catalog
+- super inventory without duplicated global products
+- strong operational control
+- future regional expansion
+
+## Current Delivery Posture
+We already completed:
+- architecture strategy
+- migration strategy
+- service decomposition
+- super inventory and master catalog design
+- business strategy
+- Phase 1 implementation planning
+
+## Current Codebase Reality
+The repository already contains:
+- a Spring Boot backend
+- a React admin dashboard
+- a Next.js storefront
+- docs and partial domain foundations
+
+The current backend is a hybrid:
+- partly modular by domain
+- partly legacy shared-layer structure
+
+## Near-Term Goal
+Phase 1 creates the startup-safe platform foundation:
+- gateway
+- IAM
+- catalog-governance
+- inventory-availability
+- search-discovery
+- modular `commerce-core`
+
+## Non-Negotiables
+- no careless full rewrite
+- no duplicate global product masters
+- no search index as source of truth
+- no direct cross-service database writes
+- no premature microservice fragmentation
+- keep architecture and business strategy aligned
+
+## Read Order
+For architecture or implementation work, read:
+1. `PROJECT_CONTEXT.md`
+2. `BUSINESS_MODEL.md`
+3. `ARCHITECTURE.md`
+4. `DOMAIN_MAP.md`
+5. `SERVICE_CATALOG.md`
+6. `MIGRATION_PLAN.md`
+7. `ENGINEERING_PRINCIPLES.md`
+8. `AI_COLLABORATION_RULES.md`
