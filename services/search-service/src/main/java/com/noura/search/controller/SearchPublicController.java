@@ -46,6 +46,7 @@ public class SearchPublicController {
     public ApiResponse<PageResponse<ProductSearchHitDto>> searchProducts(
             @RequestParam(required = false, name = "q") String q,
             @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String query,
             @RequestParam(required = false) UUID categoryId,
             @RequestParam(required = false) UUID brandId,
             @RequestParam(defaultValue = "0") @Min(0) int page,
@@ -53,7 +54,7 @@ public class SearchPublicController {
             HttpServletRequest http
     ) {
         PageResponse<ProductSearchHitDto> data = PageResponse.from(
-                searchQueryService.searchProducts(coalesceKeyword(keyword, q), categoryId, brandId, page, size)
+                searchQueryService.searchProducts(coalesceKeyword(keyword, q, query), categoryId, brandId, page, size)
         );
         return ApiResponse.ok("Product search results", data, http.getRequestURI());
     }
@@ -93,10 +94,13 @@ public class SearchPublicController {
      * @param q legacy `q` parameter
      * @return resolved query
      */
-    private String coalesceKeyword(String keyword, String q) {
+    private String coalesceKeyword(String keyword, String q, String query) {
         if (keyword != null && !keyword.isBlank()) {
             return keyword;
         }
-        return q;
+        if (q != null && !q.isBlank()) {
+            return q;
+        }
+        return query;
     }
 }

@@ -381,7 +381,7 @@ Base prefix: `/api/v1/search`
 `GET /search/products`
 
 Query params:
-- `q` or `keyword`
+- `q`, `keyword`, or `query`
 - `categoryId` (optional UUID)
 - `brandId` (optional UUID)
 - `page` (optional, default `0`)
@@ -409,6 +409,7 @@ Behavior:
 Behavior:
 - derives discovery tags from trending indexed product documents
 - falls back to stable default tags when the projection is empty
+- exposes compatibility aliases `name` and `tag` alongside `value`
 
 ### Internal product index upsert
 `POST /internal/search/index/products`

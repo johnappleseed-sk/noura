@@ -1,5 +1,6 @@
 package com.noura.search.common;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Getter;
 import org.springframework.data.domain.Page;
@@ -40,5 +41,25 @@ public class PageResponse<T> {
                 .first(page.isFirst())
                 .last(page.isLast())
                 .build();
+    }
+
+    /**
+     * Frontend compatibility alias mirroring existing storefront pagination helpers.
+     *
+     * @return whether a next page exists
+     */
+    @JsonProperty("hasNext")
+    public boolean hasNext() {
+        return !last;
+    }
+
+    /**
+     * Frontend compatibility alias mirroring existing storefront pagination helpers.
+     *
+     * @return whether a previous page exists
+     */
+    @JsonProperty("hasPrevious")
+    public boolean hasPrevious() {
+        return !first;
     }
 }

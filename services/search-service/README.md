@@ -22,7 +22,7 @@ This keeps discovery concerns isolated without duplicating catalog ownership.
 
 ## Public Endpoints
 
-- `GET /api/v1/search/products?q=...&categoryId=...&brandId=...&page=0&size=20`
+- `GET /api/v1/search/products?q=...&query=...&keyword=...&categoryId=...&brandId=...&page=0&size=20`
 - `GET /api/v1/search/predictive?q=...&scope=all|products|brands|categories|stores`
 - `GET /api/v1/search/trend-tags`
 
@@ -46,6 +46,10 @@ Internal indexing routes require `X-Internal-Api-Key` and are designed for futur
 - Blank product search queries return an empty page. `search-service` is not a browse endpoint.
 - Store suggestions remain a read-through compatibility path until store discovery is projected separately.
 - Catalog browse routes such as `/api/v1/products` and `/api/v1/products/search` stay in `catalog-service`.
+- Frontend compatibility aliases are included for lower-friction adoption:
+  - search products also accepts `query`
+  - trend tags expose `value`, `name`, and `tag`
+  - product hits expose `productId` plus `id`, and `popularityScore` plus `merchandisingScore`
 
 ## Local Run
 

@@ -22,6 +22,10 @@
 - Root `README.md`, `services/README.md`, and `docs/backend-api.md` to reflect the extracted `search-service`.
 - `apps/admin-web` control-center endpoint catalog now exposes `GET /api/v1/search/products` and uses the correct predictive-search query parameters.
 - Search boundary guidance now explicitly documents that `catalog-service` keeps product truth plus browse/admin product search while `search-service` owns `/api/v1/search/**`.
+- Search-service public DTOs now include storefront-compatibility aliases after frontend audit:
+  - `/api/v1/search/products` also accepts `query`
+  - product hits expose `id`, `isTrending`, and `merchandisingScore` aliases
+  - trend tags expose `name` and `tag` aliases in addition to `value`
 
 ## 2026-03-17
 

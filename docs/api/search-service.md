@@ -25,6 +25,7 @@ Query parameters:
 
 - `q` optional free-text query
 - `keyword` optional alias for `q`
+- `query` optional compatibility alias matching existing storefront product-listing flows
 - `categoryId` optional category filter
 - `brandId` optional brand filter
 - `page` optional zero-based page index, default `0`
@@ -52,6 +53,7 @@ Example response body:
     "content": [
       {
         "productId": "0a5f0be0-f0e2-46b8-92d5-e86c277df1b0",
+        "id": "0a5f0be0-f0e2-46b8-92d5-e86c277df1b0",
         "productCode": "SKU-1001",
         "name": "Travel Mug",
         "slug": "travel-mug",
@@ -62,7 +64,9 @@ Example response body:
         "averageRating": 4.8,
         "reviewCount": 18,
         "trending": true,
-        "popularityScore": 88
+        "isTrending": true,
+        "popularityScore": 88,
+        "merchandisingScore": 88
       }
     ],
     "page": 0,
@@ -103,6 +107,7 @@ Behavior:
 
 - tags are aggregated primarily from indexed category names
 - when the projection is empty, the service returns stable fallback tags for startup-safe discovery screens
+- responses expose `value` plus compatibility aliases `name` and `tag` for existing storefront consumers
 
 ## Internal Indexing Endpoints
 

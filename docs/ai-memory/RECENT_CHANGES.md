@@ -35,6 +35,7 @@
 - `apps/api-gateway` can continue routing `/api/v1/search/**` and `/api/search/**` to `search-service`
 - `apps/admin-web` control-center endpoint catalog now includes `GET /api/v1/search/products`
 - `catalog-service` still contains transitional duplicate predictive/trend code, but the canonical boundary is now documented as `search-service`
+- A frontend audit of `storefront-web` confirmed active reliance on `/api/v1/search/predictive` and `/api/v1/search/trend-tags`, so compatibility aliases were added to reduce client churn
 
 ### Known caveats
 - No OpenSearch provider exists yet

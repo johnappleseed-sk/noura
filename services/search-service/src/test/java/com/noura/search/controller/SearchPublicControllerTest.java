@@ -59,14 +59,19 @@ class SearchPublicControllerTest {
                 .thenReturn(new PageImpl<>(List.of(hit), PageRequest.of(0, 20), 1));
 
         mockMvc.perform(get("/api/v1/search/products")
-                        .param("q", "mug")
+                        .param("query", "mug")
                         .param("page", "0")
                         .param("size", "20"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Product search results"))
+                .andExpect(jsonPath("$.data.content[0].id").value(hit.productId().toString()))
                 .andExpect(jsonPath("$.data.content[0].name").value("Travel Mug"))
                 .andExpect(jsonPath("$.data.content[0].productCode").value("SKU-1001"))
+                .andExpect(jsonPath("$.data.content[0].isTrending").value(true))
+                .andExpect(jsonPath("$.data.content[0].merchandisingScore").value(88))
+                .andExpect(jsonPath("$.data.hasNext").value(false))
+                .andExpect(jsonPath("$.data.hasPrevious").value(false))
                 .andExpect(jsonPath("$.data.totalElements").value(1));
     }
 
@@ -100,6 +105,8 @@ class SearchPublicControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Trend tags"))
                 .andExpect(jsonPath("$.data[0].value").value("Electronics"))
+                .andExpect(jsonPath("$.data[0].name").value("Electronics"))
+                .andExpect(jsonPath("$.data[0].tag").value("Electronics"))
                 .andExpect(jsonPath("$.data[0].score").value(42));
     }
 }

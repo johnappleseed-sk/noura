@@ -1,5 +1,7 @@
 package com.noura.search.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.UUID;
 
 /**
@@ -32,4 +34,34 @@ public record ProductSearchHitDto(
         boolean trending,
         int popularityScore
 ) {
+
+    /**
+     * Frontend compatibility alias so search hits can be adapted with less client remapping.
+     *
+     * @return product id as {@code id}
+     */
+    @JsonProperty("id")
+    public UUID storefrontId() {
+        return productId;
+    }
+
+    /**
+     * Frontend compatibility alias mirroring product-card conventions.
+     *
+     * @return projected trending flag as {@code isTrending}
+     */
+    @JsonProperty("isTrending")
+    public boolean storefrontTrending() {
+        return trending;
+    }
+
+    /**
+     * Frontend compatibility alias mirroring merchandising-card score naming.
+     *
+     * @return projected popularity score as {@code merchandisingScore}
+     */
+    @JsonProperty("merchandisingScore")
+    public int storefrontMerchandisingScore() {
+        return popularityScore;
+    }
 }
