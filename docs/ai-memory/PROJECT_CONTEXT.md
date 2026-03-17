@@ -38,6 +38,7 @@ The repository already contains:
 - a Spring Boot backend
 - a React admin dashboard
 - a Next.js storefront
+- extracted `order-service`, `checkout-service`, and `payment-service` targets
 - docs and partial domain foundations
 
 The current backend is a hybrid:
@@ -51,6 +52,7 @@ Phase 1 creates the startup-safe platform foundation:
 - catalog-governance
 - inventory-availability
 - search-discovery
+- extracted `payment-service` for provider abstraction and webhook ownership
 - modular `commerce-core`
 
 ## Non-Negotiables
@@ -64,10 +66,11 @@ Phase 1 creates the startup-safe platform foundation:
 ## Read Order
 For architecture or implementation work, read:
 1. `PROJECT_CONTEXT.md`
-2. `BUSINESS_MODEL.md`
-3. `ARCHITECTURE.md`
-4. `DOMAIN_MAP.md`
-5. `SERVICE_CATALOG.md`
-6. `MIGRATION_PLAN.md`
-7. `ENGINEERING_PRINCIPLES.md`
-8. `AI_COLLABORATION_RULES.md`
+2. `RECENT_CHANGES.md`
+3. `BUSINESS_MODEL.md`
+4. `ARCHITECTURE.md`
+5. `DOMAIN_MAP.md`
+6. `SERVICE_CATALOG.md`
+7. `MIGRATION_PLAN.md`
+8. `ENGINEERING_PRINCIPLES.md`
+9. `AI_COLLABORATION_RULES.md`

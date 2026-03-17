@@ -38,6 +38,18 @@ Purpose:
 - faceting
 - browse and discovery projections
 
+### payment-service
+Purpose:
+- internal payment intent records
+- provider abstraction boundary
+- authorize/capture orchestration
+- webhook delivery deduplication
+
+Notes:
+- extracted ahead of broader commerce-core breakup because provider credentials, webhook handling, and payment state isolation justify an explicit boundary
+- reads immutable order totals from `order-service`
+- does not mutate order state in the current slice
+
 ### commerce-core
 Purpose:
 - modular monolith for domains not worth splitting yet
@@ -50,7 +62,6 @@ Phase 1 modules inside:
 - cart
 - checkout
 - order-management
-- payment-orchestration
 - fulfillment-returns
 - notification
 - b2b
@@ -60,7 +71,6 @@ Phase 1 modules inside:
 Split later only when justified:
 - merchant-network
 - assortment-offer
-- payment
 - customer-profile
 - cart
 - checkout-orchestrator

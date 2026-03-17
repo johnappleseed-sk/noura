@@ -24,18 +24,21 @@ Implement the supply-control loop:
 3. build `catalog-governance`
 4. extract `inventory-availability`
 5. build `search-discovery`
-6. keep the remaining domains inside `commerce-core`
+6. extract `payment-service` to isolate provider lifecycle and webhook handling
+7. keep the remaining domains inside `commerce-core`
 
 ## What Stays Modular First
 - pricing
 - cart
 - checkout
 - order
-- payment orchestration
 - fulfillment
 - customer profile
 - notification
 - merchant/store management
+
+Payment extraction note:
+- payment moved out earlier than the other transaction modules because provider integrations and webhook retries create a cleaner operational boundary when isolated
 
 ## Data Migration Rules
 - one PostgreSQL cluster first, separate schemas and DB users

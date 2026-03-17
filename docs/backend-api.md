@@ -178,6 +178,49 @@ Response:
 See detailed endpoint contract:
 - [docs/api/admin-authorization-matrix.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/api/admin-authorization-matrix.md)
 
+## Payment Service Endpoints
+Base prefix: `/api/v1`
+
+### Create payment intent
+`POST /payments/intents`
+
+Behavior:
+- validates order existence and actor ownership/admin access through `order-service`
+- snapshots immutable `totalAmount` and `currencyCode` from the order
+- persists an internal payment record before the caller starts confirmation
+
+### Confirm payment
+`POST /payments/{paymentId}/confirm`
+
+Behavior:
+- `AUTHORIZE` performs auth-only confirmation
+- `CAPTURE` performs authorize+capture behavior through the selected provider adapter
+- repeated confirms are safe for already-terminal or already-satisfied states
+
+### Get payment by id
+`GET /payments/{paymentId}`
+
+### Get latest payment by order id
+`GET /payments/order/{orderId}`
+
+### Internal payment status update
+`POST /internal/payments/status-update`
+
+Behavior:
+- trusted service/operator endpoint
+- supports provider event correlation metadata when an upstream system already normalized the provider callback
+
+### Provider webhook
+`POST /payments/webhooks/{providerCode}`
+
+Behavior:
+- provider-generic route shape
+- sandbox provider currently accepts deterministic JSON payloads
+- duplicate deliveries are deduplicated by persisted provider event identity
+
+Detailed contract:
+- [docs/api/payment-service.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/api/payment-service.md)
+
 ## Product Enrichment Endpoints
 Base prefix: `/api/v1`
 

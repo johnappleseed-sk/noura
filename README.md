@@ -11,6 +11,7 @@ Enterprise commerce platform monorepo with canonical app, service, package, plat
 - RBAC audit integrity hashing (`payload_hash`) with database-level immutability controls.
 - Capability-driven admin routing/navigation backed by `/api/v1/admin/capabilities`.
 - Versioned RBAC matrix contract for governance diagnostics.
+- Extracted `payment-service` with internal payment intents, sandbox provider abstraction, and webhook-ready event deduplication.
 
 ## Repository Modules
 - `apps/admin-web/` React admin operations console
@@ -36,6 +37,8 @@ Legacy code retained for reuse:
 - RBAC database model: [docs/database/rbac-modeling.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/database/rbac-modeling.md)
 - Enterprise RBAC feature: [docs/features/enterprise-rbac.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/features/enterprise-rbac.md)
 - RBAC admin runbook: [docs/operations/rbac-admin-runbook.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/operations/rbac-admin-runbook.md)
+- Payment API: [docs/api/payment-service.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/api/payment-service.md)
+- Payment architecture: [docs/architecture/payment-service.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/architecture/payment-service.md)
 
 ## Local Development
 ### Legacy monolith backend (during migration)

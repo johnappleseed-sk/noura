@@ -34,6 +34,7 @@ Phase 1 should have:
 - `catalog-governance`
 - `inventory-availability`
 - `search-discovery`
+- `payment-service` for isolated provider orchestration and webhook handling
 - `commerce-core` modular monolith
 
 ## Architectural Principles
@@ -62,6 +63,11 @@ Separation of responsibilities:
 - transactional outbox for publishing
 - no distributed transactions
 - no direct DB writes across services
+
+Payment-specific note:
+- payment-service validates order identity/amount by synchronous order lookup
+- payment-service owns provider state and webhook deduplication
+- order-service does not persist provider-specific state
 
 ## Persistence Model
 - PostgreSQL for transactional truth

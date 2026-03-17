@@ -11,12 +11,13 @@ Do not contradict them unless:
 ## Required Read Order
 Read before architecture or implementation work:
 1. `PROJECT_CONTEXT.md`
-2. `BUSINESS_MODEL.md`
-3. `ARCHITECTURE.md`
-4. `DOMAIN_MAP.md`
-5. `SERVICE_CATALOG.md`
-6. `MIGRATION_PLAN.md`
-7. `ENGINEERING_PRINCIPLES.md`
+2. `RECENT_CHANGES.md`
+3. `BUSINESS_MODEL.md`
+4. `ARCHITECTURE.md`
+5. `DOMAIN_MAP.md`
+6. `SERVICE_CATALOG.md`
+7. `MIGRATION_PLAN.md`
+8. `ENGINEERING_PRINCIPLES.md`
 
 ## Default AI Behavior
 - do not assume greenfield

@@ -1,3 +1,22 @@
+## 2026-03-17
+
+### Added
+- Extracted `payment-service` application layer for internal payment intent creation, confirm flows, lookup APIs, and webhook-ready status handling.
+- New pluggable payment provider boundary with deterministic sandbox/mock adapter for startup-safe integration.
+- New payment lifecycle model with explicit authorization/capture sub-state tracking.
+- New payment webhook delivery table and idempotent provider-event deduplication migration: `services/payment-service/src/main/resources/db/migration/V2__payment_lifecycle_and_webhooks.sql`.
+- New payment API tests for request-context resolution, sandbox provider behavior, idempotent create flow, manual status transitions, and webhook processing.
+- New payment documentation:
+  - `docs/api/payment-service.md`
+  - `docs/architecture/payment-service.md`
+
+### Updated
+- `services/payment-service/README.md` with lifecycle, webhook, sandbox scenario, and environment-variable guidance.
+- `services/README.md`, root `README.md`, and `docs/backend-api.md` to reflect `payment-service` extraction.
+- Payment service application config now supports:
+  - `ORDER_SERVICE_INTERNAL_API_KEY`
+  - `PAYMENT_SANDBOX_WEBHOOK_SECRET`
+
 ## 2026-03-13
 
 ### Added
