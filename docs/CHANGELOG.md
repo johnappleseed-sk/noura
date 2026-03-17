@@ -1,6 +1,22 @@
 ## 2026-03-17
 
 ### Added
+- Extracted `promotion-service` application layer for promotion CRUD, promo-code validation, and deterministic cart discount evaluation.
+- New promotion persistence model and migration: `services/promotion-service/src/main/resources/db/migration/V1__promotion_foundation.sql`.
+- New promotion admin and storefront-compatible endpoints:
+  - `GET /api/v1/promotions/active`
+  - `POST /api/v1/promotions/validate-code`
+  - `POST /api/v1/promotions/evaluate`
+  - `POST /api/v1/promotions`
+  - `GET /api/v1/admin/promotions`
+  - `GET /api/v1/admin/promotions/{promotionId}`
+  - `PATCH /api/v1/admin/promotions/{promotionId}`
+  - `DELETE /api/v1/admin/promotions/{promotionId}`
+  - `POST /api/v1/admin/promotions/evaluate`
+- New promotion API tests for request-context resolution, authorized admin mutation, deterministic evaluation ordering, validation failure reasons, and identifier-space collision checks.
+- New promotion documentation:
+  - `docs/api/promotion-service.md`
+  - `docs/architecture/promotion-service.md`
 - Extracted `shipping-service` application layer for shipping method discovery, rule-based quotes, shipment creation, shipment reads, and internal fulfillment-status hooks.
 - New pluggable shipping carrier boundary with deterministic internal rule-based carrier adapter for startup-safe shipping integration.
 - New shipment lifecycle model with derived fulfillment-hook mapping for order shipment status foundations.
@@ -19,6 +35,11 @@
   - `docs/architecture/payment-service.md`
 
 ### Updated
+- `services/promotion-service/README.md` with endpoint coverage, deterministic evaluation rules, identifier constraints, and local-run notes.
+- `services/README.md`, root `README.md`, and `docs/backend-api.md` to reflect `promotion-service` extraction.
+- `apps/api-gateway` now routes promotion-service API and health/readiness traffic via:
+  - `/api/v1/promotions/**`
+  - `/api/v1/admin/promotions/**`
 - `services/shipping-service/README.md` with quote rules, shipment lifecycle, scenario metadata, and environment-variable guidance.
 - `services/README.md`, root `README.md`, and `docs/backend-api.md` to reflect `shipping-service` extraction.
 - Shipping service application config now supports:

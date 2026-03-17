@@ -139,8 +139,17 @@ export const endpointCatalog = [
     ["POST", "/api/v1/price-lists"],
     ["POST", "/api/v1/prices"],
     ["GET", "/api/v1/prices/variants/{variantId}"],
+  ]),
+  group("promotion-controller", "Promotion Controller", "Promotion-service admin and storefront discount endpoints", [
     ["GET", "/api/v1/promotions/active"],
     ["POST", "/api/v1/promotions"],
+    ["POST", "/api/v1/promotions/validate-code"],
+    ["POST", "/api/v1/promotions/evaluate"],
+    ["GET", "/api/v1/admin/promotions"],
+    ["GET", "/api/v1/admin/promotions/{promotionId}"],
+    ["PATCH", "/api/v1/admin/promotions/{promotionId}"],
+    ["DELETE", "/api/v1/admin/promotions/{promotionId}"],
+    ["POST", "/api/v1/admin/promotions/evaluate"],
   ]),
   group("recommendation-controller", "Recommendation Controller", "Swagger tag: recommendation-controller", [
     ["GET", "/api/v1/recommendations/best-sellers"],

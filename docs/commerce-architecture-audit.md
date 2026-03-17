@@ -64,8 +64,9 @@ Existing admin pages exposed pricing, analytics, and inventory in isolated ways,
 ### Promotions
 
 - Kept `Promotion` as the canonical rule entity instead of creating a parallel discount table.
-- Extended the existing pricing boundary with richer promotion fields and rule evaluation semantics.
-- Added a dedicated admin promotion service/controller for enterprise operations.
+- Extracted promotions into a dedicated `promotion-service` instead of keeping them inside pricing.
+- Preserved richer promotion fields and rule evaluation semantics from the archived monolith.
+- Added a dedicated promotion admin service/controller surface for enterprise operations.
 
 ### Analytics
 
@@ -93,6 +94,8 @@ Existing admin pages exposed pricing, analytics, and inventory in isolated ways,
   - `POST /api/v1/admin/promotions/evaluate`
 - Existing public API retained:
   - `GET /api/v1/promotions/active`
+  - `POST /api/v1/promotions/validate-code`
+  - `POST /api/v1/promotions/evaluate`
 - Promotion rule engine now evaluates cart/subtotal/item-based rules and free shipping flags.
 
 ### Analytics event system
@@ -145,7 +148,7 @@ Existing admin pages exposed pricing, analytics, and inventory in isolated ways,
 ## Validation and business rule notes
 
 - Promotion windows reject `endDate < startDate`
-- Promotion codes are unique when present
+- Promotion codes are unique across both `code` and `couponCode` lookup namespaces
 - Non-stackable promotions short-circuit subsequent promo application after a successful match
 - Transfer source and destination warehouses must differ
 - Immediate transfers require sufficient available stock

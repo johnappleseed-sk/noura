@@ -26,6 +26,7 @@ Current state:
 - `customer-service` is extracted for storefront customer profile/address flows.
 - `order-service` is extracted for order aggregate creation/history/status.
 - `checkout-service` is extracted for preview/validation/place-order orchestration.
+- `promotion-service` is extracted for deterministic promotion CRUD, promo-code validation, and cart discount evaluation.
 - `payment-service` is extracted for internal payment intent lifecycle, sandbox provider orchestration, and webhook-ready status handling.
 - `shipping-service` is extracted for rule-based shipping method discovery, shipment lifecycle records, and carrier-ready status hooks.
 - Other services are extraction targets reusing logic from `archive/legacy-monolith/backend-monolith`.

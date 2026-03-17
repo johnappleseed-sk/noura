@@ -139,6 +139,25 @@ spring:
             - Path=/api/pricing/v1/**,/api/pricing/v1
           filters:
             - PreserveHostHeader
+        - id: promotion-service-api
+          uri: ${PROMOTION_SERVICE_URL:http://localhost:8094}
+          predicates:
+            - Method=GET,POST,PATCH,DELETE
+            - Path=/api/v1/promotions,/api/v1/promotions/**,/api/promotions,/api/promotions/**,/api/v1/admin/promotions,/api/v1/admin/promotions/**,/api/admin/promotions,/api/admin/promotions/**
+          filters:
+            - PreserveHostHeader
+        - id: promotion-service-health
+          uri: ${PROMOTION_SERVICE_URL:http://localhost:8094}
+          predicates:
+            - Path=/internal/promotion-service/health
+          filters:
+            - RewritePath=/internal/promotion-service/health, /actuator/health
+        - id: promotion-service-readiness
+          uri: ${PROMOTION_SERVICE_URL:http://localhost:8094}
+          predicates:
+            - Path=/internal/promotion-service/readiness
+          filters:
+            - RewritePath=/internal/promotion-service/readiness, /actuator/health/readiness
         - id: pricing-service-health
           uri: ${PRICING_SERVICE_URL:http://localhost:8087}
           predicates:
@@ -151,6 +170,89 @@ spring:
             - Path=/internal/pricing-service/readiness
           filters:
             - RewritePath=/internal/pricing-service/readiness, /actuator/health/readiness
+        - id: cart-service-api
+          uri: ${CART_SERVICE_URL:http://localhost:8088}
+          predicates:
+            - Method=GET,POST,PUT,PATCH,DELETE
+            - Path=/api/v1/cart,/api/v1/cart/**,/api/cart,/api/cart/**
+          filters:
+            - PreserveHostHeader
+        - id: cart-service-health
+          uri: ${CART_SERVICE_URL:http://localhost:8088}
+          predicates:
+            - Path=/internal/cart-service/health
+          filters:
+            - RewritePath=/internal/cart-service/health, /actuator/health
+        - id: cart-service-readiness
+          uri: ${CART_SERVICE_URL:http://localhost:8088}
+          predicates:
+            - Path=/internal/cart-service/readiness
+          filters:
+            - RewritePath=/internal/cart-service/readiness, /actuator/health/readiness
+        - id: customer-service-account
+          uri: ${CUSTOMER_SERVICE_URL:http://localhost:8089}
+          predicates:
+            - Method=GET,POST,PUT,DELETE
+            - Path=/api/v1/account/profile,/api/v1/account/addresses,/api/v1/account/addresses/**,/api/account/profile,/api/account/addresses,/api/account/addresses/**
+          filters:
+            - PreserveHostHeader
+        - id: customer-service-health
+          uri: ${CUSTOMER_SERVICE_URL:http://localhost:8089}
+          predicates:
+            - Path=/internal/customer-service/health
+          filters:
+            - RewritePath=/internal/customer-service/health, /actuator/health
+        - id: customer-service-readiness
+          uri: ${CUSTOMER_SERVICE_URL:http://localhost:8089}
+          predicates:
+            - Path=/internal/customer-service/readiness
+          filters:
+            - RewritePath=/internal/customer-service/readiness, /actuator/health/readiness
+        - id: order-service-orders
+          uri: ${ORDER_SERVICE_URL:http://localhost:8090}
+          predicates:
+            - Method=GET,POST,PATCH
+            - Path=/api/v1/orders,/api/v1/orders/**,/api/orders,/api/orders/**
+          filters:
+            - PreserveHostHeader
+        - id: order-service-account-orders
+          uri: ${ORDER_SERVICE_URL:http://localhost:8090}
+          predicates:
+            - Method=GET
+            - Path=/api/v1/account/orders,/api/account/orders
+          filters:
+            - PreserveHostHeader
+        - id: order-service-health
+          uri: ${ORDER_SERVICE_URL:http://localhost:8090}
+          predicates:
+            - Path=/internal/order-service/health
+          filters:
+            - RewritePath=/internal/order-service/health, /actuator/health
+        - id: order-service-readiness
+          uri: ${ORDER_SERVICE_URL:http://localhost:8090}
+          predicates:
+            - Path=/internal/order-service/readiness
+          filters:
+            - RewritePath=/internal/order-service/readiness, /actuator/health/readiness
+        - id: checkout-service-api
+          uri: ${CHECKOUT_SERVICE_URL:http://localhost:8091}
+          predicates:
+            - Method=POST
+            - Path=/api/v1/checkout,/api/v1/checkout/preview,/api/v1/checkout/validate,/api/v1/checkout/place-order,/api/checkout,/api/checkout/preview,/api/checkout/validate,/api/checkout/place-order
+          filters:
+            - PreserveHostHeader
+        - id: checkout-service-health
+          uri: ${CHECKOUT_SERVICE_URL:http://localhost:8091}
+          predicates:
+            - Path=/internal/checkout-service/health
+          filters:
+            - RewritePath=/internal/checkout-service/health, /actuator/health
+        - id: checkout-service-readiness
+          uri: ${CHECKOUT_SERVICE_URL:http://localhost:8091}
+          predicates:
+            - Path=/internal/checkout-service/readiness
+          filters:
+            - RewritePath=/internal/checkout-service/readiness, /actuator/health/readiness
         - id: app-service
           uri: ${APP_SERVICE_URL:http://localhost:8082}
           predicates:

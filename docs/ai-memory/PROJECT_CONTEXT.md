@@ -38,7 +38,7 @@ The repository already contains:
 - a Spring Boot backend
 - a React admin dashboard
 - a Next.js storefront
-- extracted `order-service`, `checkout-service`, `payment-service`, and `shipping-service` targets
+- extracted `order-service`, `checkout-service`, `promotion-service`, `payment-service`, and `shipping-service` targets
 - docs and partial domain foundations
 
 The current backend is a hybrid:
@@ -52,6 +52,7 @@ Phase 1 creates the startup-safe platform foundation:
 - catalog-governance
 - inventory-availability
 - search-discovery
+- extracted `promotion-service` for deterministic discount rule ownership and promo-code evaluation
 - extracted `payment-service` for provider abstraction and webhook ownership
 - extracted `shipping-service` for shipment lifecycle ownership and carrier abstraction
 - modular `commerce-core`

@@ -24,9 +24,10 @@ Implement the supply-control loop:
 3. build `catalog-governance`
 4. extract `inventory-availability`
 5. build `search-discovery`
-6. extract `payment-service` to isolate provider lifecycle and webhook handling
-7. extract `shipping-service` to isolate shipment lifecycle and future carrier callbacks
-8. keep the remaining domains inside `commerce-core`
+6. extract `promotion-service` to isolate discount rule ownership and promo-code evaluation
+7. extract `payment-service` to isolate provider lifecycle and webhook handling
+8. extract `shipping-service` to isolate shipment lifecycle and future carrier callbacks
+9. keep the remaining domains inside `commerce-core`
 
 ## What Stays Modular First
 - pricing
@@ -37,6 +38,9 @@ Implement the supply-control loop:
 - customer profile
 - notification
 - merchant/store management
+
+Promotion extraction note:
+- promotion moved out before the rest of commerce-core because admin/storefront discount workflows already behaved like a separate bounded context and deterministic archived logic was worth reusing directly
 
 Payment extraction note:
 - payment moved out earlier than the other transaction modules because provider integrations and webhook retries create a cleaner operational boundary when isolated

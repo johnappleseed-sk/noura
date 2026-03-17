@@ -147,6 +147,15 @@
 | 63 | GET | `/api/v1/promotions/active` | Active promotions list | ✅ `pricingApi.listActivePromotions` → PricingPage |
 | 64 | POST | `/api/v1/promotions` | Create promotion | ✅ `pricingApi.createPromotion` → PricingPage |
 
+Promotion-service additions now implemented and used by the admin pricing surface:
+
+- `GET /api/v1/admin/promotions`
+- `GET /api/v1/admin/promotions/{promotionId}`
+- `PATCH /api/v1/admin/promotions/{promotionId}`
+- `POST /api/v1/admin/promotions/evaluate`
+- `POST /api/v1/promotions/validate-code`
+- `POST /api/v1/promotions/evaluate`
+
 ### 2.10 Inventory Controller (`inventory-controller` — Platform side)
 
 | # | Method | Path | Purpose | Used in Admin? |

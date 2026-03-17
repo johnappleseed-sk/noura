@@ -15,6 +15,7 @@ Owns governed business truth:
 Owns operational commerce flows:
 - inventory
 - pricing
+- promotions
 - cart
 - checkout
 - order
@@ -34,6 +35,7 @@ Phase 1 should have:
 - `catalog-governance`
 - `inventory-availability`
 - `search-discovery`
+- `promotion-service` for deterministic discount rule ownership and promotion admin workflows
 - `payment-service` for isolated provider orchestration and webhook handling
 - `shipping-service` for shipment lifecycle ownership, rule-based quoting, and future carrier integration
 - `commerce-core` modular monolith
@@ -74,6 +76,11 @@ Shipping-specific note:
 - shipping-service validates order identity and shipment ownership by synchronous order lookup
 - shipping-service owns shipment state, tracking references, and carrier refresh logic
 - order-service does not persist carrier-specific shipment state in this slice
+
+Promotion-specific note:
+- promotion-service owns promotion definitions, code/coupon validation, and deterministic discount evaluation
+- pricing-service remains responsible for base product price ownership
+- checkout/cart callers consume promotion-service responses without promotion-service mutating cart/order state directly
 
 ## Persistence Model
 - PostgreSQL for transactional truth

@@ -50,6 +50,18 @@ Notes:
 - reads immutable order totals from `order-service`
 - does not mutate order state in the current slice
 
+### promotion-service
+Purpose:
+- promotion definitions and admin CRUD
+- promo-code and coupon validation
+- deterministic cart discount evaluation
+- promotion scope and eligibility ownership
+
+Notes:
+- extracted because promotions already acted like a separate operating surface in admin/storefront flows
+- reuses archived deterministic rule evaluation instead of introducing a generic offer engine
+- does not own base product prices; those remain in `pricing-service`
+
 ### shipping-service
 Purpose:
 - shipping method discovery
@@ -71,7 +83,7 @@ Phase 1 modules inside:
 - admin-governance
 - merchant-network-lite
 - customer-profile
-- pricing-promotion
+- pricing
 - cart
 - checkout
 - order-management

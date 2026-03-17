@@ -272,6 +272,61 @@ Behavior:
 Detailed contract:
 - [docs/api/shipping-service.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/api/shipping-service.md)
 
+## Promotion Service Endpoints
+Base prefix: `/api/v1`
+
+### List active promotions
+`GET /promotions/active`
+
+Behavior:
+- returns active, non-archived, date-valid promotions
+- powers storefront/admin promotion discovery
+
+### Validate promo code
+`POST /promotions/validate-code`
+
+Behavior:
+- validates one promo code against current subtotal, segment, and item scope
+- distinguishes `valid` from `eligible`
+- returns stable machine-readable reason codes for rejection paths
+
+### Evaluate cart discount
+`POST /promotions/evaluate`
+
+Behavior:
+- evaluates automatic promotions and the supplied promo-code promotion together
+- uses deterministic priority ordering
+- respects `stackable=false`
+
+### Create promotion
+`POST /promotions`
+
+Behavior:
+- admin/marketing-protected mutation route
+- also available under `POST /admin/promotions`
+
+### List promotions
+`GET /admin/promotions`
+
+### Get promotion
+`GET /admin/promotions/{promotionId}`
+
+### Update promotion
+`PATCH /admin/promotions/{promotionId}`
+
+### Delete promotion
+`DELETE /admin/promotions/{promotionId}`
+
+### Admin evaluation
+`POST /admin/promotions/evaluate`
+
+Behavior:
+- preserves the existing admin-dashboard contract
+- reuses the same deterministic evaluation engine as the public evaluate endpoint
+
+Detailed contract:
+- [docs/api/promotion-service.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/api/promotion-service.md)
+
 ## Product Enrichment Endpoints
 Base prefix: `/api/v1`
 

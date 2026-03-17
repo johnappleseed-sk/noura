@@ -1,5 +1,49 @@
 # Recent Changes
 
+## 2026-03-17 - promotion-service extraction completed
+
+### Task
+- Implemented `promotion-service` with admin CRUD, promo-code validation, deterministic cart discount evaluation, and gateway-routable promotion endpoints.
+
+### Why
+- Promotions already behaved like their own operating surface in admin and checkout flows.
+- The platform needed one stable service boundary for promotion definitions and discount evaluation without committing to a full generic rule engine.
+
+### Key files touched
+- `services/promotion-service/src/main/java/com/noura/promotion/controller/PromotionController.java`
+- `services/promotion-service/src/main/java/com/noura/promotion/service/impl/PromotionServiceImpl.java`
+- `services/promotion-service/src/main/resources/db/migration/V1__promotion_foundation.sql`
+- `apps/api-gateway/src/main/resources/application.yml`
+- `docs/api/promotion-service.md`
+- `docs/architecture/promotion-service.md`
+
+### Architecture decisions
+- `promotion-service` owns promotion definitions, promo/coupon identifiers, scope mappings, and deterministic discount evaluation.
+- The service reuses archived promotion model and evaluation logic instead of introducing a new rule engine.
+- `code` and `couponCode` are treated as one logical lookup namespace in the service layer to avoid ambiguous promo-code resolution.
+- Automatic promotions remain eligible during promo-code evaluation unless blocked by `stackable=false`.
+
+### Evaluation model
+- Promotions are evaluated in descending `priority`.
+- Eligibility checks run across archive state, active flag, date window, total usage limit, customer segment, scope mappings, and type-specific conditions.
+- `stackable=false` short-circuits the evaluation chain after the first successful match.
+- Public validation distinguishes `valid` from `eligible` and returns stable reason codes.
+
+### Integration notes
+- `apps/api-gateway` now routes `/api/v1/promotions/**` and `/api/v1/admin/promotions/**` to `promotion-service`
+- `apps/admin-web` control-center endpoint catalog now exposes promotion-service endpoints explicitly
+- No order/cart mutation is performed yet; this slice is read/evaluate only
+
+### Known caveats
+- `usageLimitPerCustomer` is stored but not enforced yet because there is no redemption ledger
+- No event publication exists yet for promotion-applied analytics or order coordination
+- Collection applicability still depends on deterministic `collectionProductIds` condition data
+
+### Follow-up work
+- Integrate `checkout-service` and `cart-service` directly with `promotion-service`
+- Add redemption tracking so usage counts can move on successful order/checkout events
+- Decide whether future advanced promotion logic still fits the deterministic evaluator or needs a richer policy model
+
 ## 2026-03-17 - shipping-service extraction completed
 
 ### Task
