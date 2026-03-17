@@ -1,6 +1,14 @@
 ## 2026-03-17
 
 ### Added
+- Extracted `shipping-service` application layer for shipping method discovery, rule-based quotes, shipment creation, shipment reads, and internal fulfillment-status hooks.
+- New pluggable shipping carrier boundary with deterministic internal rule-based carrier adapter for startup-safe shipping integration.
+- New shipment lifecycle model with derived fulfillment-hook mapping for order shipment status foundations.
+- New shipping service Flyway foundation migration: `services/shipping-service/src/main/resources/db/migration/V1__shipping_foundation.sql`.
+- New shipping API tests for request-context resolution, rule-based carrier rules, idempotent shipment creation, and shipment status transition validation.
+- New shipping documentation:
+  - `docs/api/shipping-service.md`
+  - `docs/architecture/shipping-service.md`
 - Extracted `payment-service` application layer for internal payment intent creation, confirm flows, lookup APIs, and webhook-ready status handling.
 - New pluggable payment provider boundary with deterministic sandbox/mock adapter for startup-safe integration.
 - New payment lifecycle model with explicit authorization/capture sub-state tracking.
@@ -11,6 +19,15 @@
   - `docs/architecture/payment-service.md`
 
 ### Updated
+- `services/shipping-service/README.md` with quote rules, shipment lifecycle, scenario metadata, and environment-variable guidance.
+- `services/README.md`, root `README.md`, and `docs/backend-api.md` to reflect `shipping-service` extraction.
+- Shipping service application config now supports:
+  - `ORDER_SERVICE_INTERNAL_API_KEY`
+  - `SHIPPING_RULE_BASED_CARRIER_CODE`
+  - `SHIPPING_RULE_BASED_DISPLAY_NAME`
+  - `SHIPPING_RULE_BASED_FREE_STANDARD_THRESHOLD`
+  - `SHIPPING_RULE_BASED_SAME_DAY_COUNTRY_CODE`
+  - `SHIPPING_RULE_BASED_SAME_DAY_CITIES`
 - `services/payment-service/README.md` with lifecycle, webhook, sandbox scenario, and environment-variable guidance.
 - `services/README.md`, root `README.md`, and `docs/backend-api.md` to reflect `payment-service` extraction.
 - Payment service application config now supports:

@@ -12,6 +12,7 @@ Enterprise commerce platform monorepo with canonical app, service, package, plat
 - Capability-driven admin routing/navigation backed by `/api/v1/admin/capabilities`.
 - Versioned RBAC matrix contract for governance diagnostics.
 - Extracted `payment-service` with internal payment intents, sandbox provider abstraction, and webhook-ready event deduplication.
+- Extracted `shipping-service` with rule-based shipping quotes, shipment records, and carrier-ready fulfillment status hooks.
 
 ## Repository Modules
 - `apps/admin-web/` React admin operations console
@@ -39,6 +40,8 @@ Legacy code retained for reuse:
 - RBAC admin runbook: [docs/operations/rbac-admin-runbook.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/operations/rbac-admin-runbook.md)
 - Payment API: [docs/api/payment-service.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/api/payment-service.md)
 - Payment architecture: [docs/architecture/payment-service.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/architecture/payment-service.md)
+- Shipping API: [docs/api/shipping-service.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/api/shipping-service.md)
+- Shipping architecture: [docs/architecture/shipping-service.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/architecture/shipping-service.md)
 
 ## Local Development
 ### Legacy monolith backend (during migration)

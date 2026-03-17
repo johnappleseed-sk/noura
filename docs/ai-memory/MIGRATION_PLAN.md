@@ -25,7 +25,8 @@ Implement the supply-control loop:
 4. extract `inventory-availability`
 5. build `search-discovery`
 6. extract `payment-service` to isolate provider lifecycle and webhook handling
-7. keep the remaining domains inside `commerce-core`
+7. extract `shipping-service` to isolate shipment lifecycle and future carrier callbacks
+8. keep the remaining domains inside `commerce-core`
 
 ## What Stays Modular First
 - pricing
@@ -39,6 +40,9 @@ Implement the supply-control loop:
 
 Payment extraction note:
 - payment moved out earlier than the other transaction modules because provider integrations and webhook retries create a cleaner operational boundary when isolated
+
+Shipping extraction note:
+- shipping moved out before the broader fulfillment breakup because tracking identifiers, carrier polling/callbacks, and shipment status transitions are a cleaner operational boundary when isolated
 
 ## Data Migration Rules
 - one PostgreSQL cluster first, separate schemas and DB users

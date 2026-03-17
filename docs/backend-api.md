@@ -221,6 +221,57 @@ Behavior:
 Detailed contract:
 - [docs/api/payment-service.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/api/payment-service.md)
 
+## Shipping Service Endpoints
+Base prefix: `/api/v1`
+
+### Get shipping methods
+`GET /shipping/methods`
+
+Behavior:
+- resolves available methods for a destination and cart snapshot
+- supports optional carrier filtering
+- uses the internal rule-based carrier in the current slice
+
+### Create shipping quote
+`POST /shipping/quotes`
+
+Behavior:
+- calculates one quote for a selected method
+- rejects unsupported destination, method, or parcel combinations
+
+### Create shipment
+`POST /shipping/shipments`
+
+Behavior:
+- validates order existence and actor ownership/admin access through `order-service`
+- snapshots the order shipping address into a shipment record
+- persists one shipment record and carrier identifiers/tracking data
+- replays the existing record when `(orderId, customerRef, idempotencyKey)` already exists
+- keeps the first slice at one active shipment per order until split-shipment design exists
+
+### Get shipment by id
+`GET /shipping/shipments/{shipmentId}`
+
+Query params:
+- `refreshCarrier` (optional boolean)
+
+### Get latest shipment by order id
+`GET /shipping/shipments/order/{orderId}`
+
+Query params:
+- `refreshCarrier` (optional boolean)
+
+### Internal shipment status update
+`POST /internal/shipping/shipments/status-update`
+
+Behavior:
+- trusted service/operator endpoint
+- applies shipment lifecycle transitions for warehouse, manual-ops, or future carrier callback flows
+- updates tracking details, estimates, and failure reasons when provided
+
+Detailed contract:
+- [docs/api/shipping-service.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/api/shipping-service.md)
+
 ## Product Enrichment Endpoints
 Base prefix: `/api/v1`
 

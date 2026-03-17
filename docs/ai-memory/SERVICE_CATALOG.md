@@ -50,6 +50,19 @@ Notes:
 - reads immutable order totals from `order-service`
 - does not mutate order state in the current slice
 
+### shipping-service
+Purpose:
+- shipping method discovery
+- rule-based shipping quote calculation
+- shipment lifecycle ownership
+- carrier abstraction boundary
+- fulfillment-status hook foundation
+
+Notes:
+- extracted ahead of broader fulfillment decomposition because shipment state, tracking references, and later carrier callbacks form a clean boundary
+- reads order ownership and shipping-address snapshots from `order-service`
+- does not mutate order state in the current slice
+
 ### commerce-core
 Purpose:
 - modular monolith for domains not worth splitting yet

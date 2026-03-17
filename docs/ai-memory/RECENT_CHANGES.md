@@ -1,5 +1,74 @@
 # Recent Changes
 
+## 2026-03-17 - shipping-service extraction completed
+
+### Task
+- Implemented `shipping-service` with shipping method discovery, rule-based quote calculation, shipment creation, shipment reads, internal fulfillment-status updates, and future-ready carrier adapter boundaries.
+
+### Why
+- Shipment state, tracking references, and later carrier polling/callback behavior create a cleaner operational boundary when isolated from `order-service`.
+- The platform needs a stable internal shipping contract before real carrier adapters and broader fulfillment decomposition are introduced.
+
+### Key files touched
+- `services/shipping-service/src/main/java/com/noura/shipping/controller/ShippingController.java`
+- `services/shipping-service/src/main/java/com/noura/shipping/service/impl/ShippingServiceImpl.java`
+- `services/shipping-service/src/main/java/com/noura/shipping/provider/ShippingCarrier.java`
+- `services/shipping-service/src/main/java/com/noura/shipping/provider/RuleBasedShippingCarrier.java`
+- `services/shipping-service/src/main/java/com/noura/shipping/integration/client/OrderServiceClient.java`
+- `services/shipping-service/src/main/java/com/noura/shipping/domain/entity/ShipmentRecord.java`
+- `services/shipping-service/src/main/resources/db/migration/V1__shipping_foundation.sql`
+- `docs/api/shipping-service.md`
+- `docs/architecture/shipping-service.md`
+
+### Architecture decisions
+- `shipping-service` owns shipment lifecycle, tracking identifiers, external shipment references, and failure reasons.
+- `order-service` remains the read-only source for order identity, order ownership, and shipment-recipient address snapshots.
+- Carrier-specific behavior is hidden behind `ShippingCarrier`.
+- The built-in `rule-based` carrier is deterministic and metadata-driven so storefront and orchestration flows can integrate before real carriers exist.
+- Internal status updates provide the stable hook shape for warehouse events and future carrier callbacks.
+
+### Status model
+- Primary statuses:
+  - `CREATED`
+  - `LABEL_CREATED`
+  - `READY_FOR_FULFILLMENT`
+  - `IN_TRANSIT`
+  - `OUT_FOR_DELIVERY`
+  - `DELIVERED`
+  - `EXCEPTION`
+  - `RETURNED`
+  - `CANCELLED`
+- Terminal statuses:
+  - `DELIVERED`
+  - `RETURNED`
+  - `CANCELLED`
+- Derived fulfillment hooks map shipment states to downstream order-shipment signals without making `shipping-service` write order state directly.
+
+### Quote model
+- `standard`, `express`, and `same_day` are served through the internal `rule-based` carrier.
+- Standard shipping becomes free when the subtotal reaches the configured threshold.
+- Same-day availability is limited to configured cities and one configured country in this first slice.
+- No currency conversion is performed yet; quotes use the request or order currency code.
+
+### Integration notes
+- `shipping-service` reads order snapshots from `order-service`
+- `ORDER_SERVICE_INTERNAL_API_KEY` is supported for trusted service-to-service lookups
+- One active shipment per order is enforced in the first slice; replacement shipments are allowed only after `CANCELLED` or `RETURNED`
+- No order mutation or event-bus publication is performed yet
+
+### Known caveats
+- No real carrier adapter exists yet
+- No shipment webhooks or scheduled polling job exist yet
+- Split shipments and partial fulfillment are intentionally deferred
+- Service-area ownership and external rate shopping are not implemented yet
+
+### Follow-up work
+- Add real FedEx/UPS/DHL/local courier adapters
+- Add carrier webhook verification and polling jobs
+- Add split-shipment and partial-fulfillment support
+- Publish shipment state changes through outbox/events
+- Add service-area zoning and reconciliation/reporting jobs
+
 ## 2026-03-17 - payment-service extraction completed
 
 ### Task

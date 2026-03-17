@@ -1,0 +1,64 @@
+spring:
+  application:
+    name: shipping-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/commerce_platform}
+    username: ${DB_USERNAME:commerce}
+    password: ${DB_PASSWORD:commerce}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: false
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    table: flyway_schema_history_shipping_service
+    baseline-on-migrate: true
+    validate-on-migrate: true
+    clean-disabled: true
+    fail-on-missing-locations: true
+
+server:
+  port: ${SERVER_PORT:8080}
+  forward-headers-strategy: framework
+
+app:
+  internal:
+    api-key: ${APP_INTERNAL_API_KEY:}
+  shipping:
+    rule-based:
+      carrier-code: ${SHIPPING_RULE_BASED_CARRIER_CODE:rule-based}
+      display-name: ${SHIPPING_RULE_BASED_DISPLAY_NAME:Noura Rule-Based Shipping}
+      free-standard-threshold: ${SHIPPING_RULE_BASED_FREE_STANDARD_THRESHOLD:75.00}
+      same-day-country-code: ${SHIPPING_RULE_BASED_SAME_DAY_COUNTRY_CODE:KH}
+      same-day-cities: ${SHIPPING_RULE_BASED_SAME_DAY_CITIES:Phnom Penh}
+
+services:
+  order:
+    base-url: ${ORDER_SERVICE_BASE_URL:http://localhost:8090}
+    internal-api-key: ${ORDER_SERVICE_INTERNAL_API_KEY:}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+
+logging:
+  level:
+    root: INFO

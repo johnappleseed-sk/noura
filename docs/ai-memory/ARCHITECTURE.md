@@ -35,6 +35,7 @@ Phase 1 should have:
 - `inventory-availability`
 - `search-discovery`
 - `payment-service` for isolated provider orchestration and webhook handling
+- `shipping-service` for shipment lifecycle ownership, rule-based quoting, and future carrier integration
 - `commerce-core` modular monolith
 
 ## Architectural Principles
@@ -68,6 +69,11 @@ Payment-specific note:
 - payment-service validates order identity/amount by synchronous order lookup
 - payment-service owns provider state and webhook deduplication
 - order-service does not persist provider-specific state
+
+Shipping-specific note:
+- shipping-service validates order identity and shipment ownership by synchronous order lookup
+- shipping-service owns shipment state, tracking references, and carrier refresh logic
+- order-service does not persist carrier-specific shipment state in this slice
 
 ## Persistence Model
 - PostgreSQL for transactional truth
