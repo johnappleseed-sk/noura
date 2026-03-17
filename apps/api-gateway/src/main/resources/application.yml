@@ -41,6 +41,20 @@ spring:
             - Path=/api/v1/products,/api/v1/products/search
           filters:
             - PreserveHostHeader
+        - id: review-service-product-reviews
+          uri: ${REVIEW_SERVICE_URL:http://localhost:8095}
+          predicates:
+            - Method=GET,POST
+            - Path=/api/v1/products/{productId}/reviews,/api/products/{productId}/reviews
+          filters:
+            - PreserveHostHeader
+        - id: review-service-rating-summary
+          uri: ${REVIEW_SERVICE_URL:http://localhost:8095}
+          predicates:
+            - Method=GET
+            - Path=/api/v1/products/{productId}/rating-summary,/api/products/{productId}/rating-summary
+          filters:
+            - PreserveHostHeader
         - id: catalog-service-product-detail
           uri: ${CATALOG_SERVICE_URL:http://localhost:8084}
           predicates:
@@ -158,6 +172,25 @@ spring:
             - Path=/internal/promotion-service/readiness
           filters:
             - RewritePath=/internal/promotion-service/readiness, /actuator/health/readiness
+        - id: review-service-admin
+          uri: ${REVIEW_SERVICE_URL:http://localhost:8095}
+          predicates:
+            - Method=POST
+            - Path=/api/v1/admin/reviews/**,/api/admin/reviews/**
+          filters:
+            - PreserveHostHeader
+        - id: review-service-health
+          uri: ${REVIEW_SERVICE_URL:http://localhost:8095}
+          predicates:
+            - Path=/internal/review-service/health
+          filters:
+            - RewritePath=/internal/review-service/health, /actuator/health
+        - id: review-service-readiness
+          uri: ${REVIEW_SERVICE_URL:http://localhost:8095}
+          predicates:
+            - Path=/internal/review-service/readiness
+          filters:
+            - RewritePath=/internal/review-service/readiness, /actuator/health/readiness
         - id: pricing-service-health
           uri: ${PRICING_SERVICE_URL:http://localhost:8087}
           predicates:

@@ -1,6 +1,19 @@
 ## 2026-03-17
 
 ### Added
+- Extracted `review-service` application layer for storefront review submission, product review reads, approved-rating aggregation, and admin moderation.
+- New review moderation model with `PENDING`, `APPROVED`, and `REJECTED` workflow states plus spam-ready submission metadata fields.
+- New review service Flyway foundation migration: `services/review-service/src/main/resources/db/migration/V1__review_foundation.sql`.
+- New review-service endpoints:
+  - `GET /api/v1/products/{productId}/reviews`
+  - `POST /api/v1/products/{productId}/reviews`
+  - `GET /api/v1/products/{productId}/rating-summary`
+  - `POST /api/v1/admin/reviews/{reviewId}/approve`
+  - `POST /api/v1/admin/reviews/{reviewId}/reject`
+- New review API tests for request-context resolution, duplicate-review prevention, moderation authorization, pending-first submission, and approved-only rating aggregation.
+- New review documentation:
+  - `docs/api/review-service.md`
+  - `docs/architecture/review-service.md`
 - Extracted `promotion-service` application layer for promotion CRUD, promo-code validation, and deterministic cart discount evaluation.
 - New promotion persistence model and migration: `services/promotion-service/src/main/resources/db/migration/V1__promotion_foundation.sql`.
 - New promotion admin and storefront-compatible endpoints:
@@ -35,6 +48,13 @@
   - `docs/architecture/payment-service.md`
 
 ### Updated
+- `services/review-service/README.md` with moderation rules, endpoint coverage, spam-ready field notes, and local-run guidance.
+- `services/README.md`, root `README.md`, and `docs/backend-api.md` to reflect `review-service` extraction.
+- `apps/api-gateway` now routes review-service API and health/readiness traffic via:
+  - `/api/v1/products/{productId}/reviews`
+  - `/api/v1/products/{productId}/rating-summary`
+  - `/api/v1/admin/reviews/**`
+- `apps/admin-web` control-center endpoint catalog now exposes review-service storefront and moderation endpoints explicitly.
 - `services/promotion-service/README.md` with endpoint coverage, deterministic evaluation rules, identifier constraints, and local-run notes.
 - `services/README.md`, root `README.md`, and `docs/backend-api.md` to reflect `promotion-service` extraction.
 - `apps/api-gateway` now routes promotion-service API and health/readiness traffic via:

@@ -327,6 +327,53 @@ Behavior:
 Detailed contract:
 - [docs/api/promotion-service.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/api/promotion-service.md)
 
+## Review Service Endpoints
+Base prefix: `/api/v1`
+
+### Get reviews by product
+`GET /products/{productId}/reviews`
+
+Behavior:
+- returns `APPROVED` reviews by default
+- moderators may pass `moderationStatus=PENDING|APPROVED|REJECTED`
+- public callers cannot read pending or rejected reviews
+
+### Submit review
+`POST /products/{productId}/reviews`
+
+Behavior:
+- requires an authenticated customer subject
+- validates the product through `catalog-service`
+- allows one review per customer per product
+- persists the review as `PENDING` until moderation occurs
+- stores privacy-safe spam/moderation preparation fields (`submissionIpHash`, `submissionUserAgentHash`, `spamSignalsJson`)
+
+### Get rating summary
+`GET /products/{productId}/rating-summary`
+
+Behavior:
+- aggregates `averageRating`, `reviewCount`, and per-star counts from approved reviews only
+- does not mutate catalog/product aggregates in the first slice
+
+### Approve review
+`POST /admin/reviews/{reviewId}/approve`
+
+Behavior:
+- requires admin/moderator privileges or trusted internal access
+- marks the review `APPROVED`
+- records moderation notes and audit metadata when supplied
+
+### Reject review
+`POST /admin/reviews/{reviewId}/reject`
+
+Behavior:
+- requires admin/moderator privileges or trusted internal access
+- marks the review `REJECTED`
+- keeps the review hidden from public reads and rating aggregates
+
+Detailed contract:
+- [docs/api/review-service.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/api/review-service.md)
+
 ## Product Enrichment Endpoints
 Base prefix: `/api/v1`
 

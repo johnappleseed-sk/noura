@@ -190,6 +190,16 @@ Contract status: transitional compatibility aliases. In OpenAPI these operations
 | POST | /api/v1/promotions | createPromotion | - | com.noura.platform.dto.pricing.PromotionCreateRequest | com.noura.platform.common.api.ApiResponseCom.noura.platform.dto.pricing.PromotionDto |
 | GET | /api/v1/promotions/active | activePromotions | - | - | com.noura.platform.common.api.ApiResponseJava.util.ListCom.noura.platform.dto.pricing.PromotionDto |
 
+## review-controller
+
+| Method | Path | Summary | Params | Request Body | Response |
+| --- | --- | --- | --- | --- | --- |
+| GET | /api/v1/products/{productId}/reviews | getProductReviews | productId(path* string:uuid), moderationStatus(query string) | - | com.noura.review.common.ApiResponseJava.util.ListCom.noura.review.dto.review.ReviewResponse |
+| POST | /api/v1/products/{productId}/reviews | submitReview | productId(path* string:uuid) | com.noura.review.dto.review.CreateReviewRequest | com.noura.review.common.ApiResponseCom.noura.review.dto.review.ReviewResponse |
+| GET | /api/v1/products/{productId}/rating-summary | getRatingSummary | productId(path* string:uuid) | - | com.noura.review.common.ApiResponseCom.noura.review.dto.review.RatingSummaryResponse |
+| POST | /api/v1/admin/reviews/{reviewId}/approve | approveReview | reviewId(path* string:uuid) | com.noura.review.dto.review.ModerateReviewRequest | com.noura.review.common.ApiResponseCom.noura.review.dto.review.ReviewResponse |
+| POST | /api/v1/admin/reviews/{reviewId}/reject | rejectReview | reviewId(path* string:uuid) | com.noura.review.dto.review.ModerateReviewRequest | com.noura.review.common.ApiResponseCom.noura.review.dto.review.ReviewResponse |
+
 ## product-controller
 
 | Method | Path | Summary | Params | Request Body | Response |
@@ -211,8 +221,6 @@ Contract status: transitional compatibility aliases. In OpenAPI these operations
 | PUT | /api/v1/products/{productId}/inventory | upsertInventory | productId(path* string:uuid) | com.noura.platform.dto.product.ProductInventoryRequest | com.noura.platform.common.api.ApiResponseCom.noura.platform.dto.product.ProductInventoryDto |
 | POST | /api/v1/products/{productId}/media | addMedia | productId(path* string:uuid) | com.noura.platform.dto.product.ProductMediaRequest | com.noura.platform.common.api.ApiResponseCom.noura.platform.dto.product.ProductMediaDto |
 | GET | /api/v1/products/{productId}/related | related | productId(path* string:uuid) | - | com.noura.platform.common.api.ApiResponseJava.util.ListCom.noura.platform.dto.product.ProductDto |
-| GET | /api/v1/products/{productId}/reviews | reviews | productId(path* string:uuid) | - | com.noura.platform.common.api.ApiResponseJava.util.ListCom.noura.platform.dto.product.ProductReviewDto |
-| POST | /api/v1/products/{productId}/reviews | addReview | productId(path* string:uuid) | com.noura.platform.dto.product.ProductReviewRequest | com.noura.platform.common.api.ApiResponseCom.noura.platform.dto.product.ProductReviewDto |
 | GET | /api/v1/products/{productId}/variants | variants | productId(path* string:uuid) | - | com.noura.platform.common.api.ApiResponseJava.util.ListCom.noura.platform.dto.product.ProductVariantDto |
 | POST | /api/v1/products/{productId}/variants | addVariant | productId(path* string:uuid) | com.noura.platform.dto.product.ProductVariantRequest | com.noura.platform.common.api.ApiResponseCom.noura.platform.dto.product.ProductVariantDto |
 

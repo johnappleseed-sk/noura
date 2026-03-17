@@ -46,6 +46,7 @@ public class GatewaySecurityConfig {
                                     "/internal/inventory-service/**",
                                     "/internal/pricing-service/**",
                                     "/internal/promotion-service/**",
+                                    "/internal/review-service/**",
                                     "/internal/cart-service/**",
                                     "/internal/customer-service/**",
                                     "/internal/order-service/**",

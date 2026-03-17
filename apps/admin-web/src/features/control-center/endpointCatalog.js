@@ -42,8 +42,6 @@ export const endpointCatalog = [
     ["PUT", "/api/v1/products/{productId}/inventory"],
     ["POST", "/api/v1/products/{productId}/media"],
     ["GET", "/api/v1/products/{productId}/related"],
-    ["GET", "/api/v1/products/{productId}/reviews"],
-    ["POST", "/api/v1/products/{productId}/reviews"],
     ["GET", "/api/v1/products/{productId}/variants"],
     ["POST", "/api/v1/products/{productId}/variants"],
   ]),
@@ -150,6 +148,13 @@ export const endpointCatalog = [
     ["PATCH", "/api/v1/admin/promotions/{promotionId}"],
     ["DELETE", "/api/v1/admin/promotions/{promotionId}"],
     ["POST", "/api/v1/admin/promotions/evaluate"],
+  ]),
+  group("review-controller", "Review Controller", "Review-service storefront review and moderation endpoints", [
+    ["GET", "/api/v1/products/{productId}/reviews"],
+    ["POST", "/api/v1/products/{productId}/reviews", { defaultBody: {"rating": 5, "title": "Excellent", "comment": "Quality matched expectations."} }],
+    ["GET", "/api/v1/products/{productId}/rating-summary"],
+    ["POST", "/api/v1/admin/reviews/{reviewId}/approve", { defaultBody: {"moderationNotes": "Approved after manual moderation review."} }],
+    ["POST", "/api/v1/admin/reviews/{reviewId}/reject", { defaultBody: {"moderationNotes": "Rejected for spam or policy reasons."} }],
   ]),
   group("recommendation-controller", "Recommendation Controller", "Swagger tag: recommendation-controller", [
     ["GET", "/api/v1/recommendations/best-sellers"],

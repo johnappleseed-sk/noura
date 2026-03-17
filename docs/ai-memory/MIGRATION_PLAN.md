@@ -27,7 +27,8 @@ Implement the supply-control loop:
 6. extract `promotion-service` to isolate discount rule ownership and promo-code evaluation
 7. extract `payment-service` to isolate provider lifecycle and webhook handling
 8. extract `shipping-service` to isolate shipment lifecycle and future carrier callbacks
-9. keep the remaining domains inside `commerce-core`
+9. extract `review-service` to isolate customer feedback moderation and approved-rating aggregation
+10. keep the remaining domains inside `commerce-core`
 
 ## What Stays Modular First
 - pricing
@@ -47,6 +48,9 @@ Payment extraction note:
 
 Shipping extraction note:
 - shipping moved out before the broader fulfillment breakup because tracking identifiers, carrier polling/callbacks, and shipment status transitions are a cleaner operational boundary when isolated
+
+Review extraction note:
+- review moved out before the broader content/reputation breakup because customer feedback moderation, storefront visibility rules, and aggregate rating reads form a clean bounded context without needing a full reputation engine yet
 
 ## Data Migration Rules
 - one PostgreSQL cluster first, separate schemas and DB users

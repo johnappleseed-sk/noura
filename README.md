@@ -14,6 +14,7 @@ Enterprise commerce platform monorepo with canonical app, service, package, plat
 - Extracted `promotion-service` with deterministic promo-code validation, cart discount evaluation, and admin promotion CRUD.
 - Extracted `payment-service` with internal payment intents, sandbox provider abstraction, and webhook-ready event deduplication.
 - Extracted `shipping-service` with rule-based shipping quotes, shipment records, and carrier-ready fulfillment status hooks.
+- Extracted `review-service` with moderated storefront reviews, approved-only rating aggregation, and admin approval/rejection actions.
 
 ## Repository Modules
 - `apps/admin-web/` React admin operations console
@@ -43,6 +44,8 @@ Legacy code retained for reuse:
 - Payment architecture: [docs/architecture/payment-service.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/architecture/payment-service.md)
 - Promotion API: [docs/api/promotion-service.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/api/promotion-service.md)
 - Promotion architecture: [docs/architecture/promotion-service.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/architecture/promotion-service.md)
+- Review API: [docs/api/review-service.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/api/review-service.md)
+- Review architecture: [docs/architecture/review-service.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/architecture/review-service.md)
 - Shipping API: [docs/api/shipping-service.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/api/shipping-service.md)
 - Shipping architecture: [docs/architecture/shipping-service.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/architecture/shipping-service.md)
 

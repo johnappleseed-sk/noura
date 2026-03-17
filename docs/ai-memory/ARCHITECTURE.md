@@ -38,6 +38,7 @@ Phase 1 should have:
 - `promotion-service` for deterministic discount rule ownership and promotion admin workflows
 - `payment-service` for isolated provider orchestration and webhook handling
 - `shipping-service` for shipment lifecycle ownership, rule-based quoting, and future carrier integration
+- `review-service` for moderated storefront product feedback and approved-only rating aggregation
 - `commerce-core` modular monolith
 
 ## Architectural Principles
@@ -81,6 +82,11 @@ Promotion-specific note:
 - promotion-service owns promotion definitions, code/coupon validation, and deterministic discount evaluation
 - pricing-service remains responsible for base product price ownership
 - checkout/cart callers consume promotion-service responses without promotion-service mutating cart/order state directly
+
+Review-specific note:
+- review-service owns customer review records, moderation state, submission spam signals, and rating summaries
+- catalog-service remains the read-only source for product identity and listing availability
+- catalog-service does not own or mutate review moderation state in this slice
 
 ## Persistence Model
 - PostgreSQL for transactional truth

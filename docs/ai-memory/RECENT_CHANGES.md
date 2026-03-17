@@ -1,5 +1,51 @@
 # Recent Changes
 
+## 2026-03-17 - review-service extraction completed
+
+### Task
+- Implemented `review-service` with storefront review submission, public product review reads, approved-only rating aggregation, and admin approve/reject moderation actions.
+
+### Why
+- Review moderation and rating visibility are a different operational concern from catalog identity ownership.
+- The platform needed a stable review boundary before adding richer spam tooling, reputation scoring, or admin moderation queues.
+
+### Key files touched
+- `services/review-service/src/main/java/com/noura/review/controller/ReviewController.java`
+- `services/review-service/src/main/java/com/noura/review/service/impl/ReviewServiceImpl.java`
+- `services/review-service/src/main/resources/db/migration/V1__review_foundation.sql`
+- `apps/api-gateway/src/main/resources/application.yml`
+- `docs/api/review-service.md`
+- `docs/architecture/review-service.md`
+
+### Architecture decisions
+- `review-service` owns review records, moderation state, moderation audit fields, and rating aggregates.
+- The extraction reuses the archived `ProductReview` flow but keeps the first slice intentionally deterministic rather than introducing a generic comment or reputation platform.
+- Product identity is validated through synchronous read-only `catalog-service` lookups on submission.
+- Rating aggregates are computed from approved reviews inside `review-service` and are not pushed back into catalog/product records yet.
+
+### Moderation model
+- New reviews default to `PENDING`.
+- Storefront review lists and rating summaries include `APPROVED` reviews only.
+- Moderators can explicitly filter product-scoped review reads by `PENDING`, `APPROVED`, or `REJECTED`.
+- Moderation actions persist `moderatedAt`, `moderatedBy`, `moderationNotes`, `approvedAt`, and `rejectedAt`.
+
+### Integration notes
+- `apps/api-gateway` now routes `/api/v1/products/{productId}/reviews`, `/api/v1/products/{productId}/rating-summary`, and `/api/v1/admin/reviews/**` to `review-service`
+- `apps/admin-web` control-center endpoint catalog now exposes review-service endpoints explicitly
+- Storefront paths remain stable because the public review contract stays under `/api/v1/products/{productId}/...`
+
+### Known caveats
+- No review edit/delete API exists yet
+- No automated spam scoring or reputation model exists yet
+- No catalog-side aggregate projection is written yet
+- No global admin moderation queue endpoint exists yet beyond product-scoped filtering
+
+### Follow-up work
+- Add admin moderation list/search endpoints and UI
+- Add review edit/delete or replacement-review flows
+- Add spam heuristics, rate limiting, and reputation signals
+- Decide whether rating aggregates should later project into catalog/search read models
+
 ## 2026-03-17 - promotion-service extraction completed
 
 ### Task

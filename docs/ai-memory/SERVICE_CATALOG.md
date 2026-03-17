@@ -75,6 +75,19 @@ Notes:
 - reads order ownership and shipping-address snapshots from `order-service`
 - does not mutate order state in the current slice
 
+### review-service
+Purpose:
+- storefront product review submission
+- moderation workflow ownership
+- approved-rating aggregation
+- spam-ready review submission metadata
+
+Notes:
+- extracted because product feedback and moderation are a separate operational concern from catalog identity ownership
+- reuses the archived `ProductReview` flow but keeps the first slice deterministic and product-scoped
+- validates product identity through read-only `catalog-service` lookups
+- does not back-write rating aggregates into catalog/product records in the current slice
+
 ### commerce-core
 Purpose:
 - modular monolith for domains not worth splitting yet
@@ -101,7 +114,6 @@ Split later only when justified:
 - checkout-orchestrator
 - order-management
 - fulfillment-returns
-- reviews-reputation
 - analytics-reporting
 
 ## Service Boundary Rule
