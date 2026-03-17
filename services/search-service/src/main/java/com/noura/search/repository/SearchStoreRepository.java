@@ -6,6 +6,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Read-only repository for legacy store suggestions.
+ */
 public interface SearchStoreRepository extends JpaRepository<SearchStore, UUID> {
     List<SearchStore> findTop10ByNameContainingIgnoreCaseOrderByNameAsc(String name);
 }

@@ -35,6 +35,7 @@ Phase 1 should have:
 - `catalog-governance`
 - `inventory-availability`
 - `search-discovery`
+- `search-service` for projection-backed product discovery and future search-provider isolation
 - `promotion-service` for deterministic discount rule ownership and promotion admin workflows
 - `payment-service` for isolated provider orchestration and webhook handling
 - `shipping-service` for shipment lifecycle ownership, rule-based quoting, and future carrier integration
@@ -87,6 +88,11 @@ Review-specific note:
 - review-service owns customer review records, moderation state, submission spam signals, and rating summaries
 - catalog-service remains the read-only source for product identity and listing availability
 - catalog-service does not own or mutate review moderation state in this slice
+
+Search-specific note:
+- catalog-service remains the source of truth for product identity plus browse/admin product search
+- search-service owns `/api/v1/search/**`, search projections, and the search-provider abstraction
+- search-service reads canonical catalog data during rebuilds but does not become the owner of product truth
 
 ## Persistence Model
 - PostgreSQL for transactional truth

@@ -9,6 +9,9 @@ import org.hibernate.annotations.Immutable;
 
 import java.util.UUID;
 
+/**
+ * Read-only source projection for legacy store suggestions.
+ */
 @Getter
 @Setter
 @Immutable

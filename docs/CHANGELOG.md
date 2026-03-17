@@ -1,3 +1,28 @@
+## 2026-03-18
+
+### Added
+- Extracted `search-service` application layer for projection-backed product search, predictive suggestions, trend tags, and internal indexing operations.
+- New search-provider abstraction (`ProductSearchIndexProvider`) adapted from archived search adapter patterns so runtime storage can move from PostgreSQL to OpenSearch later.
+- New PostgreSQL search projection foundation migration: `services/search-service/src/main/resources/db/migration/V1__search_projection_foundation.sql`.
+- New search-service endpoints:
+  - `GET /api/v1/search/products`
+  - `GET /api/v1/search/predictive`
+  - `GET /api/v1/search/trend-tags`
+- New internal search indexing endpoints:
+  - `POST /internal/search/index/products`
+  - `POST /internal/search/index/products/rebuild`
+  - `DELETE /internal/search/index/products/{productId}`
+- New search-service tests for public query APIs, indexing APIs, provider behavior, and projection rebuild flow.
+- New search documentation:
+  - `docs/api/search-service.md`
+  - `docs/architecture/search-service.md`
+
+### Updated
+- `services/search-service/README.md` with the search boundary decision, indexing model, query-ownership rules, and environment-variable guidance.
+- Root `README.md`, `services/README.md`, and `docs/backend-api.md` to reflect the extracted `search-service`.
+- `apps/admin-web` control-center endpoint catalog now exposes `GET /api/v1/search/products` and uses the correct predictive-search query parameters.
+- Search boundary guidance now explicitly documents that `catalog-service` keeps product truth plus browse/admin product search while `search-service` owns `/api/v1/search/**`.
+
 ## 2026-03-17
 
 ### Added

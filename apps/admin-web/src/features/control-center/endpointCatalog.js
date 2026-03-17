@@ -194,7 +194,8 @@ export const endpointCatalog = [
     ["POST", "/api/v1/checkout/steps/shipping"],
   ]),
   group("search-controller", "Search Controller", "Swagger tag: search-controller", [
-    ["GET", "/api/v1/search/predictive", { defaultQuery: {"query": "example", "view": "grid"} }],
+    ["GET", "/api/v1/search/products", { defaultQuery: {"q": "mug", "page": 0, "size": 20} }],
+    ["GET", "/api/v1/search/predictive", { defaultQuery: {"q": "mug", "scope": "all"} }],
     ["GET", "/api/v1/search/trend-tags"],
   ]),
   group("inventory-reporting-controller", "Inventory Reporting Controller", "Swagger tag: inventory-reporting-controller", [

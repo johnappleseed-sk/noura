@@ -35,8 +35,16 @@ Purpose:
 ### search-discovery
 Purpose:
 - search index
-- faceting
-- browse and discovery projections
+- autocomplete and trend discovery
+- discovery-oriented product search
+- projection and indexing abstraction
+
+Notes:
+- extracted as a narrow standalone boundary because storefront and gateway already expose `/api/v1/search/**` as a distinct contract
+- `catalog-service` keeps product truth plus browse/admin product-search ownership
+- `search-service` owns search projections, predictive suggestions, trend tags, and internal indexing endpoints
+- the first provider is PostgreSQL-backed and reuses archived adapter concepts so OpenSearch can replace it later
+- blank search keywords intentionally return an empty page to avoid duplicating catalog browse behavior
 
 ### payment-service
 Purpose:

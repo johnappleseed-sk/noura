@@ -9,6 +9,9 @@ import org.hibernate.annotations.Immutable;
 
 import java.util.UUID;
 
+/**
+ * Read-only source projection for canonical brand metadata used during search index rebuilds.
+ */
 @Getter
 @Setter
 @Immutable

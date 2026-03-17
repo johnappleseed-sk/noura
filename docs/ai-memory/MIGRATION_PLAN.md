@@ -23,7 +23,7 @@ Implement the supply-control loop:
 2. introduce gateway, IAM, CI/CD, observability
 3. build `catalog-governance`
 4. extract `inventory-availability`
-5. build `search-discovery`
+5. extract `search-service` as the projection-backed discovery boundary without moving catalog browse/admin search
 6. extract `promotion-service` to isolate discount rule ownership and promo-code evaluation
 7. extract `payment-service` to isolate provider lifecycle and webhook handling
 8. extract `shipping-service` to isolate shipment lifecycle and future carrier callbacks
@@ -51,6 +51,9 @@ Shipping extraction note:
 
 Review extraction note:
 - review moved out before the broader content/reputation breakup because customer feedback moderation, storefront visibility rules, and aggregate rating reads form a clean bounded context without needing a full reputation engine yet
+
+Search extraction note:
+- search moved to a standalone projection service because `/api/v1/search/**` already behaves as a distinct discovery contract, but catalog browse/admin search stays in `catalog-service` until a later migration justifies moving it
 
 ## Data Migration Rules
 - one PostgreSQL cluster first, separate schemas and DB users

@@ -245,6 +245,7 @@ Contract status: transitional compatibility aliases. In OpenAPI these operations
 
 | Method | Path | Summary | Params | Request Body | Response |
 | --- | --- | --- | --- | --- | --- |
+| GET | /api/v1/search/products | searchProducts | q(query string), keyword(query string), categoryId(query string), brandId(query string), page(query integer:int32), size(query integer:int32) | - | com.noura.search.common.ApiResponseCom.noura.search.common.PageResponseCom.noura.search.dto.ProductSearchHitDto |
 | GET | /api/v1/search/predictive | predictive | q(query* string), scope(query string) | - | com.noura.platform.common.api.ApiResponseJava.util.ListCom.noura.platform.dto.product.SearchSuggestionDto |
 | GET | /api/v1/search/trend-tags | trendTags | - | - | com.noura.platform.common.api.ApiResponseJava.util.ListCom.noura.platform.dto.product.TrendTagDto |
 

@@ -1,5 +1,53 @@
 # Recent Changes
 
+## 2026-03-18 - search-service extraction completed
+
+### Task
+- Implemented `search-service` as the standalone discovery boundary with projection-backed product search, predictive suggestions, trend tags, and internal indexing operations.
+
+### Why
+- The audit showed `catalog-service` already owns product truth and browse/admin product search, but `/api/v1/search/**` already behaves like a separate discovery contract.
+- The platform needed a real search boundary now without duplicating catalog ownership or introducing OpenSearch too early.
+
+### Key files touched
+- `services/search-service/src/main/java/com/noura/search/controller/SearchPublicController.java`
+- `services/search-service/src/main/java/com/noura/search/controller/InternalSearchIndexController.java`
+- `services/search-service/src/main/java/com/noura/search/provider/ProductSearchIndexProvider.java`
+- `services/search-service/src/main/java/com/noura/search/provider/PostgresProductSearchIndexProvider.java`
+- `services/search-service/src/main/resources/db/migration/V1__search_projection_foundation.sql`
+- `docs/api/search-service.md`
+- `docs/architecture/search-service.md`
+
+### Architecture decisions
+- `catalog-service` remains the source of truth for product identity plus browse/admin product-search flows.
+- `search-service` now owns the canonical `/api/v1/search/**` discovery surface.
+- Runtime reads use the search-owned `search_product_documents` projection table rather than direct catalog-table reads.
+- The provider boundary reuses the archived search adapter concept so PostgreSQL can be replaced with OpenSearch later.
+- Blank product search keywords return an empty page so `search-service` does not silently become a second browse API.
+
+### Indexing model
+- Internal indexing APIs live under `/internal/search/index/**`.
+- Rebuilds currently read canonical source tables through read-only JPA mappings and repopulate the projection table.
+- Internal indexing endpoints are protected by `X-Internal-Api-Key`.
+- Store suggestions remain a temporary read-through compatibility path until store discovery gets its own projection.
+
+### Integration notes
+- `apps/api-gateway` can continue routing `/api/v1/search/**` and `/api/search/**` to `search-service`
+- `apps/admin-web` control-center endpoint catalog now includes `GET /api/v1/search/products`
+- `catalog-service` still contains transitional duplicate predictive/trend code, but the canonical boundary is now documented as `search-service`
+
+### Known caveats
+- No OpenSearch provider exists yet
+- No event-bus or outbox-driven indexing flow exists yet
+- No dedicated faceting or filter-aggregation API exists yet
+- Store suggestions are not projected yet
+
+### Follow-up work
+- Publish incremental index events from catalog/review/merchandising changes
+- Add an OpenSearch adapter behind `ProductSearchIndexProvider`
+- Decide when catalog-side duplicate predictive/trend endpoints can be retired
+- Add richer search ranking and facet aggregation once discovery requirements justify it
+
 ## 2026-03-17 - review-service extraction completed
 
 ### Task

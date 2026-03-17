@@ -374,6 +374,66 @@ Behavior:
 Detailed contract:
 - [docs/api/review-service.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/api/review-service.md)
 
+## Search Service Endpoints
+Base prefix: `/api/v1/search`
+
+### Search products
+`GET /search/products`
+
+Query params:
+- `q` or `keyword`
+- `categoryId` (optional UUID)
+- `brandId` (optional UUID)
+- `page` (optional, default `0`)
+- `size` (optional, default `20`, max `100`)
+
+Behavior:
+- queries search-owned projection documents rather than canonical catalog tables
+- returns an empty page for blank queries so this endpoint does not become a second catalog browse API
+- supports optional category and brand filtering
+
+### Predictive suggestions
+`GET /search/predictive`
+
+Query params:
+- `q`
+- `scope` (`all`, `products`, `brands`, `categories`, `stores`)
+
+Behavior:
+- serves product, brand, and category suggestions from indexed documents
+- keeps store suggestions as a temporary read-through compatibility path
+
+### Trend tags
+`GET /search/trend-tags`
+
+Behavior:
+- derives discovery tags from trending indexed product documents
+- falls back to stable default tags when the projection is empty
+
+### Internal product index upsert
+`POST /internal/search/index/products`
+
+Behavior:
+- trusted internal endpoint protected by `X-Internal-Api-Key`
+- upserts one or more product documents into the search projection
+
+### Internal product index rebuild
+`POST /internal/search/index/products/rebuild`
+
+Behavior:
+- trusted internal endpoint protected by `X-Internal-Api-Key`
+- rebuilds the search projection from canonical catalog source tables
+
+### Internal product index delete
+`DELETE /internal/search/index/products/{productId}`
+
+Behavior:
+- trusted internal endpoint protected by `X-Internal-Api-Key`
+- removes one product document from the search projection
+
+Detailed contract:
+- [docs/api/search-service.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/api/search-service.md)
+
 ## Product Enrichment Endpoints
 Base prefix: `/api/v1`
 

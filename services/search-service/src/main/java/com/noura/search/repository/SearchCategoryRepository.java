@@ -7,6 +7,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Read-only repository for canonical category metadata used during search projection rebuilds.
+ */
 public interface SearchCategoryRepository extends JpaRepository<SearchCategory, UUID> {
     List<SearchCategory> findByIdIn(Collection<UUID> ids);
 }

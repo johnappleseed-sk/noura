@@ -6,8 +6,14 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Read-only repository for canonical catalog products used to rebuild the search projection.
+ */
 public interface SearchProductRepository extends JpaRepository<SearchProduct, UUID> {
-    List<SearchProduct> findTop20ByActiveTrueAndNameContainingIgnoreCaseOrderByUpdatedAtDesc(String name);
-
-    List<SearchProduct> findTop20ByActiveTrueAndTrendingTrueOrderByPopularityScoreDesc();
+    /**
+     * Returns all products ordered by most-recent source update for rebuild operations.
+     *
+     * @return source product list
+     */
+    List<SearchProduct> findAllByOrderByUpdatedAtDesc();
 }
