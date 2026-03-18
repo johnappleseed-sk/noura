@@ -1,6 +1,7 @@
 package com.noura.cart.service;
 
 import com.noura.cart.dto.cart.AddCartItemRequest;
+import com.noura.cart.dto.cart.ApplyCouponRequest;
 import com.noura.cart.dto.cart.CartResponse;
 import com.noura.cart.dto.cart.MergeGuestCartRequest;
 import com.noura.cart.dto.cart.UpdateCartItemQuantityRequest;
@@ -74,4 +75,21 @@ public interface CartService {
      * @return refreshed cart response
      */
     CartResponse refresh(CartContext context, boolean strict);
+
+    /**
+     * Applies one coupon/promotion code to the current cart.
+     *
+     * @param context ownership context
+     * @param request coupon command
+     * @return updated cart response
+     */
+    CartResponse applyCoupon(CartContext context, ApplyCouponRequest request);
+
+    /**
+     * Removes any coupon/promotion from the current cart.
+     *
+     * @param context ownership context
+     * @return updated cart response
+     */
+    CartResponse removeCoupon(CartContext context);
 }

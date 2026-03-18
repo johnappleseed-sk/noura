@@ -4,6 +4,9 @@
 
 `payment-service` owns internal payment state for existing orders. It validates orders through `order-service`, persists provider-agnostic payment records, and exposes a webhook-ready provider ingestion model.
 
+Gateway exposure:
+- `api-gateway` routes `/api/v1/payments/**` and `/api/payments/**` to `payment-service`.
+
 All endpoints use the standard API envelope:
 
 ```json

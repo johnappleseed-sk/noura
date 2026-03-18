@@ -1,5 +1,53 @@
 # Recent Changes
 
+## 2026-03-18 - cross-service integration pass hardening
+
+### Task
+- Performed an integration hardening pass across gateway, cart, promotion, notification, payment, and shipping boundaries.
+
+### Why
+- Gateway did not expose payment/shipping APIs, which blocked ingress-level access.
+- Storefront/admin compatibility paths expected `/api/v1/cart/coupon`, but cart-service had no coupon command surface.
+- Notification API envelopes were not aligned with the shared correlation-aware response contract.
+- Promotion rounding differed from the other transaction services.
+
+### Key files touched
+- `apps/api-gateway/src/main/resources/application.yml`
+- `services/cart-service/src/main/java/com/noura/cart/controller/CartController.java`
+- `services/cart-service/src/main/java/com/noura/cart/service/CartService.java`
+- `services/cart-service/src/main/java/com/noura/cart/service/impl/CartServiceImpl.java`
+- `services/cart-service/src/main/java/com/noura/cart/integration/PromotionGateway.java`
+- `services/cart-service/src/main/java/com/noura/cart/integration/client/PromotionServiceClient.java`
+- `services/notification-service/src/main/java/com/noura/notification/common/ApiResponse.java`
+- `services/notification-service/src/main/java/com/noura/notification/config/RequestCorrelationFilter.java`
+- `services/promotion-service/src/main/java/com/noura/promotion/service/impl/PromotionServiceImpl.java`
+
+### Architecture decisions
+- `api-gateway` is now the canonical ingress for payment/shipping public APIs and readiness probes.
+- Coupon application remains cart-owned while coupon validity/eligibility logic stays promotion-owned through synchronous promotion-service validation.
+- Cart totals recomputation now treats coupon failures as strict for explicit coupon-apply commands and non-strict for background cart recomputation paths.
+- Notification now follows the same response envelope semantics as other services (`correlationId`, validation-error map, and request correlation propagation).
+- Promotion money normalization was aligned to the 4-decimal transaction contract used by cart/order/checkout/pricing/payment/shipping.
+
+### Integration notes
+- New cart coupon routes:
+  - `POST /api/v1/cart/coupon`
+  - `DELETE /api/v1/cart/coupon`
+- Cart coupon validation calls `promotion-service` endpoint `/api/v1/promotions/validate-code`.
+- Gateway now routes:
+  - `/api/v1/payments/**` and `/api/payments/**`
+  - `/api/v1/shipping/**` and `/api/shipping/**`
+
+### Known caveats
+- Checkout still uses a `NoopPaymentGateway`; checkout-to-payment orchestration remains deferred.
+- Shipping orchestration is still not triggered automatically during checkout placement.
+- Status spelling is still domain-specific (`CANCELED` in payment vs `CANCELLED` in order/shipping); mapping harmonization is pending.
+
+### Follow-up work
+- Add checkout orchestration integration for payment intent creation/confirmation and shipment bootstrapping.
+- Decide whether to standardize cancellation enum spelling platform-wide with compatibility aliases.
+- Add integration tests that traverse gateway -> cart coupon -> promotion validation -> checkout totals.
+
 ## 2026-03-18 - search-service extraction completed
 
 ### Task

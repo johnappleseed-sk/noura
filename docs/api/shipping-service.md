@@ -4,6 +4,9 @@
 
 `shipping-service` owns shipping method discovery, rule-based quote calculation, shipment lifecycle records, and fulfillment-ready shipment status hooks. It validates orders through `order-service`, persists carrier-agnostic shipment records, and keeps the carrier boundary ready for future external logistics integrations.
 
+Gateway exposure:
+- `api-gateway` routes `/api/v1/shipping/**` and `/api/shipping/**` to `shipping-service`.
+
 All endpoints use the standard API envelope:
 
 ```json

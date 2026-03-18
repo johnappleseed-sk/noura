@@ -20,6 +20,9 @@ The first version intentionally stays easy to reason about:
 - no order mutation
 - no per-customer redemption ledger yet
 
+Money normalization:
+- promotion-service now uses the same 4-decimal monetary scale as cart/order/checkout/payment/shipping/pricing (`HALF_UP`) to avoid cross-service rounding drift.
+
 ## Public/storefront-compatible endpoints
 
 ### List active promotions

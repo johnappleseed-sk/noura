@@ -26,6 +26,18 @@
   - `/api/v1/search/products` also accepts `query`
   - product hits expose `id`, `isTrending`, and `merchandisingScore` aliases
   - trend tags expose `name` and `tag` aliases in addition to `value`
+- `apps/api-gateway` now routes payment and shipping traffic (plus health/readiness probes) through:
+  - `/api/v1/payments/**` and `/api/payments/**`
+  - `/api/v1/shipping/**` and `/api/shipping/**`
+  - `/internal/payment-service/{health|readiness}`
+  - `/internal/shipping-service/{health|readiness}`
+- `cart-service` now supports coupon lifecycle endpoints:
+  - `POST /api/v1/cart/coupon`
+  - `DELETE /api/v1/cart/coupon`
+- `cart-service` now validates coupons through `promotion-service` and persists deterministic `discountAmount`/`totalAmount` updates in cart totals.
+- `notification-service` API envelope now aligns with the shared cross-service contract by including `correlationId` and field-level validation errors.
+- `notification-service` now propagates `X-Correlation-ID` with MDC-backed request filtering.
+- `promotion-service` monetary normalization now uses scale `4` to align with cart/order/checkout/pricing/payment/shipping totals.
 
 ## 2026-03-17
 

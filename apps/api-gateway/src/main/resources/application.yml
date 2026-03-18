@@ -286,6 +286,44 @@ spring:
             - Path=/internal/checkout-service/readiness
           filters:
             - RewritePath=/internal/checkout-service/readiness, /actuator/health/readiness
+        - id: payment-service-api
+          uri: ${PAYMENT_SERVICE_URL:http://localhost:8092}
+          predicates:
+            - Method=GET,POST
+            - Path=/api/v1/payments/**,/api/payments/**
+          filters:
+            - PreserveHostHeader
+        - id: payment-service-health
+          uri: ${PAYMENT_SERVICE_URL:http://localhost:8092}
+          predicates:
+            - Path=/internal/payment-service/health
+          filters:
+            - RewritePath=/internal/payment-service/health, /actuator/health
+        - id: payment-service-readiness
+          uri: ${PAYMENT_SERVICE_URL:http://localhost:8092}
+          predicates:
+            - Path=/internal/payment-service/readiness
+          filters:
+            - RewritePath=/internal/payment-service/readiness, /actuator/health/readiness
+        - id: shipping-service-api
+          uri: ${SHIPPING_SERVICE_URL:http://localhost:8093}
+          predicates:
+            - Method=GET,POST
+            - Path=/api/v1/shipping/**,/api/shipping/**
+          filters:
+            - PreserveHostHeader
+        - id: shipping-service-health
+          uri: ${SHIPPING_SERVICE_URL:http://localhost:8093}
+          predicates:
+            - Path=/internal/shipping-service/health
+          filters:
+            - RewritePath=/internal/shipping-service/health, /actuator/health
+        - id: shipping-service-readiness
+          uri: ${SHIPPING_SERVICE_URL:http://localhost:8093}
+          predicates:
+            - Path=/internal/shipping-service/readiness
+          filters:
+            - RewritePath=/internal/shipping-service/readiness, /actuator/health/readiness
         - id: app-service
           uri: ${APP_SERVICE_URL:http://localhost:8082}
           predicates:

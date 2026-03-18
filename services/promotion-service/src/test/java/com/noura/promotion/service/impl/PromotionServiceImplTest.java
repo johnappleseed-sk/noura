@@ -113,7 +113,7 @@ class PromotionServiceImplTest {
         Assertions.assertEquals(promotionId, response.id());
         Assertions.assertEquals("SPRING-SALE", response.code());
         Assertions.assertEquals("SAVE10", response.couponCode());
-        Assertions.assertEquals(new BigDecimal("10.00"), response.discountPercent());
+        Assertions.assertEquals(new BigDecimal("10.0000"), response.discountPercent());
         Assertions.assertEquals(1, response.applications().size());
     }
 
@@ -189,8 +189,8 @@ class PromotionServiceImplTest {
                 )
         );
 
-        Assertions.assertEquals(new BigDecimal("10.00"), response.discountAmount());
-        Assertions.assertEquals(new BigDecimal("40.00"), response.discountedSubtotal());
+        Assertions.assertEquals(new BigDecimal("10.0000"), response.discountAmount());
+        Assertions.assertEquals(new BigDecimal("40.0000"), response.discountedSubtotal());
         Assertions.assertEquals(List.of(couponPromotion.getId(), automaticPromotion.getId()), response.appliedPromotionIds());
     }
 

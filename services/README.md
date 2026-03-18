@@ -22,7 +22,7 @@ Current state:
 - `search-service` is extracted for projection-backed discovery APIs, internal indexing contracts, and future search-provider abstraction while `catalog-service` keeps browse/admin product search.
 - `inventory-service` is extracted for stock visibility and stock mutation APIs.
 - `pricing-service` is extracted for product price upsert and storefront/checkout price resolution.
-- `cart-service` is extracted for persistent carts with catalog/pricing/inventory validation.
+- `cart-service` is extracted for persistent carts with catalog/pricing/inventory validation plus promotion-service coupon validation integration.
 - `customer-service` is extracted for storefront customer profile/address flows.
 - `order-service` is extracted for order aggregate creation/history/status.
 - `checkout-service` is extracted for preview/validation/place-order orchestration.

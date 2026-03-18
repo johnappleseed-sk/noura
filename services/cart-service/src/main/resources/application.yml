@@ -34,6 +34,8 @@ services:
     base-url: ${INVENTORY_SERVICE_BASE_URL:http://localhost:8086}
   pricing:
     base-url: ${PRICING_SERVICE_BASE_URL:http://localhost:8087}
+  promotion:
+    base-url: ${PROMOTION_SERVICE_BASE_URL:http://localhost:8094}
 
 management:
   endpoints:

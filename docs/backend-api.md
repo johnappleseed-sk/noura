@@ -178,6 +178,23 @@ Response:
 See detailed endpoint contract:
 - [docs/api/admin-authorization-matrix.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/api/admin-authorization-matrix.md)
 
+## Cart Service Endpoints
+Base prefix: `/api/v1`
+
+### Apply cart coupon
+`POST /cart/coupon`
+
+Behavior:
+- validates the supplied coupon through `promotion-service` (`/api/v1/promotions/validate-code`)
+- updates persisted cart totals (`discountAmount`, `totalAmount`) when eligible
+- rejects invalid/ineligible coupons with stable cart error codes
+
+### Remove cart coupon
+`DELETE /cart/coupon`
+
+Behavior:
+- clears `couponCode` and recomputes totals deterministically
+
 ## Payment Service Endpoints
 Base prefix: `/api/v1`
 

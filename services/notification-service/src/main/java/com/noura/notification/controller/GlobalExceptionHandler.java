@@ -25,7 +25,13 @@ public class GlobalExceptionHandler {
         }
         String detail = validationErrors.isEmpty() ? "Validation failed" : validationErrors.toString();
         return ResponseEntity.badRequest()
-                .body(ApiResponse.fail("Validation failed", "VALIDATION_ERROR", detail, request.getRequestURI()));
+                .body(ApiResponse.fail(
+                        "Validation failed",
+                        "VALIDATION_ERROR",
+                        detail,
+                        validationErrors,
+                        request.getRequestURI()
+                ));
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
@@ -61,4 +67,3 @@ public class GlobalExceptionHandler {
                 ));
     }
 }
-

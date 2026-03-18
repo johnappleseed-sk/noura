@@ -55,7 +55,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PromotionServiceImpl implements PromotionService {
 
-    private static final BigDecimal ZERO = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+    private static final BigDecimal ZERO = BigDecimal.ZERO.setScale(4, RoundingMode.HALF_UP);
 
     private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() {
     };
@@ -785,7 +785,7 @@ public class PromotionServiceImpl implements PromotionService {
         if (percent.signum() <= 0) {
             return ZERO;
         }
-        return normalizeMoney(subtotal.multiply(percent).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP));
+        return normalizeMoney(subtotal.multiply(percent).divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP));
     }
 
     /**
@@ -848,7 +848,7 @@ public class PromotionServiceImpl implements PromotionService {
                 .orElse(ZERO);
         int eligibleUnits = totalQty / (buyQty + getQty) * getQty;
         BigDecimal base = cheapestUnit.multiply(BigDecimal.valueOf(eligibleUnits));
-        return normalizeMoney(base.multiply(discountPercent).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP));
+        return normalizeMoney(base.multiply(discountPercent).divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP));
     }
 
     /**
@@ -1065,7 +1065,7 @@ public class PromotionServiceImpl implements PromotionService {
         if (value == null) {
             return ZERO;
         }
-        return value.setScale(2, RoundingMode.HALF_UP);
+        return value.setScale(4, RoundingMode.HALF_UP);
     }
 
     /**

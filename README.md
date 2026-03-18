@@ -16,6 +16,7 @@ Enterprise commerce platform monorepo with canonical app, service, package, plat
 - Extracted `shipping-service` with rule-based shipping quotes, shipment records, and carrier-ready fulfillment status hooks.
 - Extracted `review-service` with moderated storefront reviews, approved-only rating aggregation, and admin approval/rejection actions.
 - Extracted `search-service` as the projection-backed discovery boundary for product search, autocomplete, trend tags, and provider-ready indexing.
+- Cross-service integration hardening: gateway routes now expose payment/shipping APIs, cart-service coupon flows integrate with promotion-service validation, and notification-service aligns to the shared response/correlation contract.
 
 ## Repository Modules
 - `apps/admin-web/` React admin operations console
