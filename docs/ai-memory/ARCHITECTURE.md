@@ -85,6 +85,11 @@ Testing note:
 - checkout happy-path coverage is intentionally a controller-plus-service slice with mocked downstream clients instead of a brittle full-runtime environment suite
 - gateway-level and deployed-stack smoke tests are still follow-up work
 
+API-contract note:
+- extracted services now share one documented failure-envelope policy
+- field validation, malformed-body errors, type mismatches, not-found errors, authorization placeholders, conflict responses, and unexpected failures should all map to the same top-level response shape and status-driven message rules
+- DTO naming remains suffix-based: public write models use `*Request`, read models use `*Response`, and qualifiers such as `Internal` or `Legacy` are allowed when they preserve that suffix rule
+
 Shipping-specific note:
 - shipping-service validates order identity and shipment ownership by synchronous order lookup
 - shipping-service owns shipment state, tracking references, and carrier refresh logic

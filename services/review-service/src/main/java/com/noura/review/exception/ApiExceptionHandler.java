@@ -3,6 +3,7 @@ package com.noura.review.exception;
 import com.noura.review.common.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -97,7 +98,7 @@ public class ApiExceptionHandler {
         return ResponseEntity.badRequest().body(ApiResponse.fail(
                 "Validation failed",
                 "VALIDATION_ERROR",
-                "One or more request parameters are invalid",
+                "Invalid value for parameter '" + ex.getName() + "'",
                 request.getRequestURI()
         ));
     }
@@ -131,12 +132,7 @@ public class ApiExceptionHandler {
             ReviewOperationException ex,
             HttpServletRequest request
     ) {
-        return ResponseEntity.status(ex.getStatus()).body(ApiResponse.fail(
-                "Review operation rejected",
-                ex.getCode(),
-                ex.getMessage(),
-                request.getRequestURI()
-        ));
+        return buildStatusFailure(ex.getStatus(), ex.getCode(), ex.getMessage(), request);
     }
 
     /**
@@ -154,5 +150,45 @@ public class ApiExceptionHandler {
                 "Unexpected error occurred",
                 request.getRequestURI()
         ));
+    }
+
+    /**
+     * Builds a standardized status-aware failure envelope for business and authorization errors.
+     *
+     * @param status resolved HTTP status
+     * @param code stable machine-readable code
+     * @param detail human-readable detail
+     * @param request current HTTP request
+     * @return failure envelope
+     */
+    private ResponseEntity<ApiResponse<Void>> buildStatusFailure(
+            HttpStatus status,
+            String code,
+            String detail,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity.status(status).body(ApiResponse.fail(
+                resolveStatusMessage(status),
+                code,
+                detail,
+                request.getRequestURI()
+        ));
+    }
+
+    /**
+     * Resolves the client-facing message for one status category.
+     *
+     * @param status HTTP status
+     * @return standardized client-facing message
+     */
+    private String resolveStatusMessage(HttpStatus status) {
+        return switch (status) {
+            case BAD_REQUEST, UNPROCESSABLE_ENTITY -> "Request rejected";
+            case UNAUTHORIZED -> "Unauthorized";
+            case FORBIDDEN -> "Forbidden";
+            case NOT_FOUND -> "Resource not found";
+            case CONFLICT -> "Conflict";
+            default -> status.getReasonPhrase();
+        };
     }
 }

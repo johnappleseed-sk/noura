@@ -18,6 +18,12 @@
   - `docs/architecture/search-service.md`
 
 ### Updated
+- Standardized extracted-service API failure behavior:
+  - consistent top-level failure messages by HTTP status category instead of service-specific `* operation rejected` wording
+  - added malformed-body and type-mismatch handling across the previously missing services
+  - aligned `notification-service` with the platform-standard `INTERNAL_SERVER_ERROR` handling and renamed its advice class to `ApiExceptionHandler`
+  - removed generic exception-detail leakage from `catalog-service`
+  - documented the common envelope and examples in `docs/api/error-response-standard.md`
 - Pragmatic automated commerce test coverage now includes:
   - `cart-service` quantity-update and remove-item unit coverage
   - `inventory-service` reservation-release and low-stock endpoint coverage

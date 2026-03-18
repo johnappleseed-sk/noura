@@ -59,6 +59,7 @@ Legacy code retained for reuse:
 - Shipping architecture: [docs/architecture/shipping-service.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/architecture/shipping-service.md)
 - Purchase flow architecture: [docs/architecture/purchase-flow.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/architecture/purchase-flow.md)
 - Commerce test coverage: [docs/testing/commerce-service-tests.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/testing/commerce-service-tests.md)
+- API error response standard: [docs/api/error-response-standard.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/api/error-response-standard.md)
 
 ## Local Development
 ### Legacy monolith backend (during migration)

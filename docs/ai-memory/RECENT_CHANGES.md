@@ -1,5 +1,60 @@
 # Recent Changes
 
+## 2026-03-18 - cross-service API error behavior standardization
+
+### Task
+- Audited controllers and exception handlers across the extracted services and standardized API failure behavior.
+
+### Why
+- The response envelope shape was already mostly aligned, but failure handling still drifted across services.
+- Several services were missing malformed-body or type-mismatch handlers, notification-service used a different error policy, and some handlers still returned service-specific top-level messages such as `Cart operation rejected`.
+
+### Key files touched
+- `services/catalog-service/src/main/java/com/noura/catalog/exception/ApiExceptionHandler.java`
+- `services/cart-service/src/main/java/com/noura/cart/exception/ApiExceptionHandler.java`
+- `services/checkout-service/src/main/java/com/noura/checkout/exception/ApiExceptionHandler.java`
+- `services/customer-service/src/main/java/com/noura/customer/exception/ApiExceptionHandler.java`
+- `services/inventory-service/src/main/java/com/noura/inventory/exception/ApiExceptionHandler.java`
+- `services/order-service/src/main/java/com/noura/order/exception/ApiExceptionHandler.java`
+- `services/payment-service/src/main/java/com/noura/payment/exception/ApiExceptionHandler.java`
+- `services/promotion-service/src/main/java/com/noura/promotion/exception/ApiExceptionHandler.java`
+- `services/pricing-service/src/main/java/com/noura/pricing/exception/ApiExceptionHandler.java`
+- `services/review-service/src/main/java/com/noura/review/exception/ApiExceptionHandler.java`
+- `services/search-service/src/main/java/com/noura/search/exception/ApiExceptionHandler.java`
+- `services/shipping-service/src/main/java/com/noura/shipping/exception/ApiExceptionHandler.java`
+- `services/notification-service/src/main/java/com/noura/notification/controller/ApiExceptionHandler.java`
+- `docs/api/error-response-standard.md`
+
+### Architecture decisions
+- Kept the existing response envelope shape instead of inventing a new platform wrapper.
+- Standardized top-level failure messages by status category:
+  - `Validation failed`
+  - `Resource not found`
+  - `Request rejected`
+  - `Unauthorized`
+  - `Forbidden`
+  - `Conflict`
+  - HTTP reason phrase for upstream/dependency-style statuses
+  - `Internal server error`
+- Preserved service/domain error codes for not-found and operation exceptions instead of flattening them into generic platform codes.
+- Did not mass-rename DTO classes because public DTO suffixing was already consistent enough; the standard is now documented rather than forced through broad refactors.
+
+### Integration notes
+- Services that previously lacked them now handle:
+  - malformed JSON/request bodies via `INVALID_REQUEST_BODY`
+  - path/query type mismatches via `VALIDATION_ERROR`
+- `notification-service` now uses the same internal-error policy and status-aware message mapping as the other extracted services.
+- `catalog-service` no longer leaks raw exception messages through its generic `500` handler.
+
+### Known caveats
+- Success response messages are still endpoint-specific by design; this pass standardized failure behavior, not all human-facing success wording.
+- Notification and some internal-only controllers still use `ResponseStatusException` in narrow places, but the handler now maps those statuses into the same platform-standard envelope.
+- DTO naming is documented as a convention rather than retrofitted through wide class renames.
+
+### Follow-up work
+- Add focused controller tests for malformed-body and type-mismatch cases in more services if those failure contracts become frontend-critical.
+- Consider moving the response-envelope helpers into a shared internal library if the extracted services start to diverge again.
+
 ## 2026-03-18 - pragmatic automated commerce test coverage
 
 ### Task

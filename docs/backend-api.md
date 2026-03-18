@@ -1,5 +1,47 @@
 # Backend API
 
+## Standard Response Envelope
+
+All extracted services use the same top-level response structure:
+
+- success responses: `success`, `message`, `data`, `correlationId`, `timestamp`, `path`
+- failure responses: `success`, `message`, `error.code`, `error.detail`, optional `error.validationErrors`, `correlationId`, `timestamp`, `path`
+
+Success example:
+
+```json
+{
+  "success": true,
+  "message": "Payment confirmed",
+  "data": {
+    "id": "f7c7d7d0-1111-2222-3333-444444444444"
+  },
+  "correlationId": "corr-123",
+  "timestamp": "2026-03-18T15:00:00Z",
+  "path": "/api/v1/payments/f7c7d7d0-1111-2222-3333-444444444444/confirm"
+}
+```
+
+Failure example:
+
+```json
+{
+  "success": false,
+  "message": "Forbidden",
+  "error": {
+    "code": "FORBIDDEN",
+    "detail": "Invalid internal API key",
+    "validationErrors": null
+  },
+  "correlationId": "corr-123",
+  "timestamp": "2026-03-18T15:00:00Z",
+  "path": "/internal/notifications"
+}
+```
+
+See the full error-policy reference:
+- [docs/api/error-response-standard.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/api/error-response-standard.md)
+
 ## Admin Authorization Endpoints
 Base prefix: `/api/v1`
 
