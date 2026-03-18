@@ -1,17 +1,21 @@
 package com.noura.customer.service.impl;
 
 import com.noura.customer.domain.entity.CustomerAddress;
+import com.noura.customer.domain.entity.CustomerPaymentMethod;
 import com.noura.customer.domain.entity.CustomerProfile;
 import com.noura.customer.domain.enums.AddressValidationStatus;
 import com.noura.customer.domain.enums.DefaultAddressType;
 import com.noura.customer.dto.address.CustomerAddressRequest;
 import com.noura.customer.dto.address.CustomerAddressResponse;
 import com.noura.customer.dto.internal.CustomerLookupResponse;
+import com.noura.customer.dto.payment.CustomerPaymentMethodRequest;
+import com.noura.customer.dto.payment.CustomerPaymentMethodResponse;
 import com.noura.customer.dto.profile.CustomerProfileResponse;
 import com.noura.customer.dto.profile.UpdateCustomerProfileRequest;
 import com.noura.customer.exception.CustomerOperationException;
 import com.noura.customer.exception.NotFoundException;
 import com.noura.customer.repository.CustomerAddressRepository;
+import com.noura.customer.repository.CustomerPaymentMethodRepository;
 import com.noura.customer.repository.CustomerProfileRepository;
 import com.noura.customer.service.CustomerAccountService;
 import com.noura.customer.service.model.CustomerIdentity;
@@ -34,6 +38,7 @@ public class CustomerAccountServiceImpl implements CustomerAccountService {
 
     private final CustomerProfileRepository customerProfileRepository;
     private final CustomerAddressRepository customerAddressRepository;
+    private final CustomerPaymentMethodRepository customerPaymentMethodRepository;
 
     /**
      * {@inheritDoc}
@@ -173,6 +178,71 @@ public class CustomerAccountServiceImpl implements CustomerAccountService {
      * {@inheritDoc}
      */
     @Override
+    @Transactional
+    public List<CustomerPaymentMethodResponse> listPaymentMethods(CustomerIdentity identity) {
+        CustomerProfile profile = getOrCreateProfile(identity);
+        return customerPaymentMethodRepository.findByCustomerOrderByUpdatedAtDesc(profile).stream()
+                .map(this::toPaymentMethodResponse)
+                .toList();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional
+    public CustomerPaymentMethodResponse addPaymentMethod(CustomerIdentity identity, CustomerPaymentMethodRequest request) {
+        CustomerProfile profile = getOrCreateProfile(identity);
+        if (Boolean.TRUE.equals(request.defaultMethod())) {
+            clearDefaultPaymentMethod(profile);
+        }
+
+        CustomerPaymentMethod paymentMethod = new CustomerPaymentMethod();
+        paymentMethod.setCustomer(profile);
+        applyPaymentMethodFields(paymentMethod, request);
+        paymentMethod.setCreatedBy(identity.externalSubject());
+        paymentMethod.setUpdatedBy(identity.externalSubject());
+        CustomerPaymentMethod saved = customerPaymentMethodRepository.save(paymentMethod);
+        return toPaymentMethodResponse(saved);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional
+    public CustomerPaymentMethodResponse updatePaymentMethod(
+            CustomerIdentity identity,
+            UUID paymentMethodId,
+            CustomerPaymentMethodRequest request
+    ) {
+        CustomerProfile profile = getOrCreateProfile(identity);
+        CustomerPaymentMethod paymentMethod = requirePaymentMethod(profile, paymentMethodId);
+        if (Boolean.TRUE.equals(request.defaultMethod())) {
+            clearDefaultPaymentMethod(profile);
+        }
+
+        applyPaymentMethodFields(paymentMethod, request);
+        paymentMethod.setUpdatedBy(identity.externalSubject());
+        CustomerPaymentMethod saved = customerPaymentMethodRepository.save(paymentMethod);
+        return toPaymentMethodResponse(saved);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional
+    public void deletePaymentMethod(CustomerIdentity identity, UUID paymentMethodId) {
+        CustomerProfile profile = getOrCreateProfile(identity);
+        CustomerPaymentMethod paymentMethod = requirePaymentMethod(profile, paymentMethodId);
+        customerPaymentMethodRepository.delete(paymentMethod);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     @Transactional(readOnly = true)
     public CustomerLookupResponse lookupById(UUID customerId) {
         CustomerProfile profile = customerProfileRepository.findById(customerId)
@@ -247,6 +317,18 @@ public class CustomerAccountServiceImpl implements CustomerAccountService {
     }
 
     /**
+     * Loads one payment method constrained to customer ownership.
+     *
+     * @param profile customer profile owner
+     * @param paymentMethodId payment method identifier
+     * @return payment method entity
+     */
+    private CustomerPaymentMethod requirePaymentMethod(CustomerProfile profile, UUID paymentMethodId) {
+        return customerPaymentMethodRepository.findByIdAndCustomer(paymentMethodId, profile)
+                .orElseThrow(() -> new NotFoundException("PAYMENT_METHOD_NOT_FOUND", "Payment method not found"));
+    }
+
+    /**
      * Applies mutable fields from request to address entity.
      *
      * @param address target entity
@@ -272,6 +354,19 @@ public class CustomerAccountServiceImpl implements CustomerAccountService {
         address.setValidationStatus(request.latitude() == null || request.longitude() == null
                 ? AddressValidationStatus.UNVERIFIED
                 : AddressValidationStatus.VALID);
+    }
+
+    /**
+     * Applies mutable fields from request to payment-method entity.
+     *
+     * @param paymentMethod target entity
+     * @param request source payload
+     */
+    private void applyPaymentMethodFields(CustomerPaymentMethod paymentMethod, CustomerPaymentMethodRequest request) {
+        paymentMethod.setMethodType(request.methodType().trim().toUpperCase(Locale.ROOT));
+        paymentMethod.setProvider(request.provider().trim());
+        paymentMethod.setTokenizedReference(request.tokenizedReference().trim());
+        paymentMethod.setDefaultMethod(Boolean.TRUE.equals(request.defaultMethod()));
     }
 
     /**
@@ -344,6 +439,21 @@ public class CustomerAccountServiceImpl implements CustomerAccountService {
         }
         if (defaultType == DefaultAddressType.BILLING || defaultType == DefaultAddressType.BOTH) {
             profile.setDefaultBillingAddressId(null);
+        }
+    }
+
+    /**
+     * Clears the current default payment method for the profile.
+     *
+     * @param profile profile owner
+     */
+    private void clearDefaultPaymentMethod(CustomerProfile profile) {
+        List<CustomerPaymentMethod> paymentMethods = customerPaymentMethodRepository.findByCustomerOrderByUpdatedAtDesc(profile);
+        for (CustomerPaymentMethod paymentMethod : paymentMethods) {
+            if (paymentMethod.isDefaultMethod()) {
+                paymentMethod.setDefaultMethod(false);
+                customerPaymentMethodRepository.save(paymentMethod);
+            }
         }
     }
 
@@ -432,6 +542,22 @@ public class CustomerAccountServiceImpl implements CustomerAccountService {
                 profile.isEnabled(),
                 profile.getDefaultShippingAddressId(),
                 profile.getDefaultBillingAddressId()
+        );
+    }
+
+    /**
+     * Maps payment-method entity to response DTO.
+     *
+     * @param paymentMethod payment-method entity
+     * @return payment-method response DTO
+     */
+    private CustomerPaymentMethodResponse toPaymentMethodResponse(CustomerPaymentMethod paymentMethod) {
+        return new CustomerPaymentMethodResponse(
+                paymentMethod.getId(),
+                paymentMethod.getMethodType(),
+                paymentMethod.getProvider(),
+                paymentMethod.getTokenizedReference(),
+                paymentMethod.isDefaultMethod()
         );
     }
 

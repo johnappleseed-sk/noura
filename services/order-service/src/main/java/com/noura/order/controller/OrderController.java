@@ -8,6 +8,7 @@ import com.noura.order.domain.enums.RefundStatus;
 import com.noura.order.dto.order.CreateOrderRequest;
 import com.noura.order.dto.order.OrderResponse;
 import com.noura.order.dto.order.OrderStatusEventResponse;
+import com.noura.order.dto.order.QuickReorderResponse;
 import com.noura.order.dto.order.UpdateOrderStatusRequest;
 import com.noura.order.service.OrderService;
 import com.noura.order.service.model.OrderRequestContext;
@@ -16,6 +17,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -125,6 +127,30 @@ public class OrderController {
     }
 
     /**
+     * Rebuilds the current customer's cart from one previous order.
+     *
+     * @param orderId order identifier
+     * @param authorizationHeader optional authorization header
+     * @param request current HTTP request
+     * @return quick-reorder response envelope
+     */
+    @PostMapping({"/api/v1/account/orders/{orderId}/quick-reorder", "/api/account/orders/{orderId}/quick-reorder"})
+    public ApiResponse<QuickReorderResponse> quickReorder(
+            @PathVariable UUID orderId,
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorizationHeader,
+            HttpServletRequest request
+    ) {
+        OrderRequestContext context = contextResolver.resolve(request);
+        QuickReorderResponse data = orderService.quickReorder(
+                context,
+                orderId,
+                authorizationHeader,
+                request.getHeader("X-Correlation-ID")
+        );
+        return ApiResponse.ok("Quick reorder prepared", data, request.getRequestURI());
+    }
+
+    /**
      * Lists admin-visible orders with pagination and filtering.
      *
      * @param page zero-based page number
@@ -213,4 +239,3 @@ public class OrderController {
         return "placedAt";
     }
 }
-

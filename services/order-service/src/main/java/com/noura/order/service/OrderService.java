@@ -5,6 +5,7 @@ import com.noura.order.domain.enums.RefundStatus;
 import com.noura.order.dto.order.CreateOrderRequest;
 import com.noura.order.dto.order.OrderResponse;
 import com.noura.order.dto.order.OrderStatusEventResponse;
+import com.noura.order.dto.order.QuickReorderResponse;
 import com.noura.order.dto.order.UpdateOrderStatusRequest;
 import com.noura.order.service.model.OrderRequestContext;
 import org.springframework.data.domain.Page;
@@ -80,5 +81,20 @@ public interface OrderService {
      * @return chronological timeline events
      */
     List<OrderStatusEventResponse> getOrderTimeline(OrderRequestContext context, UUID orderId);
-}
 
+    /**
+     * Rebuilds the current customer's cart from one previous order.
+     *
+     * @param context request actor context
+     * @param orderId order identifier
+     * @param authorizationHeader optional forwarded authorization header
+     * @param correlationId optional correlation identifier
+     * @return quick-reorder summary
+     */
+    QuickReorderResponse quickReorder(
+            OrderRequestContext context,
+            UUID orderId,
+            String authorizationHeader,
+            String correlationId
+    );
+}

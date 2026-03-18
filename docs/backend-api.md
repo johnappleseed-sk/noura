@@ -258,6 +258,75 @@ Behavior:
 - `CAPTURE` performs authorize+capture behavior through the selected provider adapter
 - repeated confirms are safe for already-terminal or already-satisfied states
 
+## Catalog Admin Compatibility Endpoints
+Base prefix: `/api/v1`
+
+These endpoints were added to keep `apps/admin-web` recommendation and merchandising pages functional while recommendation/merchandising control ownership is still transitional.
+
+### Recommendation controls
+- `GET /admin/recommendations/settings`
+- `PUT /admin/recommendations/settings`
+- `GET /admin/recommendations/preview`
+
+Behavior:
+- reuses catalog-backed recommendation heuristics rather than introducing a separate recommendation control service
+- preview returns storefront-style rails plus product-scoped related/FBT preview
+- response items include `score`, `reason`, and `categoryName` fields expected by admin-web
+
+### Merchandising controls
+- `GET /admin/merchandising/settings`
+- `PUT /admin/merchandising/settings`
+- `GET /admin/merchandising/boosts`
+- `POST /admin/merchandising/boosts`
+- `PUT /admin/merchandising/boosts/{boostId}`
+- `DELETE /admin/merchandising/boosts/{boostId}`
+- `GET /admin/merchandising/preview`
+
+Behavior:
+- keeps manual boost CRUD and ranking preview close to catalog-service until a dedicated admin-controls owner exists
+- preview supports `query`, `categoryId`, `storeId`, and `limit`
+- ranking remains deterministic and catalog-derived
+
+## Shipping Network Compatibility Endpoints
+Base prefix: `/api/v1`
+
+These endpoints were added to keep merchant, store, and service-area admin pages functional under an extracted backend.
+
+### Merchant admin
+- `GET /admin/merchants`
+- `GET /admin/merchants/{merchantId}`
+- `POST /admin/merchants`
+- `PATCH /admin/merchants/{merchantId}/status`
+
+### Store admin and public store registry
+- `GET /admin/stores`
+- `GET /admin/stores/{storeId}`
+- `POST /admin/stores`
+- `PATCH /admin/stores/{storeId}/status`
+- `GET /admin/stores/{storeId}/location`
+- `PUT /admin/stores/{storeId}/location`
+- `GET /stores`
+- `GET /stores/nearest`
+- `PUT /stores/preferred/{storeId}`
+- `POST /stores`
+- `PUT /stores/{storeId}`
+- `DELETE /stores/{storeId}`
+
+### Service areas
+- `GET /admin/service-areas`
+- `GET /admin/service-areas/{serviceAreaId}`
+- `POST /admin/service-areas`
+- `PUT /admin/service-areas/{serviceAreaId}`
+- `DELETE /admin/service-areas/{serviceAreaId}`
+- `POST /admin/service-areas/{serviceAreaId}/activate`
+- `POST /admin/service-areas/{serviceAreaId}/deactivate`
+- `POST /admin/service-areas/validate`
+
+Behavior:
+- shipping-service now owns the extracted fulfillment-network compatibility slice for stores and delivery coverage
+- service-area validation is deterministic and rule-based, currently supporting radius and polygon matching
+- delete operations are soft-delete style ("move to trash") for UI compatibility
+
 ### Get payment by id
 `GET /payments/{paymentId}`
 

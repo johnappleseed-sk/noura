@@ -37,7 +37,7 @@ public class CatalogPublicController {
 
     private final CatalogQueryService catalogQueryService;
 
-    @GetMapping("/products")
+    @GetMapping({"/products", "/merchandising/products"})
     public ApiResponse<PageResponse<ProductDto>> listProducts(
             @RequestParam(required = false) String query,
             @RequestParam(required = false) String category,
@@ -48,13 +48,15 @@ public class CatalogPublicController {
             @RequestParam(required = false) Double minRating,
             @RequestParam(required = false) Boolean flashSale,
             @RequestParam(required = false) Boolean trending,
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false) UUID storeId,
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String direction,
             HttpServletRequest http
     ) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(parseDirection(direction), mapSortField(sortBy)));
+        Pageable pageable = PageRequest.of(page, size, mapSort(sort, sortBy, direction));
         Page<ProductDto> data = catalogQueryService.listProducts(
                 query,
                 category,
@@ -131,6 +133,22 @@ public class CatalogPublicController {
 
     private Sort.Direction parseDirection(String raw) {
         return "asc".equalsIgnoreCase(raw) ? Sort.Direction.ASC : Sort.Direction.DESC;
+    }
+
+    private Sort mapSort(String sort, String sortBy, String direction) {
+        String normalizedSort = sort == null ? null : sort.trim().toLowerCase(Locale.ROOT);
+        if (normalizedSort == null || normalizedSort.isBlank()) {
+            return Sort.by(parseDirection(direction), mapSortField(sortBy));
+        }
+        return switch (normalizedSort) {
+            case "featured", "new" -> Sort.by(Sort.Direction.DESC, "createdAt");
+            case "name" -> Sort.by(Sort.Direction.ASC, "name");
+            case "priceasc" -> Sort.by(Sort.Direction.ASC, "basePrice");
+            case "pricedesc" -> Sort.by(Sort.Direction.DESC, "basePrice");
+            case "popularity", "trending", "bestselling" ->
+                    Sort.by(Sort.Order.desc("popularityScore"), Sort.Order.desc("averageRating"), Sort.Order.asc("name"));
+            default -> Sort.by(parseDirection(direction), mapSortField(sortBy));
+        };
     }
 
     private String mapSortField(String raw) {

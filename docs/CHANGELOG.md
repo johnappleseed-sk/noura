@@ -18,6 +18,16 @@
   - `docs/architecture/search-service.md`
 
 ### Updated
+- Backend/frontend contract alignment for active storefront and admin flows:
+  - `catalog-service` now exposes storefront compatibility routes for `/api/v1/merchandising/products`, `/api/v1/recommendations/**`, `/api/v1/recommendations/mock-ai`, `/api/v1/products/{productId}/related`, and `/api/v1/products/{productId}/frequently-bought-together`
+  - `catalog-service` now exposes admin compatibility routes for `/api/v1/admin/recommendations/**` and `/api/v1/admin/merchandising/**`
+  - `shipping-service` now exposes extracted merchant/store/service-area compatibility routes for `/api/v1/admin/merchants/**`, `/api/v1/admin/stores/**`, `/api/v1/stores/**`, and `/api/v1/admin/service-areas/**`
+  - `checkout-service` now supports legacy storefront checkout step routes under `/api/v1/checkout/steps/**`
+  - `customer-service` now supports `/api/v1/account/payment-methods/**`
+  - `order-service` now supports `POST /api/v1/account/orders/{orderId}/quick-reorder`
+  - `pricing-service` now supports `/api/v1/price-lists`, `/api/v1/prices`, and `/api/v1/prices/variants/{variantId}`
+- `apps/api-gateway` now routes the new catalog and shipping compatibility contracts to extracted services instead of falling through to the legacy `app-service`.
+- `apps/admin-web` and `apps/storefront-web` both build successfully against the updated contract surface; storefront build still logs expected `ECONNREFUSED` warnings when local APIs are absent during prerender.
 - `checkout-service` now executes the full synchronous purchase path:
   - validates cart/address/pricing/inventory
   - reserves stock

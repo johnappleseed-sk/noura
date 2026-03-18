@@ -100,6 +100,11 @@ Search-specific note:
 - search-service owns `/api/v1/search/**`, search projections, and the search-provider abstraction
 - search-service reads canonical catalog data during rebuilds but does not become the owner of product truth
 
+Frontend-compatibility note:
+- catalog-service temporarily owns admin recommendation/merchandising control compatibility endpoints so `apps/admin-web` can keep its current pages without a legacy catch-all backend
+- shipping-service temporarily owns merchant/store/service-area compatibility endpoints because active store coverage and fulfillment geography already sit nearest to shipping ownership
+- unresolved legacy-only admin modules (`location`, `carousels`, `product submissions`, `recovery`) should not be re-homed casually; they still need an explicit extracted owner
+
 ## Persistence Model
 - PostgreSQL for transactional truth
 - Redis/Valkey for cache and rate limits

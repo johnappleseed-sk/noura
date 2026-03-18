@@ -2,6 +2,48 @@
 
 This audit captures every API wrapper in the frontend apps. Endpoints are listed as fully qualified (including `/api/v1` or `/api/inventory/v1`). The "Current Endpoint" reflects the code after the latest refactor.
 
+## 2026-03-18 compatibility status
+
+Backend-first alignment landed for the frontend contracts that are actively used by current storefront and admin workflows:
+
+- storefront browse and recommendation compatibility:
+  - `GET /api/v1/merchandising/products`
+  - `GET /api/v1/recommendations/{best-sellers|trending|deals|personalized|cross-sell|mock-ai}`
+  - `GET /api/v1/products/{productId}/related`
+  - `GET /api/v1/products/{productId}/frequently-bought-together`
+- storefront checkout/account compatibility:
+  - `GET|POST /api/v1/checkout/steps/{review|shipping|payment|confirm}`
+  - `GET|POST|PUT|DELETE /api/v1/account/payment-methods`
+  - `POST /api/v1/account/orders/{orderId}/quick-reorder`
+- admin pricing and recommendation compatibility:
+  - `GET|POST /api/v1/price-lists`
+  - `POST /api/v1/prices`
+  - `GET /api/v1/prices/variants/{variantId}`
+  - `GET|PUT /api/v1/admin/recommendations/settings`
+  - `GET /api/v1/admin/recommendations/preview`
+  - `GET|PUT /api/v1/admin/merchandising/settings`
+  - `GET|POST|PUT|DELETE /api/v1/admin/merchandising/boosts`
+  - `GET /api/v1/admin/merchandising/preview`
+- admin network/store-ops compatibility:
+  - `GET|POST|PATCH /api/v1/admin/merchants/**`
+  - `GET|POST|PATCH /api/v1/admin/stores/**`
+  - `GET|POST|PUT|DELETE /api/v1/stores/**`
+  - `GET|POST|PUT|DELETE /api/v1/admin/service-areas/**`
+
+Still unresolved in the extracted backend:
+
+- `/api/v1/location/**`
+- `/api/v1/admin/carousels/**`
+- `/api/v1/admin/product-submissions/**`
+- `/api/v1/admin/recovery/**`
+
+Those routes still assume the retired legacy `app-service` owner and should remain on the follow-up extraction list instead of being reimplemented ad hoc.
+
+Frontend validation notes:
+
+- `apps/admin-web` production build passes after this contract-alignment pass.
+- `apps/storefront-web` production build passes; static prerender still logs `ECONNREFUSED` when local APIs are not running.
+
 ## Admin Dashboard (`frontend/admin-dashboard`)
 
 | App | File | Function | Current Endpoint | Intended Endpoint | Keep/Change | Notes |

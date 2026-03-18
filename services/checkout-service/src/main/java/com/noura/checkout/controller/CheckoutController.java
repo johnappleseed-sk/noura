@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -34,6 +35,53 @@ public class CheckoutController {
 
     private final CheckoutOrchestrationService checkoutOrchestrationService;
     private final CheckoutRequestContextResolver contextResolver;
+
+    /**
+     * Legacy review-step endpoint still used by storefront compatibility helpers.
+     *
+     * @param request current HTTP request
+     * @return checkout preview response envelope
+     */
+    @GetMapping({"/api/v1/checkout/steps/review", "/api/checkout/steps/review"})
+    public ApiResponse<CheckoutPreviewResponse> reviewStep(HttpServletRequest request) {
+        CheckoutRequestContext context = contextResolver.resolve(request);
+        CheckoutPreviewResponse data = checkoutOrchestrationService.preview(context, null);
+        return ApiResponse.ok("Checkout review step", data, request.getRequestURI());
+    }
+
+    /**
+     * Legacy shipping-step endpoint that maps onto the extracted preview flow.
+     *
+     * @param requestBody optional request payload
+     * @param request current HTTP request
+     * @return checkout preview response envelope
+     */
+    @PostMapping({"/api/v1/checkout/steps/shipping", "/api/checkout/steps/shipping"})
+    public ApiResponse<CheckoutPreviewResponse> shippingStep(
+            @RequestBody(required = false) @Valid CheckoutPreviewRequest requestBody,
+            HttpServletRequest request
+    ) {
+        CheckoutRequestContext context = contextResolver.resolve(request);
+        CheckoutPreviewResponse data = checkoutOrchestrationService.preview(context, requestBody);
+        return ApiResponse.ok("Checkout shipping step", data, request.getRequestURI());
+    }
+
+    /**
+     * Legacy payment-step endpoint that maps onto the extracted validation flow.
+     *
+     * @param requestBody optional request payload
+     * @param request current HTTP request
+     * @return checkout validation response envelope
+     */
+    @PostMapping({"/api/v1/checkout/steps/payment", "/api/checkout/steps/payment"})
+    public ApiResponse<CheckoutValidationResponse> paymentStep(
+            @RequestBody(required = false) @Valid CheckoutValidateRequest requestBody,
+            HttpServletRequest request
+    ) {
+        CheckoutRequestContext context = contextResolver.resolve(request);
+        CheckoutValidationResponse data = checkoutOrchestrationService.validate(context, requestBody);
+        return ApiResponse.ok("Checkout payment step", data, request.getRequestURI());
+    }
 
     /**
      * Returns checkout preview snapshot.
@@ -119,5 +167,22 @@ public class CheckoutController {
         CheckoutPlaceOrderResponse data = checkoutOrchestrationService.placeOrder(context, placeOrderRequest, idempotencyKey);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok("Order placed", data, request.getRequestURI()));
+    }
+
+    /**
+     * Legacy confirm-step endpoint retained for storefront compatibility helpers.
+     *
+     * @param requestBody optional legacy payload
+     * @param idempotencyKey optional idempotency header value
+     * @param request current HTTP request
+     * @return place-order response envelope
+     */
+    @PostMapping({"/api/v1/checkout/steps/confirm", "/api/checkout/steps/confirm"})
+    public ResponseEntity<ApiResponse<CheckoutPlaceOrderResponse>> confirmStep(
+            @RequestBody(required = false) @Valid LegacyCheckoutRequest requestBody,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+            HttpServletRequest request
+    ) {
+        return directCheckout(requestBody, idempotencyKey, request);
     }
 }

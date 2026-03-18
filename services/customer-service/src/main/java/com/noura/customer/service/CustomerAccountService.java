@@ -4,6 +4,8 @@ import com.noura.customer.domain.enums.DefaultAddressType;
 import com.noura.customer.dto.address.CustomerAddressRequest;
 import com.noura.customer.dto.address.CustomerAddressResponse;
 import com.noura.customer.dto.internal.CustomerLookupResponse;
+import com.noura.customer.dto.payment.CustomerPaymentMethodRequest;
+import com.noura.customer.dto.payment.CustomerPaymentMethodResponse;
 import com.noura.customer.dto.profile.CustomerProfileResponse;
 import com.noura.customer.dto.profile.UpdateCustomerProfileRequest;
 import com.noura.customer.service.model.CustomerIdentity;
@@ -86,6 +88,45 @@ public interface CustomerAccountService {
      * @return updated address response
      */
     CustomerAddressResponse setDefaultAddress(CustomerIdentity identity, UUID addressId, DefaultAddressType defaultType);
+
+    /**
+     * Lists current customer payment methods.
+     *
+     * @param identity resolved customer identity
+     * @return payment methods
+     */
+    List<CustomerPaymentMethodResponse> listPaymentMethods(CustomerIdentity identity);
+
+    /**
+     * Adds one payment method for current customer.
+     *
+     * @param identity resolved customer identity
+     * @param request payment method payload
+     * @return created payment method
+     */
+    CustomerPaymentMethodResponse addPaymentMethod(CustomerIdentity identity, CustomerPaymentMethodRequest request);
+
+    /**
+     * Updates one payment method for current customer.
+     *
+     * @param identity resolved customer identity
+     * @param paymentMethodId payment method identifier
+     * @param request payment method payload
+     * @return updated payment method
+     */
+    CustomerPaymentMethodResponse updatePaymentMethod(
+            CustomerIdentity identity,
+            UUID paymentMethodId,
+            CustomerPaymentMethodRequest request
+    );
+
+    /**
+     * Deletes one payment method for current customer.
+     *
+     * @param identity resolved customer identity
+     * @param paymentMethodId payment method identifier
+     */
+    void deletePaymentMethod(CustomerIdentity identity, UUID paymentMethodId);
 
     /**
      * Internal lookup by customer profile ID.

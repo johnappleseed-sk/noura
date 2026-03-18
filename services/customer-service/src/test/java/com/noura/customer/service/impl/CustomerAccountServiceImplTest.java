@@ -1,9 +1,13 @@
 package com.noura.customer.service.impl;
 
+import com.noura.customer.domain.entity.CustomerPaymentMethod;
 import com.noura.customer.domain.entity.CustomerProfile;
+import com.noura.customer.dto.payment.CustomerPaymentMethodRequest;
+import com.noura.customer.dto.payment.CustomerPaymentMethodResponse;
 import com.noura.customer.dto.profile.CustomerProfileResponse;
 import com.noura.customer.exception.CustomerOperationException;
 import com.noura.customer.repository.CustomerAddressRepository;
+import com.noura.customer.repository.CustomerPaymentMethodRepository;
 import com.noura.customer.repository.CustomerProfileRepository;
 import com.noura.customer.service.model.CustomerIdentity;
 import org.junit.jupiter.api.Assertions;
@@ -13,6 +17,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -32,6 +37,9 @@ class CustomerAccountServiceImplTest {
 
     @Mock
     private CustomerAddressRepository customerAddressRepository;
+
+    @Mock
+    private CustomerPaymentMethodRepository customerPaymentMethodRepository;
 
     @InjectMocks
     private CustomerAccountServiceImpl customerAccountService;
@@ -71,5 +79,37 @@ class CustomerAccountServiceImplTest {
         Assertions.assertEquals("EXTERNAL_SUBJECT_REQUIRED", exception.getCode());
         Assertions.assertEquals(400, exception.getStatus().value());
     }
-}
 
+    /**
+     * Verifies payment methods can be created and marked as default for the current customer.
+     */
+    @Test
+    void shouldAddDefaultPaymentMethod() {
+        CustomerProfile profile = new CustomerProfile();
+        profile.setId(UUID.fromString("22222222-2222-2222-2222-222222222222"));
+        profile.setExternalSubject("subject-002");
+        profile.setFullName("Alice");
+        profile.setEnabled(true);
+
+        when(customerProfileRepository.findByExternalSubject(eq("subject-002"))).thenReturn(Optional.of(profile));
+        when(customerPaymentMethodRepository.findByCustomerOrderByUpdatedAtDesc(eq(profile))).thenReturn(List.of());
+        when(customerPaymentMethodRepository.save(any(CustomerPaymentMethod.class))).thenAnswer(invocation -> {
+            CustomerPaymentMethod paymentMethod = invocation.getArgument(0, CustomerPaymentMethod.class);
+            if (paymentMethod.getId() == null) {
+                paymentMethod.setId(UUID.fromString("33333333-3333-3333-3333-333333333333"));
+            }
+            return paymentMethod;
+        });
+
+        CustomerPaymentMethodResponse response = customerAccountService.addPaymentMethod(
+                new CustomerIdentity("subject-002", "alice@example.com"),
+                new CustomerPaymentMethodRequest("card", "stripe", "pm_123", true)
+        );
+
+        Assertions.assertEquals("CARD", response.methodType());
+        Assertions.assertEquals("stripe", response.provider());
+        Assertions.assertEquals("pm_123", response.tokenizedReference());
+        Assertions.assertTrue(response.defaultMethod());
+        verify(customerPaymentMethodRepository).save(any(CustomerPaymentMethod.class));
+    }
+}

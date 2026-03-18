@@ -7,8 +7,11 @@ import com.noura.order.domain.enums.RefundStatus;
 import com.noura.order.dto.order.CreateOrderItemRequest;
 import com.noura.order.dto.order.CreateOrderRequest;
 import com.noura.order.dto.order.OrderResponse;
+import com.noura.order.dto.order.QuickReorderResponse;
 import com.noura.order.dto.order.UpdateOrderStatusRequest;
 import com.noura.order.exception.OrderOperationException;
+import com.noura.order.integration.client.CartServiceClient;
+import com.noura.order.domain.entity.OrderItemRecord;
 import com.noura.order.repository.OrderItemRecordRepository;
 import com.noura.order.repository.OrderRecordRepository;
 import com.noura.order.repository.OrderStatusHistoryRepository;
@@ -29,6 +32,7 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -48,6 +52,9 @@ class OrderServiceImplTest {
     @Mock
     private OrderStatusHistoryRepository orderStatusHistoryRepository;
 
+    @Mock
+    private CartServiceClient cartServiceClient;
+
     private OrderServiceImpl orderService;
 
     /**
@@ -59,7 +66,8 @@ class OrderServiceImplTest {
                 orderRecordRepository,
                 orderItemRecordRepository,
                 orderStatusHistoryRepository,
-                new ObjectMapper()
+                new ObjectMapper(),
+                cartServiceClient
         );
     }
 
@@ -153,5 +161,51 @@ class OrderServiceImplTest {
         Assertions.assertEquals("ORDER_STATUS_INVALID_TRANSITION", exception.getCode());
         verify(orderRecordRepository, never()).save(any(OrderRecord.class));
     }
-}
 
+    /**
+     * Verifies quick reorder clears the current cart and rebuilds it from the stored order items.
+     */
+    @Test
+    void shouldRebuildCartForQuickReorder() {
+        UUID orderId = UUID.fromString("33333333-3333-3333-3333-333333333333");
+        UUID storeId = UUID.fromString("44444444-4444-4444-4444-444444444444");
+        UUID productId = UUID.fromString("55555555-5555-5555-5555-555555555555");
+        UUID variantId = UUID.fromString("66666666-6666-6666-6666-666666666666");
+
+        OrderRecord order = new OrderRecord();
+        order.setId(orderId);
+        order.setCustomerRef("customer-quick");
+        order.setStoreId(storeId);
+        order.setStatus(OrderStatus.DELIVERED);
+        order.setRefundStatus(RefundStatus.NONE);
+
+        OrderItemRecord item = new OrderItemRecord();
+        item.setId(UUID.randomUUID());
+        item.setOrder(order);
+        item.setLineNumber(1);
+        item.setProductId(productId);
+        item.setVariantId(variantId);
+        item.setQuantity(2);
+
+        when(orderRecordRepository.findById(eq(orderId))).thenReturn(Optional.of(order));
+        when(orderItemRecordRepository.findByOrderIdOrderByLineNumberAsc(eq(orderId))).thenReturn(List.of(item));
+
+        QuickReorderResponse response = orderService.quickReorder(
+                new OrderRequestContext("customer-quick", Set.of(), false),
+                orderId,
+                "Bearer token",
+                "corr-quick"
+        );
+
+        Assertions.assertEquals(orderId, response.orderId());
+        Assertions.assertEquals(1, response.rebuiltItemCount());
+        Assertions.assertTrue(response.replacedExistingCart());
+        verify(cartServiceClient).clearCart("customer-quick", "Bearer token", "corr-quick");
+        verify(cartServiceClient, times(1)).addItem(
+                eq("customer-quick"),
+                eq("Bearer token"),
+                eq("corr-quick"),
+                any(CartServiceClient.AddCartItemPayload.class)
+        );
+    }
+}

@@ -5,6 +5,8 @@ import com.noura.customer.controller.support.CustomerIdentityResolver;
 import com.noura.customer.domain.enums.DefaultAddressType;
 import com.noura.customer.dto.address.CustomerAddressRequest;
 import com.noura.customer.dto.address.CustomerAddressResponse;
+import com.noura.customer.dto.payment.CustomerPaymentMethodRequest;
+import com.noura.customer.dto.payment.CustomerPaymentMethodResponse;
 import com.noura.customer.dto.profile.CustomerProfileResponse;
 import com.noura.customer.dto.profile.UpdateCustomerProfileRequest;
 import com.noura.customer.service.CustomerAccountService;
@@ -177,6 +179,73 @@ public class CustomerAccountController {
     }
 
     /**
+     * Lists current customer payment methods.
+     *
+     * @param request current HTTP request
+     * @return payment method list response envelope
+     */
+    @GetMapping("/payment-methods")
+    public ApiResponse<List<CustomerPaymentMethodResponse>> listPaymentMethods(HttpServletRequest request) {
+        CustomerIdentity identity = resolveIdentity(request);
+        List<CustomerPaymentMethodResponse> paymentMethods = customerAccountService.listPaymentMethods(identity);
+        return ApiResponse.ok("Payment methods", paymentMethods, request.getRequestURI());
+    }
+
+    /**
+     * Adds one payment method for current customer.
+     *
+     * @param payload payment method payload
+     * @param request current HTTP request
+     * @return created payment method response envelope
+     */
+    @PostMapping("/payment-methods")
+    public ApiResponse<CustomerPaymentMethodResponse> addPaymentMethod(
+            @Valid @RequestBody CustomerPaymentMethodRequest payload,
+            HttpServletRequest request
+    ) {
+        CustomerIdentity identity = resolveIdentity(request);
+        CustomerPaymentMethodResponse paymentMethod = customerAccountService.addPaymentMethod(identity, payload);
+        return ApiResponse.ok("Payment method added", paymentMethod, request.getRequestURI());
+    }
+
+    /**
+     * Updates one payment method for current customer.
+     *
+     * @param paymentMethodId payment method identifier
+     * @param payload payment method payload
+     * @param request current HTTP request
+     * @return updated payment method response envelope
+     */
+    @PutMapping("/payment-methods/{paymentMethodId}")
+    public ApiResponse<CustomerPaymentMethodResponse> updatePaymentMethod(
+            @PathVariable UUID paymentMethodId,
+            @Valid @RequestBody CustomerPaymentMethodRequest payload,
+            HttpServletRequest request
+    ) {
+        CustomerIdentity identity = resolveIdentity(request);
+        CustomerPaymentMethodResponse paymentMethod =
+                customerAccountService.updatePaymentMethod(identity, paymentMethodId, payload);
+        return ApiResponse.ok("Payment method updated", paymentMethod, request.getRequestURI());
+    }
+
+    /**
+     * Deletes one payment method for current customer.
+     *
+     * @param paymentMethodId payment method identifier
+     * @param request current HTTP request
+     * @return empty success response envelope
+     */
+    @DeleteMapping("/payment-methods/{paymentMethodId}")
+    public ApiResponse<Void> deletePaymentMethod(
+            @PathVariable UUID paymentMethodId,
+            HttpServletRequest request
+    ) {
+        CustomerIdentity identity = resolveIdentity(request);
+        customerAccountService.deletePaymentMethod(identity, paymentMethodId);
+        return ApiResponse.ok("Payment method deleted", null, request.getRequestURI());
+    }
+
+    /**
      * Resolves required customer identity for current request.
      *
      * @param request current HTTP request
@@ -186,4 +255,3 @@ public class CustomerAccountController {
         return customerIdentityResolver.resolveRequiredIdentity(request);
     }
 }
-

@@ -38,7 +38,21 @@ spring:
           uri: ${CATALOG_SERVICE_URL:http://localhost:8084}
           predicates:
             - Method=GET
-            - Path=/api/v1/products,/api/v1/products/search
+            - Path=/api/v1/products,/api/v1/products/search,/api/v1/merchandising/products
+          filters:
+            - PreserveHostHeader
+        - id: catalog-service-recommendations
+          uri: ${CATALOG_SERVICE_URL:http://localhost:8084}
+          predicates:
+            - Method=GET
+            - Path=/api/v1/recommendations/**,/api/v1/products/{productId}/related,/api/v1/products/{productId}/frequently-bought-together
+          filters:
+            - PreserveHostHeader
+        - id: catalog-service-admin-compatibility
+          uri: ${CATALOG_SERVICE_URL:http://localhost:8084}
+          predicates:
+            - Method=GET,POST,PUT,DELETE
+            - Path=/api/v1/admin/recommendations/**,/api/v1/admin/merchandising/**
           filters:
             - PreserveHostHeader
         - id: review-service-product-reviews
@@ -150,7 +164,7 @@ spring:
           uri: ${PRICING_SERVICE_URL:http://localhost:8087}
           predicates:
             - Method=GET,POST,PUT
-            - Path=/api/pricing/v1/**,/api/pricing/v1
+            - Path=/api/pricing/v1/**,/api/pricing/v1,/api/v1/price-lists,/api/v1/price-lists/**,/api/v1/prices,/api/v1/prices/**
           filters:
             - PreserveHostHeader
         - id: promotion-service-api
@@ -226,7 +240,7 @@ spring:
           uri: ${CUSTOMER_SERVICE_URL:http://localhost:8089}
           predicates:
             - Method=GET,POST,PUT,DELETE
-            - Path=/api/v1/account/profile,/api/v1/account/addresses,/api/v1/account/addresses/**,/api/account/profile,/api/account/addresses,/api/account/addresses/**
+            - Path=/api/v1/account/profile,/api/v1/account/addresses,/api/v1/account/addresses/**,/api/v1/account/payment-methods,/api/v1/account/payment-methods/**,/api/account/profile,/api/account/addresses,/api/account/addresses/**,/api/account/payment-methods,/api/account/payment-methods/**
           filters:
             - PreserveHostHeader
         - id: customer-service-health
@@ -255,6 +269,13 @@ spring:
             - Path=/api/v1/account/orders,/api/account/orders
           filters:
             - PreserveHostHeader
+        - id: order-service-account-quick-reorder
+          uri: ${ORDER_SERVICE_URL:http://localhost:8090}
+          predicates:
+            - Method=POST
+            - Path=/api/v1/account/orders/{orderId}/quick-reorder,/api/account/orders/{orderId}/quick-reorder
+          filters:
+            - PreserveHostHeader
         - id: order-service-health
           uri: ${ORDER_SERVICE_URL:http://localhost:8090}
           predicates:
@@ -270,8 +291,8 @@ spring:
         - id: checkout-service-api
           uri: ${CHECKOUT_SERVICE_URL:http://localhost:8091}
           predicates:
-            - Method=POST
-            - Path=/api/v1/checkout,/api/v1/checkout/preview,/api/v1/checkout/validate,/api/v1/checkout/place-order,/api/checkout,/api/checkout/preview,/api/checkout/validate,/api/checkout/place-order
+            - Method=GET,POST
+            - Path=/api/v1/checkout,/api/v1/checkout/preview,/api/v1/checkout/validate,/api/v1/checkout/place-order,/api/v1/checkout/steps/review,/api/v1/checkout/steps/shipping,/api/v1/checkout/steps/payment,/api/v1/checkout/steps/confirm,/api/checkout,/api/checkout/preview,/api/checkout/validate,/api/checkout/place-order,/api/checkout/steps/review,/api/checkout/steps/shipping,/api/checkout/steps/payment,/api/checkout/steps/confirm
           filters:
             - PreserveHostHeader
         - id: checkout-service-health
@@ -308,8 +329,8 @@ spring:
         - id: shipping-service-api
           uri: ${SHIPPING_SERVICE_URL:http://localhost:8093}
           predicates:
-            - Method=GET,POST
-            - Path=/api/v1/shipping/**,/api/shipping/**
+            - Method=GET,POST,PUT,PATCH,DELETE
+            - Path=/api/v1/shipping/**,/api/shipping/**,/api/v1/stores,/api/v1/stores/**,/api/v1/admin/merchants/**,/api/v1/admin/stores/**,/api/v1/admin/service-areas/**
           filters:
             - PreserveHostHeader
         - id: shipping-service-health

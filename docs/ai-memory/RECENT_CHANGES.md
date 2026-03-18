@@ -1,5 +1,64 @@
 # Recent Changes
 
+## 2026-03-18 - frontend/backend contract alignment pass completed
+
+### Task
+- Aligned extracted backend APIs with the currently implemented `apps/storefront-web` and `apps/admin-web` contract surface.
+
+### Why
+- Frontend apps still depended on several legacy monolith paths that no longer had an extracted backend owner.
+- Storefront recommendation, checkout-step, account payment-method, and quick-reorder flows needed compatibility endpoints to avoid frontend rework.
+- Admin recommendation, merchandising, merchant, store, and service-area pages still assumed controllers that existed only in the archived monolith.
+
+### Key files touched
+- `services/catalog-service/src/main/java/com/noura/catalog/controller/CatalogPublicController.java`
+- `services/catalog-service/src/main/java/com/noura/catalog/controller/CatalogRecommendationController.java`
+- `services/catalog-service/src/main/java/com/noura/catalog/controller/CatalogAdminCompatibilityController.java`
+- `services/catalog-service/src/main/java/com/noura/catalog/service/impl/CatalogAdminCompatibilityServiceImpl.java`
+- `services/checkout-service/src/main/java/com/noura/checkout/controller/CheckoutController.java`
+- `services/customer-service/src/main/java/com/noura/customer/controller/CustomerAccountController.java`
+- `services/order-service/src/main/java/com/noura/order/controller/OrderController.java`
+- `services/pricing-service/src/main/java/com/noura/pricing/controller/PricingLegacyCompatibilityController.java`
+- `services/shipping-service/src/main/java/com/noura/shipping/controller/FulfillmentNetworkController.java`
+- `services/shipping-service/src/main/java/com/noura/shipping/service/impl/FulfillmentNetworkServiceImpl.java`
+- `apps/api-gateway/src/main/resources/application.yml`
+
+### Archive reuse decisions
+- Reused archived recommendation, merchandising, merchant, store, and service-area controller shapes as the compatibility contract reference.
+- Reused archived DTO field names where that reduced frontend churn directly.
+- Did not revive archived `app-service`-style catch-all ownership; each migrated contract was assigned to an extracted service with a concrete bounded-context rationale.
+
+### Architecture decisions
+- Catalog-service now owns transitional admin recommendation/merchandising control compatibility because those pages operate over catalog-derived ranking and preview data.
+- Shipping-service now owns the extracted merchant/store/service-area compatibility slice because active store coverage belongs closest to fulfillment and shipping decisions.
+- Legacy pricing, checkout-step, payment-method, quick-reorder, and storefront recommendation/product-rail contracts were preserved as compatibility adapters instead of rewriting frontend clients.
+- Gateway remains the canonical ingress and now routes the new admin compatibility endpoints to extracted services rather than the legacy `app-service`.
+
+### Integration notes
+- New extracted admin compatibility routes now exist for:
+  - recommendation settings and preview
+  - merchandising settings, boosts, and preview
+  - merchants
+  - stores and store-location updates
+  - service areas and validation sandbox
+- Storefront compatibility routes now cover:
+  - merchandising product listing
+  - recommendations rails plus `mock-ai`
+  - related products and frequently-bought-together
+  - checkout step APIs
+  - account payment methods
+  - quick reorder
+
+### Known caveats
+- Catalog admin recommendation/merchandising control state is a lightweight transitional compatibility layer, not yet a dedicated long-term control-plane service.
+- `location`, `admin/carousels`, `admin/product-submissions`, and `admin/recovery` still assume legacy-only ownership and remain unresolved.
+- Storefront build still logs `ECONNREFUSED` during static prerender when local APIs are not running, but the build completes successfully.
+
+### Follow-up work
+- Extract an explicit owner for `location` APIs instead of leaving them on the dead legacy route.
+- Decide whether carousels/product submissions/recovery belong in a control-plane service or a modular governance service.
+- Replace lightweight catalog admin control state with a persistent extracted admin configuration owner once the control plane is split out.
+
 ## 2026-03-18 - end-to-end purchase flow completed
 
 ### Task

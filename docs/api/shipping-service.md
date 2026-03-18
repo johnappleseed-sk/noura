@@ -6,6 +6,7 @@
 
 Gateway exposure:
 - `api-gateway` routes `/api/v1/shipping/**` and `/api/shipping/**` to `shipping-service`.
+- `api-gateway` also routes `/api/v1/stores/**`, `/api/v1/admin/merchants/**`, `/api/v1/admin/stores/**`, and `/api/v1/admin/service-areas/**` to `shipping-service`.
 
 All endpoints use the standard API envelope:
 
@@ -21,10 +22,54 @@ All endpoints use the standard API envelope:
 ## Ownership and access
 
 - `shipping-service` owns shipment records, tracking identifiers, shipment status, failure reasons, and carrier refresh logic.
+- `shipping-service` now also owns the extracted merchant/store/service-area compatibility model used by active admin-web store-ops pages.
 - `order-service` remains the source of truth for order identity, customer ownership, and the shipping address snapshot.
 - `shipping-service` does not mutate order state in this v1 extraction.
 - Customer-facing shipment reads and creation flows use `X-Auth-Subject` ownership checks when available.
 - Internal/admin reads and status updates are allowed through role headers or `X-Internal-Api-Key` when configured.
+
+## Fulfillment-network compatibility APIs
+
+These routes were added to avoid pushing `apps/admin-web` back to legacy monolith-only contracts while a dedicated network/control-plane service is still pending.
+
+Merchant admin:
+
+- `GET /api/v1/admin/merchants`
+- `GET /api/v1/admin/merchants/{merchantId}`
+- `POST /api/v1/admin/merchants`
+- `PATCH /api/v1/admin/merchants/{merchantId}/status`
+
+Store admin and public registry:
+
+- `GET /api/v1/admin/stores`
+- `GET /api/v1/admin/stores/{storeId}`
+- `POST /api/v1/admin/stores`
+- `PATCH /api/v1/admin/stores/{storeId}/status`
+- `GET /api/v1/admin/stores/{storeId}/location`
+- `PUT /api/v1/admin/stores/{storeId}/location`
+- `GET /api/v1/stores`
+- `GET /api/v1/stores/nearest`
+- `PUT /api/v1/stores/preferred/{storeId}`
+- `POST /api/v1/stores`
+- `PUT /api/v1/stores/{storeId}`
+- `DELETE /api/v1/stores/{storeId}`
+
+Service-area admin:
+
+- `GET /api/v1/admin/service-areas`
+- `GET /api/v1/admin/service-areas/{serviceAreaId}`
+- `POST /api/v1/admin/service-areas`
+- `PUT /api/v1/admin/service-areas/{serviceAreaId}`
+- `DELETE /api/v1/admin/service-areas/{serviceAreaId}`
+- `POST /api/v1/admin/service-areas/{serviceAreaId}/activate`
+- `POST /api/v1/admin/service-areas/{serviceAreaId}/deactivate`
+- `POST /api/v1/admin/service-areas/validate`
+
+Behavior notes:
+
+- Store and service-area deletes are soft-delete style for current UI compatibility.
+- Service-area validation is deterministic and currently supports radius and polygon matching.
+- Active store assignment stays shipping-owned so quote/shipment logic and service-area validation use the same store coverage model.
 
 ## Shipment status model
 

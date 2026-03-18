@@ -16,6 +16,7 @@ import com.noura.catalog.dto.product.ProductSeoDto;
 import com.noura.catalog.dto.product.ProductStoreInventoryDto;
 import com.noura.catalog.dto.product.ProductVariantDto;
 import com.noura.catalog.dto.product.TrendTagDto;
+import com.noura.catalog.dto.product.VariantLookupResponse;
 import com.noura.catalog.exception.NotFoundException;
 import com.noura.catalog.repository.CatalogBrandRepository;
 import com.noura.catalog.repository.CatalogCategoryRepository;
@@ -233,6 +234,141 @@ public class CatalogQueryServiceImpl implements com.noura.catalog.service.Catalo
 
     @Override
     @Transactional(readOnly = true)
+    public List<ProductDto> bestSellerRecommendations(int limit) {
+        List<ProductDto> items = recommendationSlice(
+                (root, ignored, cb) -> cb.and(
+                        cb.isTrue(root.get("active")),
+                        cb.isTrue(root.get("bestSeller"))
+                ),
+                Sort.by(Sort.Order.desc("popularityScore"), Sort.Order.desc("averageRating"), Sort.Order.asc("name")),
+                limit
+        );
+        return items.isEmpty() ? popularFallback(limit) : items;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductDto> trendingRecommendations(int limit) {
+        List<ProductDto> items = recommendationSlice(
+                (root, ignored, cb) -> cb.and(
+                        cb.isTrue(root.get("active")),
+                        cb.isTrue(root.get("trending"))
+                ),
+                Sort.by(Sort.Order.desc("popularityScore"), Sort.Order.desc("averageRating"), Sort.Order.asc("name")),
+                limit
+        );
+        return items.isEmpty() ? popularFallback(limit) : items;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductDto> dealRecommendations(int limit) {
+        List<ProductDto> items = recommendationSlice(
+                (root, ignored, cb) -> cb.and(
+                        cb.isTrue(root.get("active")),
+                        cb.isTrue(root.get("flashSale"))
+                ),
+                Sort.by(Sort.Order.desc("popularityScore"), Sort.Order.asc("basePrice"), Sort.Order.asc("name")),
+                limit
+        );
+        return items.isEmpty() ? popularFallback(limit) : items;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductDto> personalizedRecommendations(String customerRef, int limit) {
+        return rotateDeterministically(popularFallback(limit * 2), customerRef, normalizeLimit(limit));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductDto> crossSellRecommendations(String customerRef, int limit) {
+        List<ProductDto> pool = new ArrayList<>();
+        pool.addAll(bestSellerRecommendations(Math.max(normalizeLimit(limit), 6)));
+        pool.addAll(trendingRecommendations(Math.max(normalizeLimit(limit), 6)));
+        return rotateDeterministically(deduplicate(pool), "cross-sell:" + normalizeNullable(customerRef), normalizeLimit(limit));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductDto> relatedProducts(UUID productId, int limit) {
+        CatalogProduct anchor = productRepository.findByIdAndActiveTrue(productId)
+                .orElseThrow(() -> new NotFoundException("PRODUCT_NOT_FOUND", "Product not found"));
+        List<ProductDto> primary = recommendationSlice(
+                (root, ignored, cb) -> cb.and(
+                        cb.isTrue(root.get("active")),
+                        cb.notEqual(root.get("id"), productId),
+                        anchor.getCategoryId() == null
+                                ? cb.conjunction()
+                                : cb.equal(root.get("categoryId"), anchor.getCategoryId())
+                ),
+                Sort.by(Sort.Order.desc("popularityScore"), Sort.Order.desc("averageRating"), Sort.Order.asc("name")),
+                limit
+        );
+        if (!primary.isEmpty() || anchor.getBrandId() == null) {
+            return primary;
+        }
+        return recommendationSlice(
+                (root, ignored, cb) -> cb.and(
+                        cb.isTrue(root.get("active")),
+                        cb.notEqual(root.get("id"), productId),
+                        cb.equal(root.get("brandId"), anchor.getBrandId())
+                ),
+                Sort.by(Sort.Order.desc("popularityScore"), Sort.Order.desc("averageRating"), Sort.Order.asc("name")),
+                limit
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductDto> frequentlyBoughtTogether(UUID productId, int limit) {
+        CatalogProduct anchor = productRepository.findByIdAndActiveTrue(productId)
+                .orElseThrow(() -> new NotFoundException("PRODUCT_NOT_FOUND", "Product not found"));
+        List<ProductDto> pool = new ArrayList<>();
+        pool.addAll(recommendationSlice(
+                (root, ignored, cb) -> cb.and(
+                        cb.isTrue(root.get("active")),
+                        cb.notEqual(root.get("id"), productId),
+                        cb.isTrue(root.get("bestSeller")),
+                        anchor.getCategoryId() == null
+                                ? cb.conjunction()
+                                : cb.equal(root.get("categoryId"), anchor.getCategoryId())
+                ),
+                Sort.by(Sort.Order.desc("popularityScore"), Sort.Order.desc("reviewCount"), Sort.Order.asc("name")),
+                Math.max(normalizeLimit(limit), 6)
+        ));
+        if (anchor.getBrandId() != null) {
+            pool.addAll(recommendationSlice(
+                    (root, ignored, cb) -> cb.and(
+                            cb.isTrue(root.get("active")),
+                            cb.notEqual(root.get("id"), productId),
+                            cb.equal(root.get("brandId"), anchor.getBrandId())
+                    ),
+                    Sort.by(Sort.Order.desc("popularityScore"), Sort.Order.desc("averageRating"), Sort.Order.asc("name")),
+                    Math.max(normalizeLimit(limit), 6)
+            ));
+        }
+        return deduplicate(pool).stream()
+                .limit(normalizeLimit(limit))
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public VariantLookupResponse lookupVariant(UUID variantId) {
+        CatalogProductVariant variant = variantRepository.findById(variantId)
+                .orElseThrow(() -> new NotFoundException("VARIANT_NOT_FOUND", "Variant not found"));
+        return new VariantLookupResponse(
+                variant.getId(),
+                variant.getProductId(),
+                variant.getSku(),
+                variant.getVariantName(),
+                variant.isActive()
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Page<ProductSearchResultDto> searchProducts(
             String keyword,
             UUID categoryId,
@@ -269,6 +405,53 @@ public class CatalogQueryServiceImpl implements com.noura.catalog.service.Catalo
 
         Page<CatalogProduct> products = productRepository.findAll(spec, normalizedPageable);
         return mapToSearchPage(products);
+    }
+
+    private List<ProductDto> recommendationSlice(Specification<CatalogProduct> specification, Sort sort, int limit) {
+        int safeLimit = normalizeLimit(limit);
+        Page<CatalogProduct> page = productRepository.findAll(specification, PageRequest.of(0, safeLimit, sort));
+        return page.getContent().stream()
+                .map(product -> mapProduct(product, null, null, null, null, null))
+                .toList();
+    }
+
+    private List<ProductDto> popularFallback(int limit) {
+        return recommendationSlice(
+                (root, ignored, cb) -> cb.isTrue(root.get("active")),
+                Sort.by(Sort.Order.desc("popularityScore"), Sort.Order.desc("averageRating"), Sort.Order.asc("name")),
+                limit
+        );
+    }
+
+    private List<ProductDto> rotateDeterministically(List<ProductDto> source, String seed, int limit) {
+        if (source.isEmpty()) {
+            return List.of();
+        }
+        int safeLimit = Math.min(limit, source.size());
+        int offset = 0;
+        String normalizedSeed = normalizeNullable(seed);
+        if (normalizedSeed != null) {
+            offset = Math.floorMod(normalizedSeed.hashCode(), source.size());
+        }
+        List<ProductDto> rotated = new ArrayList<>(source.size());
+        for (int index = 0; index < source.size(); index++) {
+            rotated.add(source.get((index + offset) % source.size()));
+        }
+        return rotated.subList(0, safeLimit);
+    }
+
+    private List<ProductDto> deduplicate(List<ProductDto> source) {
+        Map<UUID, ProductDto> unique = new LinkedHashMap<>();
+        for (ProductDto item : source) {
+            if (item != null && item.id() != null) {
+                unique.putIfAbsent(item.id(), item);
+            }
+        }
+        return new ArrayList<>(unique.values());
+    }
+
+    private int normalizeLimit(int limit) {
+        return Math.max(1, Math.min(limit, 24));
     }
 
     private ProductDto mapProduct(
@@ -476,6 +659,10 @@ public class CatalogQueryServiceImpl implements com.noura.catalog.service.Catalo
 
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
+    }
+
+    private String normalizeNullable(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 
     private static final class CategoryTreeNode {

@@ -12,9 +12,11 @@ import com.noura.order.dto.order.CreateOrderRequest;
 import com.noura.order.dto.order.OrderItemResponse;
 import com.noura.order.dto.order.OrderResponse;
 import com.noura.order.dto.order.OrderStatusEventResponse;
+import com.noura.order.dto.order.QuickReorderResponse;
 import com.noura.order.dto.order.UpdateOrderStatusRequest;
 import com.noura.order.exception.NotFoundException;
 import com.noura.order.exception.OrderOperationException;
+import com.noura.order.integration.client.CartServiceClient;
 import com.noura.order.repository.OrderItemRecordRepository;
 import com.noura.order.repository.OrderRecordRepository;
 import com.noura.order.repository.OrderStatusHistoryRepository;
@@ -74,6 +76,7 @@ public class OrderServiceImpl implements OrderService {
     private final OrderItemRecordRepository orderItemRecordRepository;
     private final OrderStatusHistoryRepository orderStatusHistoryRepository;
     private final ObjectMapper objectMapper;
+    private final CartServiceClient cartServiceClient;
 
     /**
      * {@inheritDoc}
@@ -260,6 +263,49 @@ public class OrderServiceImpl implements OrderService {
         return orderStatusHistoryRepository.findByOrderIdOrderByChangedAtAsc(orderId).stream()
                 .map(this::toTimelineResponse)
                 .toList();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public QuickReorderResponse quickReorder(
+            OrderRequestContext context,
+            UUID orderId,
+            String authorizationHeader,
+            String correlationId
+    ) {
+        OrderRecord order = orderRecordRepository.findById(orderId)
+                .orElseThrow(() -> new NotFoundException("ORDER_NOT_FOUND", "Order not found"));
+        assertOrderAccess(context, order);
+        if (!context.hasSubject()) {
+            throw new OrderOperationException(
+                    HttpStatus.UNAUTHORIZED,
+                    "AUTH_SUBJECT_REQUIRED",
+                    "Authenticated customer identity is required"
+            );
+        }
+
+        List<OrderItemRecord> items = orderItemRecordRepository.findByOrderIdOrderByLineNumberAsc(order.getId());
+        cartServiceClient.clearCart(context.subject(), authorizationHeader, correlationId);
+        for (OrderItemRecord item : items) {
+            cartServiceClient.addItem(
+                    context.subject(),
+                    authorizationHeader,
+                    correlationId,
+                    new CartServiceClient.AddCartItemPayload(
+                            item.getProductId(),
+                            item.getVariantId(),
+                            item.getQuantity(),
+                            order.getStoreId(),
+                            "quick-reorder",
+                            item.getLineNumber(),
+                            "/orders/" + order.getId()
+                    )
+            );
+        }
+        return new QuickReorderResponse(order.getId(), items.size(), true);
     }
 
     /**
@@ -718,4 +764,3 @@ public class OrderServiceImpl implements OrderService {
     ) {
     }
 }
-
