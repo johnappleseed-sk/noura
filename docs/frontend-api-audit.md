@@ -132,7 +132,7 @@ This audit captures every API wrapper in the frontend apps. Endpoints are listed
 | storefront | frontend/storefront-noura/lib/api.js | updateCartItem | PUT `/api/v1/cart/items/{itemId}` | PUT `/api/v1/cart/items/{itemId}` | Keep | - |
 | storefront | frontend/storefront-noura/lib/api.js | removeCartItem | DELETE `/api/v1/cart/items/{itemId}` | DELETE `/api/v1/cart/items/{itemId}` | Keep | - |
 | storefront | frontend/storefront-noura/lib/api.js | clearCart | DELETE `/api/v1/cart/items` | DELETE `/api/v1/cart/items` | Keep | - |
-| storefront | frontend/storefront-noura/lib/api.js | checkoutCart | POST `/api/v1/checkout` | POST `/api/v1/checkout` | Keep | Now sends `addressId` and backend-derived shipping snapshot for delivery checkout. |
+| storefront | frontend/storefront-noura/lib/api.js | checkoutCart | POST `/api/v1/checkout` | POST `/api/v1/checkout` | Keep | Now sends `storeId`, `addressId`, typed payment fields, backend-derived shipping snapshot, and an idempotency key for direct checkout. |
 | storefront | frontend/storefront-noura/lib/api.js | getMyOrders | GET `/api/v1/account/orders` | GET `/api/v1/account/orders` | Keep | - |
 | storefront | frontend/storefront-noura/lib/api.js | quickReorder | POST `/api/v1/account/orders/{orderId}/quick-reorder` | POST `/api/v1/account/orders/{orderId}/quick-reorder` | Keep | - |
 | storefront | frontend/storefront-noura/lib/api.js | predictiveSearch | GET `/api/v1/search/predictive` | GET `/api/v1/search/predictive` | Keep | Uses `q` + `scope`. |

@@ -18,6 +18,17 @@
   - `docs/architecture/search-service.md`
 
 ### Updated
+- `checkout-service` now executes the full synchronous purchase path:
+  - validates cart/address/pricing/inventory
+  - reserves stock
+  - creates the order in `PAYMENT_PENDING`
+  - creates and confirms payment intents through `payment-service`
+  - finalizes the order to `PAID`
+  - clears the cart and dispatches notifications best-effort
+- `order-service` now exposes `POST /internal/orders/{orderId}/status` for trusted internal order finalization.
+- `customer-service` internal lookup is now used by checkout so notification dispatch targets the real customer UUID instead of the external subject.
+- `apps/storefront-web` checkout now sends `storeId`, typed payment fields, and generated idempotency keys to the backend direct-checkout contract.
+- `apps/storefront-web` order normalization now understands checkout responses that return nested `order` and `payment` summaries.
 - `services/search-service/README.md` with the search boundary decision, indexing model, query-ownership rules, and environment-variable guidance.
 - Root `README.md`, `services/README.md`, and `docs/backend-api.md` to reflect the extracted `search-service`.
 - `apps/admin-web` control-center endpoint catalog now exposes `GET /api/v1/search/products` and uses the correct predictive-search query parameters.

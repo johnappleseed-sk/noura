@@ -17,6 +17,7 @@ Enterprise commerce platform monorepo with canonical app, service, package, plat
 - Extracted `review-service` with moderated storefront reviews, approved-only rating aggregation, and admin approval/rejection actions.
 - Extracted `search-service` as the projection-backed discovery boundary for product search, autocomplete, trend tags, and provider-ready indexing.
 - Cross-service integration hardening: gateway routes now expose payment/shipping APIs, cart-service coupon flows integrate with promotion-service validation, and notification-service aligns to the shared response/correlation contract.
+- Complete synchronous storefront purchase flow: cart -> checkout validation -> stock reservation -> order creation -> payment confirmation -> order finalization -> notification dispatch.
 
 ## Repository Modules
 - `apps/admin-web/` React admin operations console
@@ -52,6 +53,7 @@ Legacy code retained for reuse:
 - Search architecture: [docs/architecture/search-service.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/architecture/search-service.md)
 - Shipping API: [docs/api/shipping-service.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/api/shipping-service.md)
 - Shipping architecture: [docs/architecture/shipping-service.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/architecture/shipping-service.md)
+- Purchase flow architecture: [docs/architecture/purchase-flow.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/architecture/purchase-flow.md)
 
 ## Local Development
 ### Legacy monolith backend (during migration)

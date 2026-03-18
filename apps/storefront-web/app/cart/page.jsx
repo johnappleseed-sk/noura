@@ -265,12 +265,14 @@ export default function CartPage() {
       })
       await checkoutCart(token, {
         fulfillmentMethod: 'DELIVERY',
+        storeId: deliveryEligibility?.matchedStoreId || cart?.storeId || null,
         addressId: selectedAddressId,
         shippingAddress: selectedAddress,
         shippingAddressSnapshot: selectedAddress?.formattedAddress || null,
         paymentMethod,
         paymentProvider: paymentProvider.trim() || null,
-        paymentProviderReference: paymentProviderReference.trim() || null
+        paymentProviderReference: paymentProviderReference.trim() || null,
+        paymentAutoCapture: true
       })
       await loadCheckoutData(token)
       router.push('/orders')

@@ -74,6 +74,12 @@ Payment-specific note:
 - payment-service owns provider state and webhook deduplication
 - order-service does not persist provider-specific state
 
+Purchase-flow note:
+- checkout-service now owns the synchronous storefront purchase command path
+- happy path is: cart validation -> stock reservation -> order creation -> payment confirmation -> order finalization -> notification dispatch
+- order finalization uses a trusted internal order lifecycle endpoint instead of public admin routes
+- notification dispatch resolves the customer UUID through customer-service before calling notification-service
+
 Shipping-specific note:
 - shipping-service validates order identity and shipment ownership by synchronous order lookup
 - shipping-service owns shipment state, tracking references, and carrier refresh logic

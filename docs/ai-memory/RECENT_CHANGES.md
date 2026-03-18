@@ -1,5 +1,58 @@
 # Recent Changes
 
+## 2026-03-18 - end-to-end purchase flow completed
+
+### Task
+- Completed one executable happy-path purchase flow across storefront, checkout-service, order-service, payment-service, customer-service, inventory-service, cart-service, and notification-service.
+
+### Why
+- Checkout still stopped before real payment confirmation and order finalization.
+- Storefront direct checkout did not send the `storeId` or typed payment fields needed by the backend contract.
+- Notification dispatch could not target the correct user because checkout only held the external customer subject.
+
+### Key files touched
+- `services/checkout-service/src/main/java/com/noura/checkout/service/impl/CheckoutOrchestrationServiceImpl.java`
+- `services/checkout-service/src/main/java/com/noura/checkout/service/impl/PaymentServiceGateway.java`
+- `services/checkout-service/src/main/java/com/noura/checkout/integration/client/OrderServiceClient.java`
+- `services/checkout-service/src/main/java/com/noura/checkout/integration/client/CustomerServiceClient.java`
+- `services/checkout-service/src/main/java/com/noura/checkout/integration/client/NotificationServiceClient.java`
+- `services/checkout-service/src/main/java/com/noura/checkout/controller/CheckoutController.java`
+- `services/order-service/src/main/java/com/noura/order/controller/InternalOrderLifecycleController.java`
+- `apps/storefront-web/lib/api.js`
+- `apps/storefront-web/app/cart/page.jsx`
+- `docs/architecture/purchase-flow.md`
+
+### Architecture decisions
+- Checkout remains synchronous for the first complete purchase flow.
+- `payment-service` still owns provider state and confirmation, while `checkout-service` owns the orchestration that turns successful payment into a finalized order.
+- Internal order finalization uses a narrow trusted endpoint instead of reusing the public admin order-status route.
+- Notification dispatch now resolves the internal customer UUID through `customer-service` before calling `notification-service`.
+- Payment success for checkout finalization currently means `AUTHORIZED` or `CAPTURED`.
+
+### Integration notes
+- Storefront direct checkout now sends:
+  - `storeId`
+  - `paymentMethod`
+  - `paymentProvider`
+  - `paymentProviderReference`
+  - `paymentAutoCapture`
+  - `idempotencyKey`
+- Checkout derives a payment-scoped idempotency key from the checkout key.
+- Successful checkout now returns nested `order` and `payment` summaries.
+- Payment failures release reservations and attempt to cancel the created order.
+
+### Known caveats
+- Shipping orchestration is still not triggered automatically during checkout placement.
+- Order finalization currently updates status only; order-service does not persist the payment reference written back from checkout.
+- Status spelling is still domain-specific (`CANCELED` in payment vs `CANCELLED` in order/shipping); mapping harmonization is pending.
+- Storefront build still logs `ECONNREFUSED` during static prerender when local APIs are not running, but the build completes successfully.
+
+### Follow-up work
+- Add shipment creation/finalization into the checkout happy path once shipping ownership is finalized.
+- Decide whether order-service should persist payment reference updates from checkout finalization.
+- Add gateway-level or end-to-end integration tests for the full purchase path.
+- Add compensation/outbox handling for post-payment order finalization failures.
+
 ## 2026-03-18 - cross-service integration pass hardening
 
 ### Task

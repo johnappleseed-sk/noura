@@ -195,6 +195,50 @@ Behavior:
 Behavior:
 - clears `couponCode` and recomputes totals deterministically
 
+## Checkout Service Endpoints
+Base prefix: `/api/v1`
+
+### Direct checkout
+`POST /checkout`
+
+Behavior:
+- validates cart lines, address ownership, pricing, and inventory availability
+- requires a resolved `storeId` for inventory reservation
+- creates the order in `PAYMENT_PENDING`
+- creates and confirms a payment through `payment-service`
+- finalizes the order to `PAID` when payment reaches `AUTHORIZED` or `CAPTURED`
+- releases reservations and cancels the order when payment fails
+- clears the cart and dispatches notification best-effort after success
+
+Request highlights:
+- `storeId`
+- `addressId`
+- `paymentMethod`
+- `paymentProvider`
+- `paymentProviderReference`
+- `paymentAutoCapture`
+- `couponCode`
+- `idempotencyKey`
+
+Response highlights:
+- `order`
+- `payment`
+- `reservedStock`
+- `idempotencyKey`
+- `placedAt`
+
+### Checkout preview
+`POST /checkout/preview`
+
+### Checkout validation
+`POST /checkout/validate`
+
+### Explicit place-order endpoint
+`POST /checkout/place-order`
+
+Behavior:
+- same orchestration as direct checkout, but without the storefront-compatibility wrapper
+
 ## Payment Service Endpoints
 Base prefix: `/api/v1`
 

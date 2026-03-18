@@ -389,21 +389,38 @@ function buildAddressPayload(payload) {
 }
 
 function normalizeOrder(order) {
+  const resolvedId = order?.id || order?.orderId || null
+  const resolvedStatus = order?.status || 'PENDING'
+  const resolvedPlacedAt = order?.placedAt || order?.createdAt || null
+  const resolvedPayment = order?.payment || order?.latestPayment || null
+
   return {
-    id: order?.id,
-    orderNumber: order?.id ? `ORD-${String(order.id).split('-')[0].toUpperCase()}` : null,
-    status: order?.status || 'PENDING',
-    currencyCode: 'USD',
+    id: resolvedId,
+    orderNumber:
+      order?.orderNumber || (resolvedId ? `ORD-${String(resolvedId).split('-')[0].toUpperCase()}` : null),
+    status: resolvedStatus,
+    currencyCode: order?.currencyCode || resolvedPayment?.currencyCode || 'USD',
     subtotal: order?.subtotal || 0,
     discountTotal: order?.discountAmount || 0,
     shippingTotal: order?.shippingAmount || 0,
     taxTotal: 0,
     grandTotal: order?.totalAmount || 0,
-    placedAt: order?.createdAt || null,
+    placedAt: resolvedPlacedAt,
     shippingAddress: null,
-    latestPayment: null,
+    latestPayment: resolvedPayment
+      ? {
+          id: resolvedPayment.paymentId || resolvedPayment.id || null,
+          reference: resolvedPayment.paymentReference || null,
+          providerCode: resolvedPayment.providerCode || null,
+          methodType: resolvedPayment.methodType || null,
+          status: resolvedPayment.status || null,
+          amount: resolvedPayment.amount || 0,
+          currencyCode: resolvedPayment.currencyCode || order?.currencyCode || 'USD',
+          confirmedAt: resolvedPayment.confirmedAt || null
+        }
+      : null,
     items: (order?.items || []).map((item, index) => ({
-      id: `${order?.id || 'order'}-${index}`,
+      id: `${resolvedId || 'order'}-${index}`,
       productId: item?.productId,
       sku: null,
       productName: item?.productName,
@@ -831,8 +848,16 @@ export async function clearCart(token) {
 }
 
 export async function checkoutCart(token, body) {
+  const idempotencyKey =
+    body?.idempotencyKey ||
+    (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? `checkout-${crypto.randomUUID()}`
+      : `checkout-${Date.now()}`)
   const data = await requestWithAuth(`${ACTIVE_API_PREFIX}/checkout`, token, {
     method: 'POST',
+    headers: {
+      'Idempotency-Key': idempotencyKey
+    },
     body: JSON.stringify({
       fulfillmentMethod: body?.fulfillmentMethod || (body?.addressId || body?.shippingAddress ? 'DELIVERY' : 'PICKUP'),
       storeId: body?.storeId || null,
@@ -840,17 +865,17 @@ export async function checkoutCart(token, body) {
       shippingAddressSnapshot:
         body?.shippingAddressSnapshot ||
         buildShippingAddressSnapshot(body?.shippingAddress),
-      paymentReference:
-        [body?.paymentMethod, body?.paymentProvider, body?.paymentProviderReference]
-          .filter(Boolean)
-          .join(' | ') || 'Storefront checkout',
+      paymentMethod: body?.paymentMethod || 'CASH_ON_DELIVERY',
+      paymentProvider: body?.paymentProvider || null,
+      paymentProviderReference: body?.paymentProviderReference || null,
       couponCode: body?.couponCode || null,
       b2bInvoice: false,
-      idempotencyKey: null
+      paymentAutoCapture: body?.paymentAutoCapture ?? true,
+      idempotencyKey
     })
   })
 
-  const order = normalizeOrder(data)
+  const order = normalizeOrder(data?.order || data)
   notifyCartUpdated()
   return order
 }

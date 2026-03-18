@@ -7,6 +7,9 @@
 Gateway exposure:
 - `api-gateway` routes `/api/v1/payments/**` and `/api/payments/**` to `payment-service`.
 
+Current orchestration note:
+- `checkout-service` is the active synchronous caller for intent creation and confirmation in the storefront purchase flow.
+
 All endpoints use the standard API envelope:
 
 ```json
