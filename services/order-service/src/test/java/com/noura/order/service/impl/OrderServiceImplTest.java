@@ -2,6 +2,7 @@ package com.noura.order.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.noura.order.domain.entity.OrderRecord;
+import com.noura.order.domain.entity.OrderStatusHistory;
 import com.noura.order.domain.enums.OrderStatus;
 import com.noura.order.domain.enums.RefundStatus;
 import com.noura.order.dto.order.CreateOrderItemRequest;
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -207,5 +209,121 @@ class OrderServiceImplTest {
                 eq("corr-quick"),
                 any(CartServiceClient.AddCartItemPayload.class)
         );
+    }
+
+    /**
+     * Verifies successful order creation persists the initial payment-pending status history event.
+     */
+    @Test
+    void shouldCreateOrderAndPersistInitialStatusHistory() {
+        UUID storeId = UUID.fromString("77777777-7777-7777-7777-777777777777");
+        UUID addressId = UUID.fromString("88888888-8888-8888-8888-888888888888");
+        UUID productId = UUID.fromString("99999999-9999-9999-9999-999999999999");
+        UUID createdOrderId = UUID.fromString("aaaaaaaa-1111-1111-1111-aaaaaaaaaaaa");
+
+        when(orderRecordRepository.findByCustomerRefAndIdempotencyKey("customer-create", "idem-create"))
+                .thenReturn(Optional.empty());
+        when(orderRecordRepository.save(any(OrderRecord.class))).thenAnswer(invocation -> {
+            OrderRecord order = invocation.getArgument(0, OrderRecord.class);
+            order.setId(createdOrderId);
+            order.setCreatedAt(Instant.now());
+            order.setUpdatedAt(Instant.now());
+            return order;
+        });
+        when(orderItemRecordRepository.save(any(OrderItemRecord.class))).thenAnswer(invocation -> {
+            OrderItemRecord item = invocation.getArgument(0, OrderItemRecord.class);
+            item.setId(UUID.fromString("bbbbbbbb-1111-1111-1111-bbbbbbbbbbbb"));
+            return item;
+        });
+        when(orderStatusHistoryRepository.save(any(OrderStatusHistory.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0, OrderStatusHistory.class));
+
+        OrderResponse response = orderService.createOrder(
+                new OrderRequestContext("customer-create", Set.of(), false),
+                new CreateOrderRequest(
+                        null,
+                        storeId,
+                        addressId,
+                        "USD",
+                        "PAY-123",
+                        null,
+                        null,
+                        null,
+                        "Line 1, Phnom Penh",
+                        null,
+                        new BigDecimal("25.0000"),
+                        BigDecimal.ZERO.setScale(4),
+                        BigDecimal.ZERO.setScale(4),
+                        BigDecimal.ZERO.setScale(4),
+                        new BigDecimal("25.0000"),
+                        false,
+                        "idem-create",
+                        List.of(new CreateOrderItemRequest(
+                                productId,
+                                null,
+                                "SKU-CREATE",
+                                "Created Product",
+                                null,
+                                1,
+                                new BigDecimal("25.0000"),
+                                new BigDecimal("25.0000"),
+                                null
+                        ))
+                )
+        );
+
+        ArgumentCaptor<OrderStatusHistory> historyCaptor = ArgumentCaptor.forClass(OrderStatusHistory.class);
+
+        Assertions.assertEquals(createdOrderId, response.id());
+        Assertions.assertEquals(OrderStatus.PAYMENT_PENDING, response.status());
+        Assertions.assertEquals(1, response.items().size());
+        verify(orderStatusHistoryRepository).save(historyCaptor.capture());
+        Assertions.assertNull(historyCaptor.getValue().getFromStatus());
+        Assertions.assertEquals(OrderStatus.PAYMENT_PENDING, historyCaptor.getValue().getToStatus());
+        Assertions.assertEquals("ORDER_CREATED", historyCaptor.getValue().getReason());
+    }
+
+    /**
+     * Verifies valid status updates persist a matching status-history entry.
+     */
+    @Test
+    void shouldUpdateOrderStatusAndAppendHistory() {
+        UUID orderId = UUID.fromString("cccccccc-1111-1111-1111-cccccccccccc");
+        OrderRecord existing = new OrderRecord();
+        existing.setId(orderId);
+        existing.setCustomerRef("customer-update");
+        existing.setStatus(OrderStatus.PAYMENT_PENDING);
+        existing.setRefundStatus(RefundStatus.NONE);
+        existing.setCurrencyCode("USD");
+        existing.setSubtotal(new BigDecimal("25.0000"));
+        existing.setDiscountAmount(BigDecimal.ZERO.setScale(4));
+        existing.setShippingAmount(BigDecimal.ZERO.setScale(4));
+        existing.setTaxAmount(BigDecimal.ZERO.setScale(4));
+        existing.setTotalAmount(new BigDecimal("25.0000"));
+        existing.setOrderNumber("ORD-STATUS-1");
+        existing.setPlacedAt(Instant.now());
+        existing.setCreatedAt(Instant.now());
+        existing.setUpdatedAt(Instant.now());
+
+        when(orderRecordRepository.findById(eq(orderId))).thenReturn(Optional.of(existing));
+        when(orderRecordRepository.save(any(OrderRecord.class))).thenAnswer(invocation -> invocation.getArgument(0, OrderRecord.class));
+        when(orderItemRecordRepository.findByOrderIdOrderByLineNumberAsc(orderId)).thenReturn(List.of());
+        when(orderStatusHistoryRepository.save(any(OrderStatusHistory.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0, OrderStatusHistory.class));
+
+        OrderResponse response = orderService.updateOrderStatus(
+                new OrderRequestContext("admin-1", Set.of("ADMIN"), false),
+                orderId,
+                new UpdateOrderStatusRequest(OrderStatus.PAID, RefundStatus.NONE, "PAYMENT_CAPTURED", "Captured successfully")
+        );
+
+        ArgumentCaptor<OrderStatusHistory> historyCaptor = ArgumentCaptor.forClass(OrderStatusHistory.class);
+
+        Assertions.assertEquals(OrderStatus.PAID, response.status());
+        verify(orderStatusHistoryRepository).save(historyCaptor.capture());
+        Assertions.assertEquals(OrderStatus.PAYMENT_PENDING, historyCaptor.getValue().getFromStatus());
+        Assertions.assertEquals(OrderStatus.PAID, historyCaptor.getValue().getToStatus());
+        Assertions.assertEquals("PAYMENT_CAPTURED", historyCaptor.getValue().getReason());
+        Assertions.assertEquals("Captured successfully", historyCaptor.getValue().getNote());
     }
 }

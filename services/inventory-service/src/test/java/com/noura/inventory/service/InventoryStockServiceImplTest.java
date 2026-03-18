@@ -6,6 +6,7 @@ import com.noura.inventory.domain.enums.StockMovementType;
 import com.noura.inventory.dto.stock.StockAdjustmentRequest;
 import com.noura.inventory.dto.stock.StockDeductionRequest;
 import com.noura.inventory.dto.stock.StockOperationResponse;
+import com.noura.inventory.dto.stock.StockReleaseReservationRequest;
 import com.noura.inventory.dto.stock.StockReservationRequest;
 import com.noura.inventory.exception.InventoryOperationException;
 import com.noura.inventory.repository.InventoryStockLevelRepository;
@@ -14,6 +15,7 @@ import com.noura.inventory.service.impl.InventoryStockServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -136,6 +138,48 @@ class InventoryStockServiceImplTest {
         assertThat(response.stockLevel().lowStockThreshold()).isEqualByComparingTo("4.0000");
         verify(stockLevelRepository, times(2)).save(any(InventoryStockLevel.class));
         verify(movementRepository).save(any(InventoryStockMovement.class));
+    }
+
+    /**
+     * Verifies release operation returns quantity to availability and writes a negative-delta movement.
+     */
+    @Test
+    void releaseReservationDecreasesReservedAndCreatesReleaseMovement() {
+        UUID productId = UUID.randomUUID();
+        UUID warehouseId = UUID.randomUUID();
+        InventoryStockLevel stockLevel = stockLevel(productId, warehouseId, "10.0000", "5.0000", "3.0000");
+
+        when(stockLevelRepository.findByProductIdAndWarehouseIdForUpdate(productId, warehouseId))
+                .thenReturn(Optional.of(stockLevel));
+        when(stockLevelRepository.save(any(InventoryStockLevel.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(movementRepository.save(any(InventoryStockMovement.class)))
+                .thenAnswer(invocation -> {
+                    InventoryStockMovement movement = invocation.getArgument(0, InventoryStockMovement.class);
+                    movement.setId(UUID.randomUUID());
+                    return movement;
+                });
+
+        StockOperationResponse response = service.releaseReservation(
+                new StockReleaseReservationRequest(
+                        productId,
+                        warehouseId,
+                        new BigDecimal("2"),
+                        "CHECKOUT_CANCELLED",
+                        "ORDER",
+                        "ORD-003",
+                        "Customer cancelled checkout"
+                ),
+                "user-4"
+        );
+
+        ArgumentCaptor<InventoryStockMovement> movementCaptor = ArgumentCaptor.forClass(InventoryStockMovement.class);
+
+        assertThat(response.movementType()).isEqualTo(StockMovementType.RELEASE);
+        assertThat(response.stockLevel().quantityReserved()).isEqualByComparingTo("3.0000");
+        assertThat(response.stockLevel().quantityAvailable()).isEqualByComparingTo("7.0000");
+        verify(movementRepository).save(movementCaptor.capture());
+        assertThat(movementCaptor.getValue().getQuantityDelta()).isEqualByComparingTo("-2.0000");
     }
 
     /**

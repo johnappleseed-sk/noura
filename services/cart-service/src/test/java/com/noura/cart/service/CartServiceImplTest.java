@@ -7,6 +7,7 @@ import com.noura.cart.domain.enums.CartOwnerType;
 import com.noura.cart.domain.enums.CartStatus;
 import com.noura.cart.dto.cart.AddCartItemRequest;
 import com.noura.cart.dto.cart.CartResponse;
+import com.noura.cart.dto.cart.UpdateCartItemQuantityRequest;
 import com.noura.cart.exception.CartOperationException;
 import com.noura.cart.integration.CatalogGateway;
 import com.noura.cart.integration.InventoryGateway;
@@ -34,6 +35,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -191,6 +193,103 @@ class CartServiceImplTest {
 
         assertThat(response.items().getFirst().validationStatus()).isEqualTo(CartItemValidationStatus.UNKNOWN);
         assertThat(response.totals().subtotal()).isEqualByComparingTo("0.0000");
+    }
+
+    /**
+     * Verifies quantity updates recompute line pricing and cart totals using the latest snapshots.
+     */
+    @Test
+    void updateItemQuantityRecomputesLineAndTotals() {
+        UUID cartId = UUID.randomUUID();
+        UUID itemId = UUID.randomUUID();
+        UUID productId = UUID.randomUUID();
+        UUID storeId = UUID.randomUUID();
+        CartContext context = CartContext.customer("customer-3");
+        Cart cart = customerCart(cartId, context.customerId());
+
+        CartItem existing = new CartItem();
+        existing.setId(itemId);
+        existing.setCart(cart);
+        existing.setCartId(cartId);
+        existing.setProductId(productId);
+        existing.setStoreId(storeId);
+        existing.setQuantity(1);
+        existing.setUnitPrice(new BigDecimal("5.0000"));
+        existing.setLineTotal(new BigDecimal("5.0000"));
+        existing.setProductNameSnapshot("Updated Product");
+        existing.setCurrencyCode("USD");
+        existing.setValidationStatus(CartItemValidationStatus.VALID);
+        existing.setUpdatedAt(Instant.now());
+
+        when(cartRepository.findActiveCustomerCartForUpdate(context.customerId())).thenReturn(Optional.of(cart));
+        when(cartItemRepository.findByIdAndCartId(itemId, cartId)).thenReturn(Optional.of(existing));
+        when(catalogGateway.findProduct(productId)).thenReturn(Optional.of(new ProductSnapshot(
+                productId,
+                "Updated Product",
+                null,
+                "SKU-003",
+                false
+        )));
+        when(pricingGateway.resolvePrice(productId, storeId)).thenReturn(Optional.of(new PricingSnapshot(
+                productId,
+                new BigDecimal("6.5000"),
+                "USD"
+        )));
+        when(inventoryGateway.resolveAvailability(productId, storeId)).thenReturn(new InventorySnapshot(
+                productId,
+                storeId,
+                new BigDecimal("30.0000"),
+                true
+        ));
+        when(cartItemRepository.save(any(CartItem.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(cartRepository.save(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(cartItemRepository.findByCartIdOrderByCreatedAtAsc(cartId)).thenReturn(List.of(existing));
+
+        CartResponse response = cartService.updateItemQuantity(context, itemId, new UpdateCartItemQuantityRequest(4));
+
+        assertThat(response.itemCount()).isEqualTo(4);
+        assertThat(response.totals().subtotal()).isEqualByComparingTo("26.0000");
+        assertThat(response.items().getFirst().quantity()).isEqualTo(4);
+        assertThat(response.items().getFirst().unitPrice()).isEqualByComparingTo("6.5000");
+    }
+
+    /**
+     * Verifies removing the final line clears cart totals deterministically.
+     */
+    @Test
+    void removeItemClearsTotalsWhenLastLineIsDeleted() {
+        UUID cartId = UUID.randomUUID();
+        UUID itemId = UUID.randomUUID();
+        UUID productId = UUID.randomUUID();
+        CartContext context = CartContext.customer("customer-4");
+        Cart cart = customerCart(cartId, context.customerId());
+        cart.setSubtotal(new BigDecimal("12.0000"));
+        cart.setTotalAmount(new BigDecimal("12.0000"));
+
+        CartItem existing = new CartItem();
+        existing.setId(itemId);
+        existing.setCart(cart);
+        existing.setCartId(cartId);
+        existing.setProductId(productId);
+        existing.setQuantity(2);
+        existing.setUnitPrice(new BigDecimal("6.0000"));
+        existing.setLineTotal(new BigDecimal("12.0000"));
+        existing.setCurrencyCode("USD");
+        existing.setValidationStatus(CartItemValidationStatus.VALID);
+        existing.setUpdatedAt(Instant.now());
+
+        when(cartRepository.findActiveCustomerCartForUpdate(context.customerId())).thenReturn(Optional.of(cart));
+        when(cartItemRepository.findByIdAndCartId(itemId, cartId)).thenReturn(Optional.of(existing));
+        when(cartRepository.save(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(cartItemRepository.findByCartIdOrderByCreatedAtAsc(cartId)).thenReturn(List.of());
+
+        CartResponse response = cartService.removeItem(context, itemId);
+
+        assertThat(response.itemCount()).isZero();
+        assertThat(response.items()).isEmpty();
+        assertThat(response.totals().subtotal()).isEqualByComparingTo("0.0000");
+        assertThat(response.totals().totalAmount()).isEqualByComparingTo("0.0000");
+        verify(cartItemRepository).delete(existing);
     }
 
     /**

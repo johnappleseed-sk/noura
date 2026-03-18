@@ -5,6 +5,7 @@ import com.noura.payment.domain.entity.PaymentTransaction;
 import com.noura.payment.domain.entity.PaymentWebhookEvent;
 import com.noura.payment.domain.enums.PaymentAuthorizationStatus;
 import com.noura.payment.domain.enums.PaymentCaptureStatus;
+import com.noura.payment.domain.enums.PaymentConfirmationAction;
 import com.noura.payment.domain.enums.PaymentMethodType;
 import com.noura.payment.domain.enums.PaymentStatus;
 import com.noura.payment.domain.enums.PaymentWebhookProcessingStatus;
@@ -264,6 +265,46 @@ class PaymentServiceImplTest {
         Assertions.assertEquals(PaymentStatus.CAPTURED, payment.getStatus());
         Assertions.assertEquals(PaymentCaptureStatus.CAPTURED, payment.getCaptureStatus());
         Assertions.assertNotNull(payment.getCapturedAt());
+    }
+
+    /**
+     * Verifies confirm-payment captures an intent and persists the provider-normalized terminal state.
+     */
+    @Test
+    void shouldConfirmPaymentAndPersistCapturedState() {
+        UUID paymentId = UUID.fromString("66666666-6666-6666-6666-666666666666");
+        PaymentTransaction payment = payment(
+                paymentId,
+                UUID.fromString("77777777-7777-7777-7777-777777777777"),
+                "customer-6",
+                PaymentStatus.REQUIRES_CONFIRMATION
+        );
+        payment.setAuthorizationStatus(PaymentAuthorizationStatus.NOT_REQUESTED);
+        payment.setCaptureStatus(PaymentCaptureStatus.NOT_CAPTURED);
+
+        when(paymentTransactionRepository.findByIdForUpdate(paymentId)).thenReturn(Optional.of(payment));
+        when(paymentProviderRegistry.resolve("mock")).thenReturn(paymentProvider);
+        when(paymentProvider.capturePayment(any())).thenReturn(new PaymentProvider.ProviderOperationResult(
+                PaymentStatus.CAPTURED,
+                PaymentAuthorizationStatus.AUTHORIZED,
+                PaymentCaptureStatus.CAPTURED,
+                "mock_txn_confirmed",
+                null
+        ));
+        when(paymentTransactionRepository.save(any(PaymentTransaction.class))).thenAnswer(invocation -> invocation.getArgument(0, PaymentTransaction.class));
+
+        PaymentResponse response = paymentService.confirmPayment(
+                new PaymentRequestContext("customer-6", null, Set.of(), false),
+                paymentId,
+                new ConfirmPaymentRequest(PaymentConfirmationAction.CAPTURE, null, null)
+        );
+
+        Assertions.assertEquals(PaymentStatus.CAPTURED, response.status());
+        Assertions.assertEquals(PaymentCaptureStatus.CAPTURED, response.captureStatus());
+        Assertions.assertEquals("mock_txn_confirmed", response.providerTransactionId());
+        Assertions.assertNotNull(response.confirmedAt());
+        Assertions.assertNotNull(response.capturedAt());
+        verify(paymentTransactionRepository).save(payment);
     }
 
     /**

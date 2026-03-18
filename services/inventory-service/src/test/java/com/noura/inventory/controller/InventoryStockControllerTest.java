@@ -111,4 +111,50 @@ class InventoryStockControllerTest {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"));
     }
+
+    /**
+     * Verifies low-stock lookup returns the standard paginated envelope used by admin operations.
+     *
+     * @throws Exception when MockMvc invocation fails
+     */
+    @Test
+    void lowStockReturnsPagedEnvelope() throws Exception {
+        UUID productId = UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+        UUID warehouseId = UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+        StockLevelResponse response = new StockLevelResponse(
+                UUID.fromString("cccccccc-cccc-cccc-cccc-cccccccccccc"),
+                productId,
+                "SKU-LOW-1",
+                "Low Stock Product",
+                warehouseId,
+                "WH-02",
+                "Overflow Warehouse",
+                null,
+                null,
+                null,
+                null,
+                new BigDecimal("3.0000"),
+                new BigDecimal("1.0000"),
+                new BigDecimal("2.0000"),
+                BigDecimal.ZERO.setScale(4),
+                Instant.parse("2026-03-18T08:00:00Z"),
+                true,
+                new BigDecimal("5.0000"),
+                StockStatus.LOW_STOCK,
+                Instant.parse("2026-03-18T08:00:00Z")
+        );
+        Page<StockLevelResponse> page = new PageImpl<>(List.of(response), PageRequest.of(0, 20), 1);
+
+        when(inventoryStockService.getLowStock(
+                eq(PageRequest.of(0, 20, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "quantityAvailable")))
+        )).thenReturn(page);
+
+        mockMvc.perform(get("/api/inventory/v1/stock-levels/low-stock"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Low stock levels"))
+                .andExpect(jsonPath("$.data.content[0].productId").value(productId.toString()))
+                .andExpect(jsonPath("$.data.content[0].stockStatus").value("LOW_STOCK"))
+                .andExpect(jsonPath("$.data.totalElements").value(1));
+    }
 }

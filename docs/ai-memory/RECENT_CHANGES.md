@@ -1,5 +1,52 @@
 # Recent Changes
 
+## 2026-03-18 - pragmatic automated commerce test coverage
+
+### Task
+- Added targeted automated coverage for the highest-risk commerce flows across pricing, promotion, cart, inventory, checkout, order, and payment services.
+
+### Why
+- The extracted services already had strong coverage in some areas, but core mutation and happy-path workflow gaps remained around cart updates, stock release, checkout HTTP orchestration, successful order status history, and payment confirmation.
+- The goal was to raise confidence in the current commerce platform without introducing a brittle or overbuilt full environment test harness.
+
+### Key files touched
+- `services/cart-service/src/test/java/com/noura/cart/service/CartServiceImplTest.java`
+- `services/inventory-service/src/test/java/com/noura/inventory/service/InventoryStockServiceImplTest.java`
+- `services/inventory-service/src/test/java/com/noura/inventory/controller/InventoryStockControllerTest.java`
+- `services/checkout-service/src/test/java/com/noura/checkout/controller/CheckoutControllerIntegrationTest.java`
+- `services/order-service/src/test/java/com/noura/order/service/impl/OrderServiceImplTest.java`
+- `services/payment-service/src/test/java/com/noura/payment/service/impl/PaymentServiceImplTest.java`
+- `docs/testing/commerce-service-tests.md`
+
+### Architecture decisions
+- Kept the test strategy pragmatic: unit tests for business rules and Web MVC slices for HTTP contracts.
+- Used a controller-plus-service checkout test instead of a full multi-service runtime test so the request contract and orchestration logic are both exercised without introducing infrastructure-heavy fragility.
+- Did not add repository-specific slice tests in this pass because the highest signal remained in domain/service behavior and HTTP contract coverage.
+
+### Integration notes
+- Commerce-critical scenarios now covered directly by automated tests include:
+  - price lookup
+  - promo validation/evaluation
+  - add/update/remove cart item
+  - stock reserve/release/deduct guardrails
+  - checkout validation
+  - checkout place-order happy path
+  - order creation status history
+  - order status update
+  - payment confirm/capture
+  - low-stock lookup
+- Checkout happy-path coverage uses the real controller and orchestration service with mocked downstream service clients.
+
+### Known caveats
+- There is still no containerized gateway-to-services end-to-end suite.
+- Search, shipping, review, and customer-service test expansion were not the focus of this pass because the requested critical commerce scenarios were already better represented elsewhere or fell outside the highest-risk path.
+- Repository-query behavior is still validated indirectly through service tests rather than dedicated `@DataJpaTest` coverage.
+
+### Follow-up work
+- Add gateway-level or docker-compose smoke tests for the full purchase flow once the local platform bootstrap is stable enough for CI.
+- Expand shipping and notification test coverage when shipment orchestration becomes part of checkout.
+- Revisit repository-slice tests if service query complexity increases beyond the current simple lookup patterns.
+
 ## 2026-03-18 - database and migration cleanup across extracted services
 
 ### Task

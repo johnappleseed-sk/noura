@@ -49,3 +49,9 @@ mvn spring-boot:run
 ```
 
 Flyway runs automatically on startup for service-owned schemas. For the current persistence standards and read-only exceptions, see [docs/database/service-persistence-standards.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/database/service-persistence-standards.md).
+
+## Test coverage
+
+- Commerce-critical service coverage currently prioritizes pricing lookup, promo validation, cart mutation, inventory reservation/release/deduction, checkout validation/place-order, order lifecycle updates, and payment confirm/webhook behavior.
+- The preferred pattern is service-level unit tests plus Web MVC slices. Checkout additionally uses a controller-plus-service slice so the HTTP contract and orchestration behavior are validated together without a full multi-service runtime.
+- Targeted test guidance and commands live in [docs/testing/commerce-service-tests.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/testing/commerce-service-tests.md).

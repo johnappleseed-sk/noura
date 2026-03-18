@@ -18,6 +18,13 @@
   - `docs/architecture/search-service.md`
 
 ### Updated
+- Pragmatic automated commerce test coverage now includes:
+  - `cart-service` quantity-update and remove-item unit coverage
+  - `inventory-service` reservation-release and low-stock endpoint coverage
+  - `checkout-service` controller-plus-service validation and place-order happy-path coverage
+  - `order-service` successful create/status-history and valid status-update coverage
+  - `payment-service` confirm/capture happy-path coverage
+  - documented test scope and commands in `docs/testing/commerce-service-tests.md`
 - Database and migration cleanup across extracted services:
   - added Flyway-backed `customer_payment_methods` in `customer-service`
   - added Flyway-backed `legacy_price_lists` in `pricing-service`

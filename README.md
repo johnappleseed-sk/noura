@@ -19,6 +19,7 @@ Enterprise commerce platform monorepo with canonical app, service, package, plat
 - Cross-service integration hardening: gateway routes now expose payment/shipping APIs, cart-service coupon flows integrate with promotion-service validation, and notification-service aligns to the shared response/correlation contract.
 - Complete synchronous storefront purchase flow: cart -> checkout validation -> stock reservation -> order creation -> payment confirmation -> order finalization -> notification dispatch.
 - Frontend contract alignment: extracted services now cover the active storefront/admin compatibility surface for recommendations, merchandising controls, payment methods, quick reorder, checkout steps, merchants, stores, and service areas without reviving the legacy catch-all `app-service`.
+- Pragmatic commerce test baseline across pricing, promotion, cart, inventory, checkout, order, and payment critical flows.
 
 ## Repository Modules
 - `apps/admin-web/` React admin operations console
@@ -57,6 +58,7 @@ Legacy code retained for reuse:
 - Shipping API: [docs/api/shipping-service.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/api/shipping-service.md)
 - Shipping architecture: [docs/architecture/shipping-service.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/architecture/shipping-service.md)
 - Purchase flow architecture: [docs/architecture/purchase-flow.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/architecture/purchase-flow.md)
+- Commerce test coverage: [docs/testing/commerce-service-tests.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/testing/commerce-service-tests.md)
 
 ## Local Development
 ### Legacy monolith backend (during migration)

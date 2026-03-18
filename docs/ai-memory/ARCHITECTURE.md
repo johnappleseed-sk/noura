@@ -80,6 +80,11 @@ Purchase-flow note:
 - order finalization uses a trusted internal order lifecycle endpoint instead of public admin routes
 - notification dispatch resolves the customer UUID through customer-service before calling notification-service
 
+Testing note:
+- extracted services favor unit tests for deterministic business rules and Web MVC slices for HTTP contracts
+- checkout happy-path coverage is intentionally a controller-plus-service slice with mocked downstream clients instead of a brittle full-runtime environment suite
+- gateway-level and deployed-stack smoke tests are still follow-up work
+
 Shipping-specific note:
 - shipping-service validates order identity and shipment ownership by synchronous order lookup
 - shipping-service owns shipment state, tracking references, and carrier refresh logic
