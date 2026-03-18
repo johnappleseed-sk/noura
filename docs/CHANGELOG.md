@@ -18,6 +18,14 @@
   - `docs/architecture/search-service.md`
 
 ### Updated
+- Database and migration cleanup across extracted services:
+  - added Flyway-backed `customer_payment_methods` in `customer-service`
+  - added Flyway-backed `legacy_price_lists` in `pricing-service`
+  - standardized DB-managed timestamp defaults in notification, promotion, review, and shipping owned tables
+  - added missing lookup indexes for inventory, notification, payment, review, and shipping hot paths
+  - added the missing intra-service foreign key from `shipping-service.store_records.merchant_id` to `merchant_records.id`
+  - documented shared persistence standards in `docs/database/service-persistence-standards.md`
+  - documented `catalog-service` as the explicit read-only persistence exception until catalog write ownership is extracted
 - Backend/frontend contract alignment for active storefront and admin flows:
   - `catalog-service` now exposes storefront compatibility routes for `/api/v1/merchandising/products`, `/api/v1/recommendations/**`, `/api/v1/recommendations/mock-ai`, `/api/v1/products/{productId}/related`, and `/api/v1/products/{productId}/frequently-bought-together`
   - `catalog-service` now exposes admin compatibility routes for `/api/v1/admin/recommendations/**` and `/api/v1/admin/merchandising/**`

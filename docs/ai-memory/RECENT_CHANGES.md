@@ -1,5 +1,53 @@
 # Recent Changes
 
+## 2026-03-18 - database and migration cleanup across extracted services
+
+### Task
+- Audited extracted service persistence and cleaned up migration gaps, lookup indexes, audit timestamp defaults, and intra-service relational constraints.
+
+### Why
+- Several extracted services had drift between runtime JPA entities and Flyway-owned tables.
+- Some first-wave migrations relied on application callbacks for audit timestamps instead of also setting database defaults.
+- A few hot lookup paths used in checkout, payments, notifications, reviews, and stock history did not yet have explicit supporting indexes.
+
+### Key files touched
+- `services/customer-service/src/main/resources/db/migration/V2__customer_payment_methods.sql`
+- `services/pricing-service/src/main/resources/db/migration/V2__pricing_admin_compatibility.sql`
+- `services/inventory-service/src/main/resources/db/migration/V2__inventory_lookup_indexes.sql`
+- `services/notification-service/src/main/resources/db/migration/V2__notification_audit_cleanup.sql`
+- `services/promotion-service/src/main/resources/db/migration/V2__promotion_persistence_cleanup.sql`
+- `services/review-service/src/main/resources/db/migration/V2__review_persistence_cleanup.sql`
+- `services/payment-service/src/main/resources/db/migration/V3__payment_persistence_cleanup.sql`
+- `services/shipping-service/src/main/resources/db/migration/V3__shipping_persistence_cleanup.sql`
+- `docs/database/service-persistence-standards.md`
+
+### Architecture decisions
+- `customer-service` now owns its saved payment-method table through Flyway instead of relying on an unmigrated runtime entity.
+- `pricing-service` now owns the lightweight `legacy_price_lists` compatibility table through Flyway so admin-web pricing pages no longer depend on an implicit schema.
+- Extracted services continue to standardize on string-backed enums and database-managed `created_at` / `updated_at` columns.
+- The platform still does not use JPA optimistic locking; current concurrency control remains idempotency + targeted pessimistic locks.
+- `catalog-service` remains the deliberate read-only exception until catalog write ownership moves into a service-owned schema plan.
+
+### Integration notes
+- Added lookup indexes for:
+  - inventory stock-level product timelines
+  - inventory stock-movement history
+  - notification unread-count queries
+  - payment latest-by-order lookups
+  - review product timelines
+  - shipping case-insensitive merchant/store code lookups
+- Added the missing `store_records.merchant_id -> merchant_records.id` foreign key because both tables are owned by `shipping-service`.
+
+### Known caveats
+- `catalog-service`, `search-service`, and some search-side read models still depend on shared canonical tables outside service-owned Flyway control.
+- Notification persistence still standardizes timestamp audit only; it does not yet have a stable actor audit contract comparable to customer/order/payment/shipping writes.
+- Older migrations are still heterogeneous in style (`IF NOT EXISTS` coverage, inline checks, default clauses), but the current standards are now documented for future work.
+
+### Follow-up work
+- Decide when catalog write ownership is ready for a service-owned migration set instead of shared read-only table mappings.
+- Consider adding dedicated migration validation/integration tests against PostgreSQL or Testcontainers so future schema drift is caught before runtime.
+- Revisit search/catalog shared read-only table dependencies once projection rebuilds are fully event-driven.
+
 ## 2026-03-18 - frontend/backend contract alignment pass completed
 
 ### Task

@@ -33,3 +33,19 @@ Current state:
 - `shipping-service` also owns the extracted merchant/store/service-area compatibility slice currently used by admin-web store-ops pages.
 - `review-service` is extracted for moderated storefront product reviews, approved-only rating aggregation, and admin moderation actions.
 - Other services are extraction targets reusing logic from `archive/legacy-monolith/backend-monolith`.
+
+## Migration discipline
+
+- Service-owned persistence uses Flyway with one schema-history table per service.
+- Transactional services should keep `spring.jpa.hibernate.ddl-auto=validate` so entity drift fails fast against migrated schemas.
+- Cross-service foreign keys are intentionally avoided; only intra-service ownership relations should use database FKs.
+- `catalog-service` is the explicit exception in this repo today: it is read-only over shared catalog tables and does not own a Flyway migration set yet.
+
+Run one service migration stack locally with:
+
+```bash
+cd services/<service-name>
+mvn spring-boot:run
+```
+
+Flyway runs automatically on startup for service-owned schemas. For the current persistence standards and read-only exceptions, see [docs/database/service-persistence-standards.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/database/service-persistence-standards.md).

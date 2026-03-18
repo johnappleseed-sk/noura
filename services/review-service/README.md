@@ -81,3 +81,8 @@ See:
 
 - [docs/api/review-service.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/api/review-service.md)
 - [docs/architecture/review-service.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/architecture/review-service.md)
+
+## Persistence notes
+
+- Review moderation enums are stored as strings, not ordinals.
+- `V2__review_persistence_cleanup.sql` standardizes audit timestamp defaults and adds a product timeline index for product-scoped review history queries.

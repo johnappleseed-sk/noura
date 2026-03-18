@@ -39,6 +39,8 @@
   - `db/inventory/migration/V1` and `V2`
 - New PostgreSQL analytics/search migration:
   - `db/migration/V20__postgres_reporting_and_search_foundation.sql`
+- Extracted service persistence conventions are tracked in:
+  - `docs/database/service-persistence-standards.md`
 
 ## Rollback Guidance
 

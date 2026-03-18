@@ -83,3 +83,8 @@ See:
 
 - [docs/api/promotion-service.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/api/promotion-service.md)
 - [docs/architecture/promotion-service.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/architecture/promotion-service.md)
+
+## Persistence notes
+
+- Promotion enums are stored as strings, not ordinals.
+- `V2__promotion_persistence_cleanup.sql` standardizes database-managed timestamp defaults and adds database checks for valid promotion windows and non-negative usage limits.

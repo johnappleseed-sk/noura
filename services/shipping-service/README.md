@@ -135,3 +135,12 @@ Optional environment variables:
 - `SHIPPING_RULE_BASED_FREE_STANDARD_THRESHOLD`
 - `SHIPPING_RULE_BASED_SAME_DAY_COUNTRY_CODE`
 - `SHIPPING_RULE_BASED_SAME_DAY_CITIES`
+
+## Persistence notes
+
+- Flyway migrations:
+  - `V1__shipping_foundation.sql`
+  - `V2__network_admin_compatibility.sql`
+  - `V3__shipping_persistence_cleanup.sql`
+- Shipment and network enums are stored as strings, not ordinals.
+- The cleanup migration standardizes audit timestamp defaults and adds the missing intra-service FK from `store_records.merchant_id` to `merchant_records.id`.

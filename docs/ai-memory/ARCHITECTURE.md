@@ -112,6 +112,13 @@ Frontend-compatibility note:
 - OpenSearch for search and filters
 - object storage for media
 
+Persistence-governance note:
+- service-owned transactional schemas should use Flyway + `ddl-auto=validate`
+- enums are persisted as strings across extracted services
+- cross-service foreign keys remain prohibited
+- intra-service foreign keys should be used when ownership is local and explicit
+- `catalog-service` remains the current read-only exception because it still maps shared catalog tables rather than a service-owned migration set
+
 ## Deployment Model
 - Docker
 - Kubernetes

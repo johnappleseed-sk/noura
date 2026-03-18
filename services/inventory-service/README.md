@@ -36,3 +36,4 @@ Optional:
 - Uses synchronous REST and PostgreSQL only for this first extraction slice.
 - Keeps inventory movement logging without introducing Kafka/event bus.
 - Designed so catalog/search can query stock availability by product ID.
+- Flyway migration `V2__inventory_lookup_indexes.sql` adds product and warehouse movement indexes for stock-history and low-latency checkout reservation lookups.

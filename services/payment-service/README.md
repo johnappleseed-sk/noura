@@ -105,3 +105,12 @@ Optional environment variables:
 - `APP_INTERNAL_API_KEY`
 - `ORDER_SERVICE_INTERNAL_API_KEY`
 - `PAYMENT_SANDBOX_WEBHOOK_SECRET`
+
+## Persistence notes
+
+- Flyway migrations:
+  - `V1__payment_foundation.sql`
+  - `V2__payment_lifecycle_and_webhooks.sql`
+  - `V3__payment_persistence_cleanup.sql`
+- Payment enums are stored as strings, not ordinals.
+- The persistence cleanup migration adds composite indexes for `order -> latest payment` lookups and check constraints for non-negative component amounts.

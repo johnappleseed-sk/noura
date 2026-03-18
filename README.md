@@ -43,6 +43,7 @@ Legacy code retained for reuse:
 - RBAC feature guide: [docs/features/rbac-authorization-matrix.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/features/rbac-authorization-matrix.md)
 - RBAC API: [docs/api/admin-authorization-matrix.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/api/admin-authorization-matrix.md)
 - RBAC database model: [docs/database/rbac-modeling.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/database/rbac-modeling.md)
+- Service persistence standards: [docs/database/service-persistence-standards.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/database/service-persistence-standards.md)
 - Enterprise RBAC feature: [docs/features/enterprise-rbac.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/features/enterprise-rbac.md)
 - RBAC admin runbook: [docs/operations/rbac-admin-runbook.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/operations/rbac-admin-runbook.md)
 - Payment API: [docs/api/payment-service.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/api/payment-service.md)

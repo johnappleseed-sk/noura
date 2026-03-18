@@ -12,6 +12,10 @@ Production customer account service for storefront profile and address book flow
 - `PUT /api/v1/account/addresses/{addressId}` (legacy alias: `/api/account/addresses/{addressId}`)
 - `DELETE /api/v1/account/addresses/{addressId}` (legacy alias: `/api/account/addresses/{addressId}`)
 - `POST /api/v1/account/addresses/{addressId}/set-default?type=SHIPPING|BILLING|BOTH` (type optional, defaults to `BOTH`)
+- `GET /api/v1/account/payment-methods` (legacy alias: `/api/account/payment-methods`)
+- `POST /api/v1/account/payment-methods` (legacy alias: `/api/account/payment-methods`)
+- `PUT /api/v1/account/payment-methods/{paymentMethodId}` (legacy alias: `/api/account/payment-methods/{paymentMethodId}`)
+- `DELETE /api/v1/account/payment-methods/{paymentMethodId}` (legacy alias: `/api/account/payment-methods/{paymentMethodId}`)
 - `GET /internal/customers/{customerId}`
 - `GET /internal/customers/by-subject/{externalSubject}`
 
@@ -43,3 +47,5 @@ Optional:
 - Address defaults support separate shipping and billing defaults.
 - Response payload keeps `defaultAddress` for storefront compatibility.
 - Internal lookup endpoints require `X-Internal-Api-Key` only when `APP_INTERNAL_API_KEY` is configured.
+- Flyway now owns both `customer_profiles` / `customer_addresses` and the storefront-facing `customer_payment_methods` table.
+- Saved payment methods enforce one default method per customer and deduplicate provider-token references per customer.

@@ -43,3 +43,9 @@ Required environment variables:
 - `DB_URL`
 - `DB_USERNAME`
 - `DB_PASSWORD`
+
+## Persistence note
+
+- `catalog-service` is currently read-only over the shared catalog schema and intentionally does not own Flyway migrations yet.
+- Its JPA mappings reuse canonical tables such as `products`, `product_variants`, `product_media`, `categories`, `brands`, and `stores`.
+- Schema evolution for those tables still belongs to the source catalog domain until catalog write ownership is extracted fully.
