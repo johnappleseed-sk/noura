@@ -39,7 +39,6 @@ Current state:
 - Java baseline:
   - all extracted services and `apps/api-gateway` now compile and run against `JDK 25`
   - Docker build/runtime images are aligned to Temurin 25 so local Docker builds match host-based Maven runs
-
 - Service-owned persistence uses Flyway with one schema-history table per service.
 - Transactional services should keep `spring.jpa.hibernate.ddl-auto=validate` so entity drift fails fast against migrated schemas.
 - Cross-service foreign keys are intentionally avoided; only intra-service ownership relations should use database FKs.
@@ -50,6 +49,12 @@ Run one service migration stack locally with:
 ```bash
 cd services/<service-name>
 mvn spring-boot:run
+```
+
+For the full extracted platform, prefer:
+
+```bash
+./platform/scripts/run-local.sh
 ```
 
 Flyway runs automatically on startup for service-owned schemas. For the current persistence standards and read-only exceptions, see [docs/database/service-persistence-standards.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/database/service-persistence-standards.md).
@@ -65,3 +70,14 @@ Flyway runs automatically on startup for service-owned schemas. For the current 
 - Extracted services share one API envelope shape for success and failure responses.
 - Validation, not-found, auth, conflict, business-rule, and internal-error categories now follow one documented response policy instead of service-specific top-level failure wording.
 - The standard and example payloads live in [docs/api/error-response-standard.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/api/error-response-standard.md).
+
+## Operational readiness
+
+- Every extracted service now exposes:
+  - `/actuator/health`
+  - `/actuator/health/readiness`
+  - `/actuator/health/liveness`
+- Every extracted service propagates `X-Correlation-ID` and emits one structured access log line per request.
+- Every service logs one `service_startup` summary on boot with port, probe paths, and active profiles.
+- Docker images now use a liveness `HEALTHCHECK` against `/actuator/health/liveness`.
+- The shared local/dev runbook lives in [docs/operations/local-service-readiness.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/operations/local-service-readiness.md).

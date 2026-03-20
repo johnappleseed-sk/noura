@@ -60,6 +60,7 @@ Legacy code retained for reuse:
 - Purchase flow architecture: [docs/architecture/purchase-flow.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/architecture/purchase-flow.md)
 - Commerce test coverage: [docs/testing/commerce-service-tests.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/testing/commerce-service-tests.md)
 - API error response standard: [docs/api/error-response-standard.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/api/error-response-standard.md)
+- Local service readiness: [docs/operations/local-service-readiness.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/operations/local-service-readiness.md)
 
 ## Local Development
 ### Java toolchain baseline
@@ -90,7 +91,38 @@ npm run dev
 
 ### Platform local stack
 ```bash
-cd platform/scripts
-cp .env.example .env
-docker compose -f docker-compose.local.yml up -d --build
+cp platform/scripts/.env.example platform/scripts/.env
+./platform/scripts/run-local.sh
 ```
+
+The scripted local flow now does all of the following:
+- starts shared infrastructure from `platform/scripts/docker-compose.local.yml`
+- bootstraps the shared local PostgreSQL schema for extracted services
+- seeds one demo catalog/search/pricing/inventory product (`Hydrating Glow Serum`)
+- launches the extracted backend services, `api-gateway`, `apps/storefront-web`, and `apps/admin-web`
+
+Stop the local stack with:
+
+```bash
+./platform/scripts/stop-local.sh
+./platform/scripts/stop-local.sh --down-infra
+```
+
+### Recommended backend startup order
+1. `catalog-service`, `inventory-service`, `pricing-service`, `customer-service`, `promotion-service`
+2. `cart-service`, `order-service`, `payment-service`, `shipping-service`, `notification-service`, `review-service`, `search-service`
+3. `checkout-service`
+4. `apps/api-gateway`
+
+Preferred command for new engineers:
+
+```bash
+./platform/scripts/run-local.sh
+```
+
+Operational baseline for every extracted service:
+
+- probes: `/actuator/health`, `/actuator/health/readiness`, `/actuator/health/liveness`
+- correlation header: `X-Correlation-ID`
+- structured request logs: `http_request ...`
+- startup summary logs: `service_startup ...`

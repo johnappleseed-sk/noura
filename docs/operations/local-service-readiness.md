@@ -39,6 +39,29 @@ Recommended order for a clean local bring-up:
 
 This order minimizes downstream startup noise because the orchestration services depend on the foundational data services already being reachable.
 
+## Recommended Local Commands
+
+Use the scripted local flow from the repository root:
+
+```bash
+./platform/scripts/run-local.sh
+```
+
+That script:
+- starts shared infrastructure containers
+- bootstraps the shared PostgreSQL schema for extracted services
+- seeds one demo product for catalog and search validation
+- starts the extracted backend services, gateway, storefront, and admin app
+
+Stop the local stack with:
+
+```bash
+./platform/scripts/stop-local.sh
+./platform/scripts/stop-local.sh --down-infra
+```
+
+The launcher prefers detached `screen` sessions when `screen` is available, because plain background jobs were not stable enough for long-running local dev servers on this machine.
+
 ## Dependency Map
 
 - `catalog-service`
@@ -94,6 +117,7 @@ This order minimizes downstream startup noise because the orchestration services
   - `SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE=3`
   - `SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE=0`
   - optional: `SPRING_DATASOURCE_HIKARI_IDLE_TIMEOUT=10000`
+- `run-local.sh` already applies the low-pool Hikari settings above to the extracted Java services.
 - Probe endpoints are intended to distinguish process health from dependency readiness:
   - `liveness` answers whether the process should stay running
   - `readiness` answers whether the service is ready to serve traffic
@@ -102,3 +126,4 @@ This order minimizes downstream startup noise because the orchestration services
   - `GATEWAY_FORWARDED_HEADERS_ENABLED=true`
   - `GATEWAY_X_FORWARDED_ENABLED=true`
   when the gateway is deployed behind a real proxy/load balancer.
+- `api-gateway` is launched locally from compiled classes plus a generated runtime classpath instead of `spring-boot:run`, because the Maven run goal is not stable here on Java 25.

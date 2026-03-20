@@ -264,3 +264,11 @@
 
 ### Refactored
 - Product enrichment flow centralized in a dedicated `ProductEnrichmentService` to keep controller logic thin and reusable.
+# 2026-03-20
+
+## Local platform startup automation
+- added `platform/scripts/bootstrap-local-db.sh` to make shared-schema local PostgreSQL bootstrapping reproducible for extracted services
+- added `platform/scripts/run-local.sh` and `platform/scripts/stop-local.sh` for one-command local start/stop of infra, extracted services, gateway, storefront, and admin-web
+- added `platform/scripts/sql/local-shared-catalog-bootstrap.sql` with one demo catalog/search/pricing/inventory seed record so first boot is not empty
+- updated onboarding and local-ops docs to point new engineers at the scripted startup flow instead of ad hoc manual service boot
+- documented the Java 25 local gateway workaround: run from compiled classes + generated runtime classpath instead of `spring-boot:run`

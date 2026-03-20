@@ -1,5 +1,56 @@
 # Recent Changes
 
+## 2026-03-20 - reproducible local stack bootstrap and run scripts
+
+### Task
+- Added repo-level local bootstrap and startup helpers so a new engineer can bring up the extracted NOURA platform without replaying manual terminal steps.
+
+### Why
+- Local project bring-up depended on session-specific knowledge:
+  - shared-schema PostgreSQL bootstrapping for extracted services
+  - manual service startup order
+  - low-pool JDBC tuning
+  - sample data seeding so catalog/search were not empty
+- The previous Docker-only approach was not enough because the extracted services are run directly on the host in the current local workflow.
+
+### Key files touched
+- `platform/scripts/local-common.sh`
+- `platform/scripts/bootstrap-local-db.sh`
+- `platform/scripts/run-local.sh`
+- `platform/scripts/stop-local.sh`
+- `platform/scripts/sql/local-shared-catalog-bootstrap.sql`
+- `platform/scripts/.env.example`
+- `platform/scripts/README.md`
+- `README.md`
+- `docs/onboarding.md`
+- `docs/operations/local-service-readiness.md`
+
+### Architecture decisions
+- Kept the local bootstrap explicitly separate from production migration ownership. The bootstrap compensates for shared-schema/Flyway baseline behavior in local development; it does not redefine service-owned persistence boundaries.
+- Seeded one deterministic demo product plus matching pricing/inventory/search source data so first boot produces visible storefront and search results.
+- Used detached `screen` sessions when available because plain background shell jobs were not stable enough for long-running local services on this machine.
+- Switched the local gateway launcher away from `spring-boot:run` and onto compiled classes plus a generated runtime classpath because the Maven run goal is unreliable here on Java 25.
+- Local startup skips test compilation for runtime bring-up with `-Dmaven.test.skip=true` so unrelated test drift does not block a runnable dev environment.
+
+### Integration notes
+- `./platform/scripts/run-local.sh` now starts:
+  - PostgreSQL, Redis, Kafka, Keycloak
+  - extracted backend services
+  - `apps/api-gateway`
+  - `apps/storefront-web`
+  - `apps/admin-web`
+- `./platform/scripts/bootstrap-local-db.sh` is idempotent and can be run independently when only the database needs repair/reset.
+- `./platform/scripts/stop-local.sh` now tears down the known NOURA local listeners on the standard ports and can optionally stop Docker infra too with `--down-infra`.
+
+### Known caveats
+- The local bootstrap still reflects an architectural compromise: extracted services currently share one local PostgreSQL schema.
+- `stop-local.sh` is intentionally aggressive on the known NOURA dev ports; if another unrelated process is bound to one of those standard ports, the script will stop it too.
+- The demo seed is meant for bootstrap visibility, not for performance or migration testing.
+
+### Follow-up work
+- Replace the shared-schema local bootstrap workaround with cleaner service-owned local schema isolation.
+- Add a lightweight seeded smoke test around `run-local.sh` once CI can support the required local-style process supervision.
+
 ## 2026-03-20 - local platform bootstrap blockers fixed
 
 ### Task

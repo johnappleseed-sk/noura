@@ -42,37 +42,39 @@ These paths are now under `archive/legacy-monolith/backend-monolith/`.
 - RBAC bulk saved views are introduced by `V24__admin_rbac_bulk_assignment_saved_views.sql` (`admin_bulk_user_role_views`).
 
 ## Run Locally
-### Backend
+### Preferred extracted-stack workflow
+```bash
+cp platform/scripts/.env.example platform/scripts/.env
+./platform/scripts/run-local.sh
+```
+
+This command:
+- starts PostgreSQL, Redis, Kafka, and Keycloak
+- bootstraps the shared local PostgreSQL schema for the extracted services
+- seeds one demo product so catalog and search are not empty on first boot
+- launches the extracted Java services, the gateway, the storefront, and the admin app
+
+Stop everything with:
+
+```bash
+./platform/scripts/stop-local.sh
+./platform/scripts/stop-local.sh --down-infra
+```
+
+### Legacy monolith backend only
 ```bash
 cd archive/legacy-monolith/backend-monolith
 ./mvnw spring-boot:run
-```
-
-### Admin dashboard
-```bash
-cd apps/admin-web
-npm install
-npm run dev
-```
-
-### Storefront
-```bash
-cd apps/storefront-web
-npm install
-npm run dev
-```
-
-### Platform stack
-```bash
-cd platform/scripts
-cp .env.example .env
-docker compose -f docker-compose.local.yml up -d --build
 ```
 
 ## Run Migrations
 Migrations run during backend startup when Flyway is enabled.  
 For policy checks and environment guards, review `backend/README.md` and workflow `.github/workflows/backend-schema-policy.yml`.
 Monolith docs now live at `archive/legacy-monolith/backend-monolith/README.md`.
+
+For the extracted-stack local bootstrap, note:
+- service-owned Flyway migrations still share one local PostgreSQL schema
+- `platform/scripts/bootstrap-local-db.sh` compensates for that local-only baseline limitation so first-time startup is reproducible
 
 ## How To Add New Features
 1. Audit existing module patterns first.
