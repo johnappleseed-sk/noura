@@ -74,6 +74,8 @@ mvn spring-boot:run
 - Discovery is intentionally disabled in the gateway. `spring.cloud.discovery.enabled=false`
   keeps actuator health aligned with the explicit-URI routing model and avoids misleading
   `Discovery Client not initialized` health contributors when no registry is deployed.
+- Startup summary logs now include `serviceResolution=<mode>` so local/dev boot output makes it
+  obvious whether the gateway expects explicit upstream URLs or discovery-based routing.
 
 ## Known limitations
 

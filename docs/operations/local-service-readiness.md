@@ -21,7 +21,7 @@ http_request correlationId=<id> method=<verb> path=<path> status=<code> duration
 - Startup summary log format:
 
 ```text
-service_startup service=<name> port=<port> health=/actuator/health readiness=/actuator/health/readiness liveness=/actuator/health/liveness profiles=<profiles>
+service_startup service=<name> port=<port> health=/actuator/health readiness=/actuator/health/readiness liveness=/actuator/health/liveness serviceResolution=<explicit-uris|discovery> authEnabled=<true|false> profiles=<profiles>
 ```
 
 - Docker runtime healthcheck:

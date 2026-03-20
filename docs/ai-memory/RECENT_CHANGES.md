@@ -1,5 +1,33 @@
 # Recent Changes
 
+## 2026-03-20 - gateway startup routing signal
+
+### Task
+- Added a routing-mode signal to the gateway startup summary log so boot output immediately shows how upstream services are expected to resolve.
+
+### Why
+- After cleaning up the misleading discovery health contributors, it was still helpful to make the intended routing mode visible at startup instead of requiring engineers to infer it from config.
+
+### Key files touched
+- `apps/api-gateway/src/main/java/com/company/platform/gateway/EdgeGatewayApplication.java`
+- `apps/api-gateway/src/test/java/com/company/platform/gateway/EdgeGatewayApplicationTest.java`
+- `apps/api-gateway/README.md`
+- `docs/operations/local-service-readiness.md`
+- `docs/CHANGELOG.md`
+
+### Architecture decisions
+- Kept the startup log dynamic instead of hard-coding `explicit-uris`, so a future discovery-enabled profile can surface `serviceResolution=discovery` without changing log structure.
+
+### Integration notes
+- Gateway startup logs now include `serviceResolution=explicit-uris` in the current local/dev topology.
+- The routing signal is independent of health output and does not change request behavior.
+
+### Known caveats
+- The routing-mode helper infers mode from discovery-related gateway properties. If a future environment introduces more exotic routing behavior, the helper may need to evolve with that configuration model.
+
+### Follow-up work
+- Consider adding the same `serviceResolution` startup signal to any future gateway-like edge components if NOURA grows beyond one API gateway.
+
 ## 2026-03-20 - gateway discovery health cleanup
 
 ### Task
