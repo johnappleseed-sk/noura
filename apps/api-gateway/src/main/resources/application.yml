@@ -1,10 +1,29 @@
 spring:
   application:
     name: edge-gateway
+  autoconfigure:
+    exclude:
+      - org.springframework.cloud.client.discovery.simple.SimpleDiscoveryClientAutoConfiguration
+      - org.springframework.cloud.client.discovery.simple.reactive.SimpleReactiveDiscoveryClientAutoConfiguration
+      - org.springframework.cloud.client.discovery.composite.CompositeDiscoveryClientAutoConfiguration
+      - org.springframework.cloud.client.discovery.composite.reactive.ReactiveCompositeDiscoveryClientAutoConfiguration
   main:
     web-application-type: reactive
   cloud:
+    discovery:
+      # The gateway uses explicit service base URLs in local/dev and does not rely on
+      # a registry such as Eureka or Consul. Disable discovery so actuator health does
+      # not expose misleading "client not initialized" states.
+      enabled: false
+      client:
+        composite-indicator:
+          enabled: false
+        health-indicator:
+          enabled: false
     gateway:
+      discovery:
+        locator:
+          enabled: false
       forwarded:
         enabled: ${GATEWAY_FORWARDED_HEADERS_ENABLED:false}
       x-forwarded:
@@ -507,8 +526,12 @@ management:
         liveness:
           include: livenessState,ping
   health:
+    discovery-composite:
+      enabled: false
     livenessstate:
       enabled: true
+    reactive-discovery-clients:
+      enabled: false
     readinessstate:
       enabled: true
 

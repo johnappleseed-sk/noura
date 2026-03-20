@@ -1,5 +1,37 @@
 # Recent Changes
 
+## 2026-03-20 - gateway discovery health cleanup
+
+### Task
+- Removed misleading discovery-client health noise from `api-gateway` and documented the intended service-resolution model.
+
+### Why
+- Gateway health exposed `discoveryComposite` and `reactiveDiscoveryClients` as `UNKNOWN` with `Discovery Client not initialized`, which looked like a broken registry setup.
+- The current NOURA local/dev architecture does not deploy Eureka, Consul, or another registry. Gateway routes resolve through explicit upstream service URLs, so the health output was misleading rather than diagnostic.
+
+### Key files touched
+- `apps/api-gateway/src/main/resources/application.yml`
+- `apps/api-gateway/src/test/java/com/company/platform/gateway/health/GatewayHealthEndpointTest.java`
+- `apps/api-gateway/README.md`
+- `docs/operations/local-service-readiness.md`
+- `docs/CHANGELOG.md`
+
+### Architecture decisions
+- Kept the explicit-URI gateway routing model and did not introduce service discovery infrastructure.
+- Disabled Spring Cloud discovery at the gateway boundary with the discovery client health contributors off as well, so actuator reflects the intended topology.
+- Left gateway route definitions unchanged because they already resolve correctly through explicit service URLs.
+
+### Integration notes
+- `api-gateway` should no longer surface discovery-related `UNKNOWN` health contributors in local/dev health output.
+- Product and search routes continue to work through the same explicit upstream service URLs.
+- `GatewayHealthEndpointTest` now guards the actuator contract so this cleanup is less likely to regress silently.
+
+### Known caveats
+- This change is intentionally scoped to the gateway. If a future environment adopts a real service registry, discovery should be re-enabled in an environment-specific profile instead of changing the default local/dev topology.
+
+### Follow-up work
+- Add a small gateway health regression test if actuator contract checks become part of the gateway test suite.
+
 ## 2026-03-20 - reproducible local stack bootstrap and run scripts
 
 ### Task

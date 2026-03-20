@@ -68,6 +68,7 @@ Separation of responsibilities:
 - transactional outbox for publishing
 - no distributed transactions
 - no direct DB writes across services
+- `api-gateway` currently routes through explicit upstream base URLs in local/dev and does not rely on a runtime service registry such as Eureka or Consul
 
 Payment-specific note:
 - payment-service validates order identity/amount by synchronous order lookup

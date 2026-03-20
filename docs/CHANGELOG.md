@@ -1,6 +1,8 @@
 ## 2026-03-20
 
 ### Updated
+- Disabled unused Spring Cloud discovery contributors in `apps/api-gateway` and explicitly set gateway discovery off, so actuator health no longer reports misleading `Discovery Client not initialized` states in the explicit-URI local/dev topology.
+- Added `GatewayHealthEndpointTest` so the gateway actuator contract keeps discovery contributors out of health when NOURA is running without a service registry.
 - Fixed the gateway correlation filter so `api-gateway` no longer throws `UnsupportedOperationException` when proxying business routes with generated or forwarded `X-Correlation-ID` headers.
 - Aligned `apps/api-gateway` to Spring Framework `6.2.15` so Spring Cloud Gateway header filters no longer fail with `HttpHeaders.headerSet()` linkage errors during local routed requests.
 - Defaulted gateway forwarded-header filters off for local/dev startup, with env overrides to re-enable them behind a real proxy, so routed requests no longer fail with the Spring Cloud Gateway `HttpHeaders.headerSet()` linkage error on the current stack.

@@ -6,6 +6,8 @@ This document captures the operational baseline expected from extracted NOURA se
 
 - Host Java baseline: `JDK 25` for `apps/api-gateway` and all extracted Spring services when they run outside Docker.
 - Default HTTP port: `8080` unless `SERVER_PORT` overrides it.
+- Service discovery: disabled for `api-gateway` local/dev runs. The gateway routes to explicit
+  `http://host:port` service URLs instead of relying on Eureka, Consul, or `lb://` routes.
 - Health endpoint: `GET /actuator/health`
 - Readiness endpoint: `GET /actuator/health/readiness`
 - Liveness endpoint: `GET /actuator/health/liveness`
@@ -109,6 +111,7 @@ The launcher prefers detached `screen` sessions when `screen` is available, beca
 - `api-gateway`
   - extracted backend services
   - Keycloak when `GATEWAY_AUTH_ENABLED=true`
+  - no service registry dependency in the current local/dev topology
 
 ## Local Debugging Notes
 
