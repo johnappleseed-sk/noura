@@ -1,6 +1,11 @@
 ## 2026-03-20
 
 ### Updated
+- Fixed the gateway correlation filter so `api-gateway` no longer throws `UnsupportedOperationException` when proxying business routes with generated or forwarded `X-Correlation-ID` headers.
+- Aligned `apps/api-gateway` to Spring Framework `6.2.15` so Spring Cloud Gateway header filters no longer fail with `HttpHeaders.headerSet()` linkage errors during local routed requests.
+- Defaulted gateway forwarded-header filters off for local/dev startup, with env overrides to re-enable them behind a real proxy, so routed requests no longer fail with the Spring Cloud Gateway `HttpHeaders.headerSet()` linkage error on the current stack.
+- Added `GET /api/v1/search` as a compatibility alias for `GET /api/v1/search/products` so gateway and frontend callers using the shorter legacy search URL succeed without client rewrites.
+- Documented the small-pool local startup recommendation for direct multi-service Maven runs against the shared PostgreSQL container.
 - Upgraded `apps/api-gateway` and all extracted Spring services from Java 21 to Java 25 by changing every module `pom.xml` `java.version` property to `25`.
 - Standardized Java container images on Temurin 25:
   - build stage: `maven:3.9.14-eclipse-temurin-25`

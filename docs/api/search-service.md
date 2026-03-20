@@ -19,6 +19,8 @@ Base prefix: `/api/v1/search`
 
 ### GET `/products`
 
+Compatibility alias: `GET /api/v1/search`
+
 Queries search-owned product documents.
 
 Query parameters:
@@ -41,6 +43,12 @@ Example:
 
 ```http
 GET /api/v1/search/products?q=mug&page=0&size=20
+```
+
+Compatibility example:
+
+```http
+GET /api/v1/search?q=mug&page=0&size=20
 ```
 
 Example response body:

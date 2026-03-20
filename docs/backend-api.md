@@ -552,6 +552,9 @@ Base prefix: `/api/v1/search`
 ### Search products
 `GET /search/products`
 
+Compatibility alias:
+- `GET /search`
+
 Query params:
 - `q`, `keyword`, or `query`
 - `categoryId` (optional UUID)

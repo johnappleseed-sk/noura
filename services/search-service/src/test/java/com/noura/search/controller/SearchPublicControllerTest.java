@@ -76,6 +76,37 @@ class SearchPublicControllerTest {
     }
 
     /**
+     * Verifies the legacy root search endpoint remains compatible with storefront and gateway callers.
+     */
+    @Test
+    void searchProductsCompatibilityAliasReturnsApiEnvelope() throws Exception {
+        ProductSearchHitDto hit = new ProductSearchHitDto(
+                UUID.randomUUID(),
+                "SKU-2002",
+                "Desk Lamp",
+                "desk-lamp",
+                null,
+                "Lighting",
+                null,
+                "NouraHome",
+                4.6,
+                9,
+                false,
+                61
+        );
+        when(searchQueryService.searchProducts("lamp", null, null, 0, 20))
+                .thenReturn(new PageImpl<>(List.of(hit), PageRequest.of(0, 20), 1));
+
+        mockMvc.perform(get("/api/v1/search")
+                        .param("q", "lamp"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Product search results"))
+                .andExpect(jsonPath("$.data.content[0].id").value(hit.productId().toString()))
+                .andExpect(jsonPath("$.path").value("/api/v1/search"));
+    }
+
+    /**
      * Verifies predictive suggestions return the standard API envelope.
      */
     @Test

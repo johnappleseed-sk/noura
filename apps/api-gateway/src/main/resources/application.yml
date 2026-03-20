@@ -5,8 +5,10 @@ spring:
     web-application-type: reactive
   cloud:
     gateway:
+      forwarded:
+        enabled: ${GATEWAY_FORWARDED_HEADERS_ENABLED:false}
       x-forwarded:
-        enabled: true
+        enabled: ${GATEWAY_X_FORWARDED_ENABLED:false}
       default-filters:
         - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
         - RemoveRequestHeader=Cookie
@@ -109,6 +111,12 @@ spring:
             - Path=/internal/catalog-service/readiness
           filters:
             - RewritePath=/internal/catalog-service/readiness, /actuator/health/readiness
+        - id: catalog-service-liveness
+          uri: ${CATALOG_SERVICE_URL:http://localhost:8084}
+          predicates:
+            - Path=/internal/catalog-service/liveness
+          filters:
+            - RewritePath=/internal/catalog-service/liveness, /actuator/health/liveness
         - id: search-service-health
           uri: ${SEARCH_SERVICE_URL:http://localhost:8085}
           predicates:
@@ -121,6 +129,12 @@ spring:
             - Path=/internal/search-service/readiness
           filters:
             - RewritePath=/internal/search-service/readiness, /actuator/health/readiness
+        - id: search-service-liveness
+          uri: ${SEARCH_SERVICE_URL:http://localhost:8085}
+          predicates:
+            - Path=/internal/search-service/liveness
+          filters:
+            - RewritePath=/internal/search-service/liveness, /actuator/health/liveness
         - id: notification-service-api
           uri: ${NOTIFICATION_SERVICE_URL:http://localhost:8083}
           predicates:
@@ -160,6 +174,12 @@ spring:
             - Path=/internal/inventory-service/readiness
           filters:
             - RewritePath=/internal/inventory-service/readiness, /actuator/health/readiness
+        - id: inventory-service-liveness
+          uri: ${INVENTORY_SERVICE_URL:http://localhost:8086}
+          predicates:
+            - Path=/internal/inventory-service/liveness
+          filters:
+            - RewritePath=/internal/inventory-service/liveness, /actuator/health/liveness
         - id: pricing-service-api
           uri: ${PRICING_SERVICE_URL:http://localhost:8087}
           predicates:
@@ -186,6 +206,12 @@ spring:
             - Path=/internal/promotion-service/readiness
           filters:
             - RewritePath=/internal/promotion-service/readiness, /actuator/health/readiness
+        - id: promotion-service-liveness
+          uri: ${PROMOTION_SERVICE_URL:http://localhost:8094}
+          predicates:
+            - Path=/internal/promotion-service/liveness
+          filters:
+            - RewritePath=/internal/promotion-service/liveness, /actuator/health/liveness
         - id: review-service-admin
           uri: ${REVIEW_SERVICE_URL:http://localhost:8095}
           predicates:
@@ -205,6 +231,12 @@ spring:
             - Path=/internal/review-service/readiness
           filters:
             - RewritePath=/internal/review-service/readiness, /actuator/health/readiness
+        - id: review-service-liveness
+          uri: ${REVIEW_SERVICE_URL:http://localhost:8095}
+          predicates:
+            - Path=/internal/review-service/liveness
+          filters:
+            - RewritePath=/internal/review-service/liveness, /actuator/health/liveness
         - id: pricing-service-health
           uri: ${PRICING_SERVICE_URL:http://localhost:8087}
           predicates:
@@ -217,6 +249,12 @@ spring:
             - Path=/internal/pricing-service/readiness
           filters:
             - RewritePath=/internal/pricing-service/readiness, /actuator/health/readiness
+        - id: pricing-service-liveness
+          uri: ${PRICING_SERVICE_URL:http://localhost:8087}
+          predicates:
+            - Path=/internal/pricing-service/liveness
+          filters:
+            - RewritePath=/internal/pricing-service/liveness, /actuator/health/liveness
         - id: cart-service-api
           uri: ${CART_SERVICE_URL:http://localhost:8088}
           predicates:
@@ -236,6 +274,12 @@ spring:
             - Path=/internal/cart-service/readiness
           filters:
             - RewritePath=/internal/cart-service/readiness, /actuator/health/readiness
+        - id: cart-service-liveness
+          uri: ${CART_SERVICE_URL:http://localhost:8088}
+          predicates:
+            - Path=/internal/cart-service/liveness
+          filters:
+            - RewritePath=/internal/cart-service/liveness, /actuator/health/liveness
         - id: customer-service-account
           uri: ${CUSTOMER_SERVICE_URL:http://localhost:8089}
           predicates:
@@ -255,6 +299,12 @@ spring:
             - Path=/internal/customer-service/readiness
           filters:
             - RewritePath=/internal/customer-service/readiness, /actuator/health/readiness
+        - id: customer-service-liveness
+          uri: ${CUSTOMER_SERVICE_URL:http://localhost:8089}
+          predicates:
+            - Path=/internal/customer-service/liveness
+          filters:
+            - RewritePath=/internal/customer-service/liveness, /actuator/health/liveness
         - id: order-service-orders
           uri: ${ORDER_SERVICE_URL:http://localhost:8090}
           predicates:
@@ -288,6 +338,12 @@ spring:
             - Path=/internal/order-service/readiness
           filters:
             - RewritePath=/internal/order-service/readiness, /actuator/health/readiness
+        - id: order-service-liveness
+          uri: ${ORDER_SERVICE_URL:http://localhost:8090}
+          predicates:
+            - Path=/internal/order-service/liveness
+          filters:
+            - RewritePath=/internal/order-service/liveness, /actuator/health/liveness
         - id: checkout-service-api
           uri: ${CHECKOUT_SERVICE_URL:http://localhost:8091}
           predicates:
@@ -307,6 +363,12 @@ spring:
             - Path=/internal/checkout-service/readiness
           filters:
             - RewritePath=/internal/checkout-service/readiness, /actuator/health/readiness
+        - id: checkout-service-liveness
+          uri: ${CHECKOUT_SERVICE_URL:http://localhost:8091}
+          predicates:
+            - Path=/internal/checkout-service/liveness
+          filters:
+            - RewritePath=/internal/checkout-service/liveness, /actuator/health/liveness
         - id: payment-service-api
           uri: ${PAYMENT_SERVICE_URL:http://localhost:8092}
           predicates:
@@ -326,6 +388,12 @@ spring:
             - Path=/internal/payment-service/readiness
           filters:
             - RewritePath=/internal/payment-service/readiness, /actuator/health/readiness
+        - id: payment-service-liveness
+          uri: ${PAYMENT_SERVICE_URL:http://localhost:8092}
+          predicates:
+            - Path=/internal/payment-service/liveness
+          filters:
+            - RewritePath=/internal/payment-service/liveness, /actuator/health/liveness
         - id: shipping-service-api
           uri: ${SHIPPING_SERVICE_URL:http://localhost:8093}
           predicates:
@@ -345,6 +413,12 @@ spring:
             - Path=/internal/shipping-service/readiness
           filters:
             - RewritePath=/internal/shipping-service/readiness, /actuator/health/readiness
+        - id: shipping-service-liveness
+          uri: ${SHIPPING_SERVICE_URL:http://localhost:8093}
+          predicates:
+            - Path=/internal/shipping-service/liveness
+          filters:
+            - RewritePath=/internal/shipping-service/liveness, /actuator/health/liveness
         - id: app-service
           uri: ${APP_SERVICE_URL:http://localhost:8082}
           predicates:
@@ -369,6 +443,12 @@ spring:
             - Path=/internal/notification-service/readiness
           filters:
             - RewritePath=/internal/notification-service/readiness, /actuator/health/readiness
+        - id: notification-service-liveness
+          uri: ${NOTIFICATION_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/internal/notification-service/liveness
+          filters:
+            - RewritePath=/internal/notification-service/liveness, /actuator/health/liveness
         - id: app-service-health
           uri: ${APP_SERVICE_URL:http://localhost:8082}
           predicates:
@@ -381,6 +461,12 @@ spring:
             - Path=/internal/app/readiness
           filters:
             - RewritePath=/internal/app/readiness, /actuator/health/readiness
+        - id: app-service-liveness
+          uri: ${APP_SERVICE_URL:http://localhost:8082}
+          predicates:
+            - Path=/internal/app/liveness
+          filters:
+            - RewritePath=/internal/app/liveness, /actuator/health/liveness
         - id: keycloak
           uri: ${KEYCLOAK_URL:http://localhost:18080}
           predicates:
@@ -415,7 +501,18 @@ management:
       probes:
         enabled: true
       show-details: always
+      group:
+        readiness:
+          include: readinessState,ping
+        liveness:
+          include: livenessState,ping
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
 
 logging:
   level:
+    root: INFO
     org.springframework.cloud.gateway: INFO

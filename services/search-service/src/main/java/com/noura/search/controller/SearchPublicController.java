@@ -42,7 +42,7 @@ public class SearchPublicController {
      * @param http current request
      * @return paged product hits
      */
-    @GetMapping("/products")
+    @GetMapping({"", "/", "/products"})
     public ApiResponse<PageResponse<ProductSearchHitDto>> searchProducts(
             @RequestParam(required = false, name = "q") String q,
             @RequestParam(required = false) String keyword,

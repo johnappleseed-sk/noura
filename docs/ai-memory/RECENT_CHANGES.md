@@ -1,5 +1,50 @@
 # Recent Changes
 
+## 2026-03-20 - local platform bootstrap blockers fixed
+
+### Task
+- Removed two backend blockers that were preventing the locally started platform from serving expected gateway/frontend routes.
+
+### Why
+- `api-gateway` was throwing `UnsupportedOperationException` on proxied business requests because the correlation filter tried to mutate read-only request headers.
+- `search-service` only exposed `GET /api/v1/search/products`, while local gateway/frontends still hit `GET /api/v1/search`.
+- Running many Spring services directly against the shared PostgreSQL container also needed an explicit low-pool recommendation to avoid exhausting default DB connection slots during local bring-up.
+
+### Key files touched
+- `apps/api-gateway/pom.xml`
+- `apps/api-gateway/src/main/java/com/company/platform/gateway/config/RequestCorrelationGatewayFilter.java`
+- `apps/api-gateway/src/main/resources/application.yml`
+- `apps/api-gateway/src/test/java/com/company/platform/gateway/config/RequestCorrelationGatewayFilterTest.java`
+- `services/search-service/src/main/java/com/noura/search/controller/SearchPublicController.java`
+- `services/search-service/src/test/java/com/noura/search/controller/SearchPublicControllerTest.java`
+- `docs/api/search-service.md`
+- `docs/backend-api.md`
+- `docs/operations/local-service-readiness.md`
+- `docs/CHANGELOG.md`
+
+### Architecture decisions
+- Kept the gateway correlation design unchanged and only fixed the unsafe request-header mutation path.
+- Scoped the framework alignment to `apps/api-gateway` by pinning Spring Framework `6.2.15` there, instead of upgrading every service, because the linkage error came from Spring Cloud Gateway internals and the other Spring Boot services were already running.
+- Defaulted gateway forwarded-header filters off in local/dev configuration, but left them env-toggleable for proxy-backed deployments, because the current Spring Cloud Gateway stack throws a linkage error when those filters run locally.
+- Added `GET /api/v1/search` as a compatibility alias instead of changing gateway/frontends to a new route, because the shorter endpoint is already in active local usage.
+- Documented dev-only Hikari sizing guidance rather than changing every service default pool policy in this pass.
+
+### Integration notes
+- `api-gateway` now forwards `/api/v1/products` and other routed business endpoints without tripping the correlation filter.
+- `api-gateway` local startup now expects proxy-header filters to stay disabled unless `GATEWAY_FORWARDED_HEADERS_ENABLED=true` and `GATEWAY_X_FORWARDED_ENABLED=true` are set intentionally.
+- `search-service` now accepts both:
+  - `GET /api/v1/search`
+  - `GET /api/v1/search/products`
+- Local direct Maven bring-up should use a small Hikari pool when many services share the same PostgreSQL container.
+
+### Known caveats
+- This pass fixes the gateway/search compatibility issues discovered during local bring-up; it does not resolve the broader Flyway shared-schema baseline behavior that still makes first-time local bootstrapping brittle.
+- The standalone search endpoint still returns empty results until catalog/search documents exist; route compatibility is fixed, not sample-data seeding.
+
+### Follow-up work
+- Replace the current shared-schema/Flyway baseline workaround with a reproducible repo-level local bootstrap approach.
+- Add one lightweight gateway smoke test over a routed business endpoint if the gateway test suite expands beyond the current filter regression coverage.
+
 ## 2026-03-20 - Java 25 baseline upgrade
 
 ### Task
