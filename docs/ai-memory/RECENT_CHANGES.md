@@ -1,5 +1,55 @@
 # Recent Changes
 
+## 2026-03-20 - Java 25 baseline upgrade
+
+### Task
+- Upgraded the Java runtime baseline for the gateway and extracted Spring services from Java 21 to Java 25.
+
+### Why
+- The repository was still pinned to Java 21 even though the requested platform baseline was the latest GA Java release.
+- Host Maven builds and Docker builds needed to move together so local development, CI-style builds, and containerized execution stay aligned.
+
+### Key files touched
+- `apps/api-gateway/pom.xml`
+- `apps/api-gateway/Dockerfile`
+- `services/*/pom.xml`
+- `services/*/Dockerfile`
+- `README.md`
+- `services/README.md`
+- `docs/operations/local-service-readiness.md`
+
+### Architecture decisions
+- Kept the upgrade intentionally shallow at the build/runtime boundary:
+  - Maven compiler baseline is now Java 25
+  - Java Docker builder images now use `maven:3.9.14-eclipse-temurin-25`
+  - Java Docker runtime images now use `eclipse-temurin:25-jre`
+- Did not introduce Maven toolchains or mixed-version support because the platform currently wants one shared Java baseline across gateway and extracted services.
+
+### Integration notes
+- The upgrade covers `apps/api-gateway` plus:
+  - `catalog-service`
+  - `search-service`
+  - `pricing-service`
+  - `cart-service`
+  - `checkout-service`
+  - `order-service`
+  - `payment-service`
+  - `inventory-service`
+  - `customer-service`
+  - `promotion-service`
+  - `shipping-service`
+  - `notification-service`
+  - `review-service`
+- Documentation now explicitly states that direct Maven runs should use a Java 25 host JDK.
+
+### Known caveats
+- The local Docker Compose stack is still behind the latest extracted service set; this change updates Java baselines, not compose service coverage.
+- Some module test suites already have unrelated pre-existing failures in the current worktree; validation for this task should focus on Java 25 compilation/build compatibility.
+
+### Follow-up work
+- Add a repo-level toolchain note or bootstrap script if the team wants automatic local JDK selection instead of a documented prerequisite.
+- Refresh the local compose stack so every extracted Java service can be run containerized under the same Java 25 baseline.
+
 ## 2026-03-18 - cross-service API error behavior standardization
 
 ### Task

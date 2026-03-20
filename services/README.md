@@ -36,6 +36,10 @@ Current state:
 
 ## Migration discipline
 
+- Java baseline:
+  - all extracted services and `apps/api-gateway` now compile and run against `JDK 25`
+  - Docker build/runtime images are aligned to Temurin 25 so local Docker builds match host-based Maven runs
+
 - Service-owned persistence uses Flyway with one schema-history table per service.
 - Transactional services should keep `spring.jpa.hibernate.ddl-auto=validate` so entity drift fails fast against migrated schemas.
 - Cross-service foreign keys are intentionally avoided; only intra-service ownership relations should use database FKs.

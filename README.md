@@ -62,6 +62,12 @@ Legacy code retained for reuse:
 - API error response standard: [docs/api/error-response-standard.md](/Users/Saturn/Downloads/Coding/Projects/noura/docs/api/error-response-standard.md)
 
 ## Local Development
+### Java toolchain baseline
+
+- `apps/api-gateway` and every Java service now target `JDK 25`.
+- When running Java modules directly with Maven, use a Java 25 toolchain on the host.
+- Docker image builds also use Temurin 25, so containerized and host-based execution stay aligned.
+
 ### Legacy monolith backend (during migration)
 ```bash
 cd archive/legacy-monolith/backend-monolith

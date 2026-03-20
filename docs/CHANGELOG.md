@@ -1,3 +1,12 @@
+## 2026-03-20
+
+### Updated
+- Upgraded `apps/api-gateway` and all extracted Spring services from Java 21 to Java 25 by changing every module `pom.xml` `java.version` property to `25`.
+- Standardized Java container images on Temurin 25:
+  - build stage: `maven:3.9.14-eclipse-temurin-25`
+  - runtime stage: `eclipse-temurin:25-jre`
+- Updated local development and service-platform docs to call out the new JDK 25 host baseline for direct Maven runs.
+
 ## 2026-03-18
 
 ### Added

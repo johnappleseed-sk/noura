@@ -138,6 +138,10 @@ Persistence-governance note:
 - Prometheus + Grafana
 - GitHub Actions + GitOps deployment
 
+Runtime-baseline note:
+- `apps/api-gateway` and all extracted Spring services now target JDK 25 in both Maven builds and Docker images
+- local direct `mvn spring-boot:run` workflows should use a Java 25 host toolchain to match container behavior
+
 ## Anti-Goals
 Do not:
 - rewrite everything at once
